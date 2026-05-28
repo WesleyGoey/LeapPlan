@@ -17,9 +17,8 @@ class SearchViewModel: ObservableObject {
     @Published var selectedPlace: FSQPlace?
     @Published var isLoading: Bool = false
     
-    // Default region peta (Bisa diupdate nanti dari LocationService)
     @Published var mapRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688), // Koordinat Surabaya
+        center: CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     
@@ -56,6 +55,5 @@ class SearchViewModel: ObservableObject {
     
     func selectPlace(_ place: FSQPlace) {
         self.selectedPlace = place
-        // Opsional: Pindahkan kamera peta ke tempat yang dipilih
     }
 }

@@ -17,21 +17,18 @@ enum TripStatus: String, Codable {
 
 struct Trip: Identifiable, Codable {
     @DocumentID var id: String?
-    var title: String          // Contoh: "Bali Escapade" atau "Kyoto Autumn"
-    var locationName: String   // Lokasi utama trip
+    var title: String
+    var locationName: String
     var startDate: Date
     var endDate: Date
     var status: TripStatus
-    var coverImageUrl: String? // Digunakan untuk background image di Widget & Trip Card
+    var coverImageUrl: String?
     
-    // Kolaborasi Real-time
     var participantIDs: [String]
     
-    // Metadata
     var createdAt: Date
     var createdBy: String
     
-    // Computed property: Sangat berguna untuk UI "Countdown: X Days Left" di Home Tab
     var daysUntilTrip: Int {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.day], from: Date(), to: startDate)

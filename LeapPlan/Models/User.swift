@@ -9,11 +9,9 @@ import Foundation
 import FirebaseFirestore
 
 struct User: Identifiable, Codable {
-    @DocumentID var id: String? // Terhubung dengan Firebase Auth UID
+    @DocumentID var id: String? 
     var email: String
     var fullName: String
     var profileImageUrl: String?
     var joinedDate: Date
-    
-    // Statistik perjalanan telah dihapus untuk mendukung UI Profile yang minimalis
 }

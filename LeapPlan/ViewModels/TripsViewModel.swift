@@ -69,9 +69,6 @@ class TripsViewModel: ObservableObject {
         Task {
             do {
                 try await tripRepository.createTrip(newTrip, forUserID: userID)
-                // Setelah trip terbuat, kita asumsikan ID-nya digenerate di Repo, 
-                // idealnya fungsi createTrip me-return Trip ID agar bisa di-passing ke DayPlans.
-                // Untuk kesederhanaan saat ini, kita butuh penyesuaian di Repo untuk me-return ID.
             } catch {
                 self.errorMessage = error.localizedDescription
             }
