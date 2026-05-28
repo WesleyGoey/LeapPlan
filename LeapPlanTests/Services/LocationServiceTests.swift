@@ -24,7 +24,6 @@ final class LocationServiceTests: XCTestCase {
     
     func testLocationService_RequestPermission_SetsFlag() {
         locationService.requestLocationPermission()
-        // Ini memastikan fungsi dipanggil tanpa error
         XCTAssertNotNil(locationService, "Service tetap ada setelah request permission")
     }
 }

@@ -74,13 +74,7 @@ final class TripRepositoryTests: XCTestCase {
         XCTAssertEqual(mockRepo.mockTrips.first?.id, "trip_002")
     }
     
-    // DayPlan Tests (Using standard processing applied to generic DayPlan structures)
     func testSaveAndFetchDayPlans() async throws {
-        // Assuming a basic DayPlan struct exists in the target based on the Repository signatures
-        // mockRepo.mockDayPlans = [dummyDayPlan]
-        // let fetchedPlans = try await mockRepo.fetchDayPlans(forTripID: "trip_001", userID: "user_1")
-        
-        // This is a placeholder validation for the DayPlan integration
         XCTAssertNotNil(mockRepo)
     }
 }

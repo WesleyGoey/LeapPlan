@@ -18,7 +18,6 @@ final class AuthServiceTests: XCTestCase {
     }
     
     func testGetCurrentUserID_WhenNotLoggedIn_ReturnsNil() {
-        // Kita tes skenario saat user belum login
         let userID = authService.getCurrentUserID()
         XCTAssertNil(userID, "User ID harusnya nil jika belum ada sesi login aktif")
     }

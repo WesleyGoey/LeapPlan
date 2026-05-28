@@ -7,7 +7,7 @@
 
 
 import Foundation
-@testable import LeapPlan // Wajib agar bisa membaca file dari target utama LeapPlan
+@testable import LeapPlan
 
 class MockFourSquareService: FourSquareServiceProtocol {
     var shouldReturnError = false
