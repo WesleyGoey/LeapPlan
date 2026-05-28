@@ -18,7 +18,7 @@ struct FSQPlace: Identifiable, Codable {
 }
 
 class FourSquareService: FourSquareServiceProtocol {
-    private let apiKey = "YOUR_FOURSQUARE_API_KEY"
+    private let apiKey = "ZDO4PBFQRLLXHQEUXSCHN3G2O0KJ5M2KLKTCAKAZA4NNAUZW"
     private let baseURL = "https://api.foursquare.com/v3/places/search"
     
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
