@@ -87,4 +87,21 @@ final class TripGenerationServiceTests: XCTestCase {
         // 1. GIVEN
         let today = Date()
         let preferences = RandomTripPreferences(
-            locationName: "
+            locationName: "Seoul",
+            startDate: today,
+            endDate: today,
+            mealsPerDay: 2,
+            placesToVisitPerDay: 2
+        )
+        
+        // 2. WHEN
+        let generatedItinerary = service.generateRandomItinerary(preferences: preferences)
+        let dayPlan = generatedItinerary.first!
+        
+        // 3. THEN
+        // Kita loop semua destinasi untuk memastikan 'orderIndex' berurutan: 0, 1, 2, 3
+        for (expectedIndex, destination) in dayPlan.destinations.enumerated() {
+            XCTAssertEqual(destination.orderIndex, expectedIndex, "Order Index di destinasi gagal ter-set dengan benar. Expected: \(expectedIndex), Got: \(destination.orderIndex)")
+        }
+    }
+}
