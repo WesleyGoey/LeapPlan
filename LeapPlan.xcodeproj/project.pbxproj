@@ -16,11 +16,27 @@
 		9AF7879B2FC7E07F000FDCB3 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9AF7879A2FC7E07F000FDCB3 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		53C1BCB82FC80AE90045B368 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9AF786822FC7D2A0000FDCB3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9AF786892FC7D2A0000FDCB3;
+			remoteInfo = LeapPlan;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		53C1BCB42FC80AE90045B368 /* LeapPlanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LeapPlanTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AF7868A2FC7D2A0000FDCB3 /* LeapPlan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LeapPlan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		53C1BCB52FC80AE90045B368 /* LeapPlanTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LeapPlanTests;
+			sourceTree = "<group>";
+		};
 		9AF7868C2FC7D2A0000FDCB3 /* LeapPlan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LeapPlan;
@@ -29,6 +45,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		53C1BCB12FC80AE90045B368 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9AF786872FC7D2A0000FDCB3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -57,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				9AF7868C2FC7D2A0000FDCB3 /* LeapPlan */,
+				53C1BCB52FC80AE90045B368 /* LeapPlanTests */,
 				53C1BBD62FC7E3180045B368 /* Frameworks */,
 				9AF7868B2FC7D2A0000FDCB3 /* Products */,
 			);
@@ -66,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				9AF7868A2FC7D2A0000FDCB3 /* LeapPlan.app */,
+				53C1BCB42FC80AE90045B368 /* LeapPlanTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,6 +98,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		53C1BCB32FC80AE90045B368 /* LeapPlanTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 53C1BCBA2FC80AE90045B368 /* Build configuration list for PBXNativeTarget "LeapPlanTests" */;
+			buildPhases = (
+				53C1BCB02FC80AE90045B368 /* Sources */,
+				53C1BCB12FC80AE90045B368 /* Frameworks */,
+				53C1BCB22FC80AE90045B368 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				53C1BCB92FC80AE90045B368 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				53C1BCB52FC80AE90045B368 /* LeapPlanTests */,
+			);
+			name = LeapPlanTests;
+			packageProductDependencies = (
+			);
+			productName = LeapPlanTests;
+			productReference = 53C1BCB42FC80AE90045B368 /* LeapPlanTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		9AF786892FC7D2A0000FDCB3 /* LeapPlan */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9AF786952FC7D2A2000FDCB3 /* Build configuration list for PBXNativeTarget "LeapPlan" */;
@@ -112,6 +160,10 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					53C1BCB32FC80AE90045B368 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 9AF786892FC7D2A0000FDCB3;
+					};
 					9AF786892FC7D2A0000FDCB3 = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -135,11 +187,19 @@
 			projectRoot = "";
 			targets = (
 				9AF786892FC7D2A0000FDCB3 /* LeapPlan */,
+				53C1BCB32FC80AE90045B368 /* LeapPlanTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		53C1BCB22FC80AE90045B368 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9AF786882FC7D2A0000FDCB3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -150,6 +210,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		53C1BCB02FC80AE90045B368 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9AF786862FC7D2A0000FDCB3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -159,7 +226,55 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		53C1BCB92FC80AE90045B368 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9AF786892FC7D2A0000FDCB3 /* LeapPlan */;
+			targetProxy = 53C1BCB82FC80AE90045B368 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		53C1BCBB2FC80AE90045B368 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.LeapPlanTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LeapPlan.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LeapPlan";
+			};
+			name = Debug;
+		};
+		53C1BCBC2FC80AE90045B368 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sean.LeapPlanTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LeapPlan.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LeapPlan";
+			};
+			name = Release;
+		};
 		9AF786932FC7D2A2000FDCB3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -348,6 +463,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		53C1BCBA2FC80AE90045B368 /* Build configuration list for PBXNativeTarget "LeapPlanTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53C1BCBB2FC80AE90045B368 /* Debug */,
+				53C1BCBC2FC80AE90045B368 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		9AF786852FC7D2A0000FDCB3 /* Build configuration list for PBXProject "LeapPlan" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
