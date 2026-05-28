@@ -14,7 +14,6 @@ class HomeViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    // Filter Kategori (Cafe, Wisata, Hotel)
     @Published var selectedCategory: String = "All"
     
     private let fourSquareService: FourSquareServiceProtocol
@@ -23,7 +22,6 @@ class HomeViewModel: ObservableObject {
         self.fourSquareService = fourSquareService
     }
     
-    // Kita set default parameternya ke Surabaya agar kamu bisa langsung test data lokal
     func loadTrendingPlaces(for city: String = "Surabaya") {
         isLoading = true
         errorMessage = nil

@@ -11,5 +11,4 @@ import Foundation
 protocol AuthServiceProtocol {
     func getCurrentUserID() -> String?
     func logout() throws
-    // Nanti bisa ditambah signIn, signUp dll.
 }
