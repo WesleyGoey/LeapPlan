@@ -9,12 +9,6 @@
 import Foundation
 import FirebaseFirestore
 
-enum TripStatus: String, Codable {
-    case upcoming = "Upcoming"
-    case ongoing = "Ongoing"
-    case completed = "Completed"
-}
-
 struct Trip: Identifiable, Codable {
     @DocumentID var id: String?
     var title: String
