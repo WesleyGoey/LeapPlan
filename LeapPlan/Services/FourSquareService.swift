@@ -8,18 +8,12 @@
 
 import Foundation
 
-// MARK: - DTO Model (Sebaiknya letakkan di folder Models dengan nama FSQPlace.swift)
-struct FSQResponse: Codable { let results: [FSQPlace] }
-struct FSQPlace: Identifiable, Codable {
-    let fsq_id: String
-    let name: String
-    let distance: Int?
-    var id: String { fsq_id }
-}
-
 class FourSquareService: FourSquareServiceProtocol {
-    private let apiKey = "ZDO4PBFQRLLXHQEUXSCHN3G2O0KJ5M2KLKTCAKAZA4NNAUZW"
-    private let baseURL = "https://api.foursquare.com/v3/places/search"
+    // Tempel (Paste) kunci rahasia baru kamu yang diawali huruf RAD1... di sini
+    private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEADELCIKAINWY"
+    
+    // Pastikan base URL kamu sudah mengarah ke host migrasi baru yang kita bahas tadi
+    private let baseURL = "https://places-api.foursquare.com/places/search"
     
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
         var components = URLComponents(string: baseURL)!
@@ -45,14 +39,25 @@ class FourSquareService: FourSquareServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Accept")
-        request.addValue(apiKey, forHTTPHeaderField: "Authorization")
+        
+        // Header Otentikasi Bearer (Sudah benar)
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        
+        // REVISI DI SINI: Gunakan versi stabil global Foursquare v3 API
+        request.addValue("2023-10-10", forHTTPHeaderField: "X-Places-Api-Version")
         
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            throw URLError(.badServerResponse)
-        }
         
-        let decoded = try JSONDecoder().decode(FSQResponse.self, from: data)
-        return decoded.results
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 200 {
+                let decoded = try JSONDecoder().decode(FSQResponse.self, from: data)
+                return decoded.results
+            } else {
+                let errorMessage = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                let message = errorMessage?["message"] as? String ?? "Unknown Error"
+                throw NSError(domain: "FoursquareAPI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Error \(httpResponse.statusCode): \(message)"])
+            }
+        }
+        throw URLError(.badServerResponse)
     }
 }
