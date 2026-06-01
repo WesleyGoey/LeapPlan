@@ -9,10 +9,11 @@
 import Foundation
 
 class FourSquareService: FourSquareServiceProtocol {
-    // Tempel (Paste) kunci rahasia baru kamu yang diawali huruf RAD1... di sini
-    private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEADELCIKAINWY"
     
-    // Pastikan base URL kamu sudah mengarah ke host migrasi baru yang kita bahas tadi
+    // ⚠️ MASUKKAN KUNCI API BARUMU DI SINI (Pastikan tidak ada spasi di awal/akhir)
+    private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
+    
+    // URL Host Baru sesuai Migrasi Foursquare
     private let baseURL = "https://places-api.foursquare.com/places/search"
     
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
@@ -40,11 +41,11 @@ class FourSquareService: FourSquareServiceProtocol {
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         
-        // Header Otentikasi Bearer (Sudah benar)
+        // 1. Menggunakan format Bearer yang benar
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         
-        // REVISI DI SINI: Gunakan versi stabil global Foursquare v3 API
-        request.addValue("2023-10-10", forHTTPHeaderField: "X-Places-Api-Version")
+        // 2. Menggunakan versi tanggal yang sah sesuai dokumen baru Foursquare
+        request.addValue("2025-06-17", forHTTPHeaderField: "X-Places-Api-Version")
         
         let (data, response) = try await URLSession.shared.data(for: request)
         

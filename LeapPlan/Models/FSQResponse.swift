@@ -14,12 +14,12 @@ struct FSQResponse: Codable {
     let results: [FSQPlace]
 }
 
-// MARK: - Main Place Model (Disesuaikan dengan format JSON baru)
+// MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
-    let fsq_place_id: String  // PERUBAHAN 3: Dulunya fsq_id
+    let fsq_place_id: String  // ID Format Baru Foursquare
     let name: String
     let distance: Int?
-    let latitude: Double?     // PERUBAHAN 4: Dulunya ada di dalam struct geocodes
+    let latitude: Double?     // Koordinat Format Baru Foursquare
     let longitude: Double?
     
     var id: String { fsq_place_id }
@@ -28,8 +28,6 @@ struct FSQPlace: Identifiable, Codable, Equatable {
         return lhs.fsq_place_id == rhs.fsq_place_id
     }
 }
-
-// (Struct FSQGeocodes dan FSQCoordinate DIHAPUS karena Foursquare tidak memakainya lagi)
 
 // MARK: - MapKit Compatibility Extension
 extension FSQPlace {
