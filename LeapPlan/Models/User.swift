@@ -9,7 +9,7 @@ import Foundation
 import FirebaseFirestore
 
 struct User: Identifiable, Codable {
-    @DocumentID var id: String? 
+    @DocumentID var id: String?
     var email: String
     var fullName: String
     var profileImageUrl: String?

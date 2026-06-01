@@ -9,7 +9,15 @@
 import Foundation
 
 protocol UserRepositoryProtocol {
-    func fetchUser(userID: String) async throws -> User
-    func saveUser(_ user: User) async throws
-    func updateUser(_ user: User) async throws
+    // 1. CREATE
+        func saveUser(_ user: User) async throws
+        
+        // 2. READ
+        func fetchUser(userID: String) async throws -> User
+        
+        // 3. UPDATE
+        func updateUser(_ user: User) async throws
+        
+        // 4. DELETE
+        func deleteUser(userID: String) async throws
 }
