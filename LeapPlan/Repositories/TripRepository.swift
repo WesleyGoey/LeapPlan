@@ -5,7 +5,6 @@
 //  Created by Wesley Goey on 28/05/26.
 //
 
-
 import Foundation
 import FirebaseFirestore
 
@@ -17,14 +16,12 @@ class TripRepository: TripRepositoryProtocol {
         let snapshot = try await db.collection("Users").document(userID).collection("Trips")
             .order(by: "startDate", descending: false)
             .getDocuments()
-        
         return snapshot.documents.compactMap { try? $0.data(as: Trip.self) }
     }
     
     func createTrip(_ trip: Trip, forUserID userID: String) async throws {
         let collectionRef = db.collection("Users").document(userID).collection("Trips")
         let docRef = trip.id != nil ? collectionRef.document(trip.id!) : collectionRef.document()
-        
         var newTrip = trip
         newTrip.id = docRef.documentID
         try docRef.setData(from: newTrip)
@@ -47,7 +44,6 @@ class TripRepository: TripRepositoryProtocol {
             .collection("DayPlans")
             .order(by: "dayNumber")
             .getDocuments()
-            
         return snapshot.documents.compactMap { try? $0.data(as: DayPlan.self) }
     }
     
@@ -55,10 +51,31 @@ class TripRepository: TripRepositoryProtocol {
         let collectionRef = db.collection("Users").document(userID)
             .collection("Trips").document(tripID)
             .collection("DayPlans")
-            
         let docRef = dayPlan.id != nil ? collectionRef.document(dayPlan.id!) : collectionRef.document()
         var newPlan = dayPlan
         newPlan.id = docRef.documentID
         try docRef.setData(from: newPlan)
+    }
+    
+    // MARK: - Save Generated Trip Atomically (Batch Write)
+    // FUNGSI BARU UNTUK MENYIMPAN TRIP GENERATE SEKALIGUS
+    func saveGeneratedTripWithDayPlans(trip: Trip, dayPlans: [DayPlan], userID: String) async throws {
+        let batch = db.batch()
+        
+        let tripDocRef = db.collection("Users").document(userID).collection("Trips").document()
+        var newTrip = trip
+        newTrip.id = tripDocRef.documentID
+        
+        try batch.setData(from: newTrip, forDocument: tripDocRef)
+        
+        let dayPlansCollectionRef = tripDocRef.collection("DayPlans")
+        for plan in dayPlans {
+            let dayPlanDocRef = dayPlansCollectionRef.document()
+            var newPlan = plan
+            newPlan.id = dayPlanDocRef.documentID
+            try batch.setData(from: newPlan, forDocument: dayPlanDocRef)
+        }
+        
+        try await batch.commit()
     }
 }

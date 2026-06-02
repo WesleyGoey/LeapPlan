@@ -1,6 +1,5 @@
-
 //
-//  TripStatus.swift
+//  Trip.swift
 //  LeapPlan
 //
 //  Created by Sean tandjaja on 28/05/26.
@@ -9,7 +8,13 @@
 import Foundation
 import FirebaseFirestore
 
-struct Trip: Identifiable, Codable {
+enum TripStatus: String, Codable, Hashable {
+    case upcoming = "Upcoming"
+    case ongoing = "Ongoing"
+    case past = "Past"
+}
+
+struct Trip: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var title: String
     var locationName: String
@@ -19,6 +24,7 @@ struct Trip: Identifiable, Codable {
     var coverImageUrl: String?
     
     var participantIDs: [String]
+    var totalPlaces: Int = 0
     
     var createdAt: Date
     var createdBy: String
