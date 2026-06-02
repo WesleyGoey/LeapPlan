@@ -106,6 +106,26 @@ class FourSquareService: FourSquareServiceProtocol {
                 )
             }
         }
+        
+        let request = createRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try handleResponse(data: data, response: response)
+        
+        let fsqResponse = try JSONDecoder().decode(FSQAutocompleteResponse.self, from: data)
+        return fsqResponse.results.compactMap { result in
+            guard let geoItem = result.geo else { return nil }
+            return FSQPlace(
+                fsq_place_id: result.text.primary,
+                name: result.text.full,
+                distance: 0,
+                latitude: geoItem.center?.latitude ?? 0.0,
+                longitude: geoItem.center?.longitude ?? 0.0,
+                location: nil,
+                rating: nil,
+                stats: nil
+            )
+        }
+    }
     
     // MARK: - 4. Fetch Places (TAMBAHAN UNTUK TEMAN KAMU)
     func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {

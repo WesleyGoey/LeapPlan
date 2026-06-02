@@ -1,11 +1,3 @@
-//
-//  FSQResponse.swift
-//  LeapPlan
-//
-//  Created by Wesley Goey on 31/05/26.
-//
-
-
 import Foundation
 import CoreLocation
 
@@ -22,11 +14,26 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     let latitude: Double?     // Koordinat Format Baru Foursquare
     let longitude: Double?
     
+    // 3 VARIABEL BARU UNTUK UI DINAMIS
+    let location: FSQLocation?
+    let rating: Double?
+    let stats: FSQStats?
+    
     var id: String { fsq_place_id }
 
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {
         return lhs.fsq_place_id == rhs.fsq_place_id
     }
+}
+
+// MARK: - Struct Tambahan untuk Parsing JSON
+struct FSQLocation: Codable {
+    let locality: String? // Menyimpan Nama Kota
+    let country: String?  // Menyimpan Nama Negara
+}
+
+struct FSQStats: Codable {
+    let total_ratings: Int?
 }
 
 // MARK: - MapKit Compatibility Extension
