@@ -5,80 +5,181 @@
 //  Created by Wesley Goey on 01/06/26.
 //
 
-
 import SwiftUI
 import MapKit
 
 // MARK: - 1. MAIN MAP VIEW
 struct ExploreView: View {
     @StateObject private var viewModel = SearchViewModel()
-    @State private var isShowingSearchScreen = false
+    
+    // State untuk mode pencarian melayang (Floating Search)
+    @State private var isSearching = false
+    @FocusState private var isSearchFocused: Bool
+    
+    // State khusus untuk menangkap klik pada tempat bawaan Apple Maps
+    @State private var selectedMapFeature: MapFeature?
     
     var body: some View {
         ZStack(alignment: .top) {
+            
             // LAYER 1: Full Screen Map
-            Map(coordinateRegion: $viewModel.mapRegion,
-                annotationItems: viewModel.searchResults) { place in
-                MapAnnotation(coordinate: place.coordinate) {
-                    MapPinView(place: place, isSelected: viewModel.selectedPlace?.id == place.id)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.8)) {
-                                viewModel.selectPlace(place)
-                            }
-                        }
+            Map(position: $viewModel.cameraPosition, selection: $selectedMapFeature) {
+                
+                // FIX: Menampilkan Indikator Titik Lokasi HP Pengguna Sekarang (Bulat Hijau)
+                UserAnnotation {
+                    ZStack {
+                        Circle()
+                            .fill(Color(red: 0/255, green: 173/255, blue: 133/255).opacity(0.2))
+                            .frame(width: 32, height: 32)
+                        
+                        Circle()
+                            .stroke(Color.white, lineWidth: 2)
+                            .background(Circle().fill(Color(red: 0/255, green: 173/255, blue: 133/255)))
+                            .frame(width: 14, height: 14)
+                    }
+                }
+                
+                // Menampilkan pin dari hasil pencarian Foursquare (Hanya muncul jika dicari dari bar)
+                ForEach(viewModel.displayedPins) { place in
+                    Marker(place.name, systemImage: getIconForCategory(place.name), coordinate: place.coordinate)
+                        .tint(Color(red: 0/255, green: 173/255, blue: 133/255))
                 }
             }
             .ignoresSafeArea(edges: .top)
-            
-            // LAYER 2: Floating UI
-            VStack(spacing: 12) {
-                Button(action: {
-                    isShowingSearchScreen = true
-                }) {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        Text(viewModel.searchQuery.isEmpty ? "Search on map..." : viewModel.searchQuery)
-                            .foregroundColor(viewModel.searchQuery.isEmpty ? .gray : .primary)
-                        Spacer()
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(30)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .onTapGesture {
+                withAnimation {
+                    isSearching = false
+                    isSearchFocused = false
                 }
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        CategoryPill(icon: "fork.knife", title: "Food", isSelected: false)
-                        CategoryPill(icon: "camera", title: "Sights", isSelected: true)
-                        CategoryPill(icon: "bed.double", title: "Stay", isSelected: false)
+            }
+            .onChange(of: selectedMapFeature) { feature in
+                if let feature = feature {
+                    handleAppleMapFeatureClick(feature)
+                }
+            }
+            // Mengembalikan peta bersih & menghilangkan sorotan POI jika detail sheet ditutup
+            .onChange(of: viewModel.selectedPlace) { place in
+                if place == nil {
+                    selectedMapFeature = nil
+                    viewModel.displayedPins = []
+                }
+            }
+            
+            // LAYER 2: Floating UI (Header Search Bar)
+            VStack(spacing: 12) {
+                if isSearching {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "magnifyingglass").foregroundColor(.gray)
+                            
+                            TextField("Search destination...", text: $viewModel.searchQuery)
+                                .focused($isSearchFocused)
+                                .submitLabel(.search)
+                                .onSubmit {
+                                    if let firstRecommendation = viewModel.searchResults.first {
+                                        withAnimation(.easeInOut(duration: 0.5)) {
+                                            viewModel.selectPlace(firstRecommendation)
+                                            isSearching = false
+                                            isSearchFocused = false
+                                        }
+                                    }
+                                }
+                            
+                            // Tombol Silang (X) untuk membatalkan pencarian secara instan
+                            Button(action: {
+                                withAnimation(.easeInOut) {
+                                    viewModel.searchQuery = ""
+                                    isSearching = false
+                                    isSearchFocused = false
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 20))
+                                    .padding(.leading, 8)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(30)
+                        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                        .padding(.horizontal)
+                        
+                        // Dropdown Rekomendasi Hasil Ketikan
+                        if viewModel.isLoading {
+                            ProgressView().padding().background(Color.white).clipShape(Circle()).shadow(radius: 5)
+                        } else if !viewModel.searchResults.isEmpty {
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    ForEach(viewModel.searchResults) { place in
+                                        Button(action: {
+                                            withAnimation(.easeInOut(duration: 0.5)) {
+                                                viewModel.selectPlace(place)
+                                                isSearching = false
+                                                isSearchFocused = false
+                                            }
+                                        }) {
+                                            HStack(spacing: 15) {
+                                                Image(systemName: "mappin.circle.fill")
+                                                    .font(.title2)
+                                                    .foregroundColor(Color(red: 0/255, green: 173/255, blue: 133/255))
+                                                
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(place.name).font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
+                                                    if let distance = place.distance {
+                                                        Text("\(distance) meters away").font(.system(size: 12)).foregroundColor(.gray)
+                                                    }
+                                                }
+                                                Spacer()
+                                            }
+                                            .padding(.vertical, 12).padding(.horizontal, 16)
+                                        }
+                                        Divider()
+                                    }
+                                }
+                                .background(Color(.systemBackground)).cornerRadius(16)
+                                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                            }
+                            .frame(maxHeight: 280).padding(.horizontal)
+                        }
                     }
-                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    
+                } else {
+                    // TAMPILAN IDLE SEARCH BAR BARU (Tanpa Category Pills di bawahnya)
+                    Button(action: {
+                        withAnimation { isSearching = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { isSearchFocused = true }
+                    }) {
+                        HStack {
+                            Image(systemName: "magnifyingglass").foregroundColor(.gray)
+                            Text(viewModel.searchQuery.isEmpty ? "Search on map..." : viewModel.searchQuery)
+                                .foregroundColor(viewModel.searchQuery.isEmpty ? .gray : .primary)
+                            Spacer()
+                        }
+                        .padding().background(Color(.systemBackground)).cornerRadius(30)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    }
+                    .padding(.horizontal).padding(.top, 10)
                 }
                 
                 Spacer()
                 
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.8)) {
-                            viewModel.centerToCurrentLocation()
+                // Floating Action Button: Center to User GPS
+                if !isSearching {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.8)) { viewModel.centerToCurrentLocation() }
+                        }) {
+                            Image(systemName: "location.fill").font(.system(size: 20))
+                                .foregroundColor(Color(red: 0/255, green: 173/255, blue: 133/255))
+                                .frame(width: 50, height: 50).background(Color.white).clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                         }
-                    }) {
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(Color(red: 0/255, green: 173/255, blue: 133/255))
-                            .frame(width: 50, height: 50)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, viewModel.selectedPlace != nil ? 280 : 100)
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, viewModel.selectedPlace != nil ? 280 : 100)
-                    .animation(.easeInOut, value: viewModel.selectedPlace)
                 }
             }
         }
@@ -87,139 +188,47 @@ struct ExploreView: View {
                 .presentationDetents([.fraction(0.35)])
                 .presentationDragIndicator(.visible)
         }
-        .fullScreenCover(isPresented: $isShowingSearchScreen) {
-            SearchInputScreen(viewModel: viewModel, isPresented: $isShowingSearchScreen)
-        }
     }
-}
-
-// MARK: - 2. SEARCH INPUT SCREEN (DENGAN LIVE DATA & ERROR STATE DIAGNOSTIK)
-struct SearchInputScreen: View {
-    @ObservedObject var viewModel: SearchViewModel
-    @Binding var isPresented: Bool
-    @FocusState private var isInputFocused: Bool
     
-    var body: some View {
-        NavigationStack {
-            VStack {
-                // Search Input Field Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    
-                    TextField("Search here", text: $viewModel.searchQuery)
-                        .focused($isInputFocused)
-                    
-                    if !viewModel.searchQuery.isEmpty {
-                        Button(action: { viewModel.searchQuery = "" }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Kondisi A: Menampilkan Indikator Memuat Data
-                if viewModel.isLoading {
-                    ProgressView("Mencari rekomendasi tempat...")
-                        .padding(.top, 30)
-                }
-                
-                // Kondisi B: MENAMPILKAN PESAN ERROR JIKA REQ KE SERVER GAGAL
-                if let errorText = viewModel.errorMessage {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
-                            .foregroundColor(.orange)
-                        Text("Gagal Terhubung ke Foursquare")
-                            .fontWeight(.semibold)
-                        Text(errorText)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .padding(.top, 40)
-                }
-                
-                // Kondisi C: Teks jika pencarian kosong dari server
-                if viewModel.searchResults.isEmpty && !viewModel.searchQuery.isEmpty && !viewModel.isLoading && viewModel.errorMessage == nil {
-                    Text("Tidak ada saran tempat untuk \"\(viewModel.searchQuery)\"")
-                        .foregroundColor(.gray)
-                        .padding(.top, 40)
-                }
-                
-                // Kondisi D: Menampilkan List Live Autocomplete
-                List(viewModel.searchResults) { place in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.8)) {
-                            viewModel.selectPlace(place)
-                        }
-                        isPresented = false 
-                    }) {
-                        HStack(spacing: 15) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .foregroundColor(Color(red: 0/255, green: 173/255, blue: 133/255))
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(place.name)
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.primary)
-                                
-                                if let distance = place.distance {
-                                    Text("\(distance) meters away")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-                .listStyle(.plain)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { isPresented = false }) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
-            .onAppear {
-                isInputFocused = true 
-            }
-        }
+    // MARK: - Helper Functions
+    private func handleAppleMapFeatureClick(_ feature: MapFeature) {
+        let tempPlace = FSQPlace(
+            fsq_place_id: UUID().uuidString,
+            name: feature.title ?? "Selected Location",
+            distance: 0,
+            latitude: feature.coordinate.latitude,
+            longitude: feature.coordinate.longitude,
+            location: FSQLocation(locality: nil, country: nil),
+            rating: nil,
+            stats: nil
+        )
+        viewModel.selectPlace(tempPlace, isFromAppleMap: true)
+    }
+    
+    private func getIconForCategory(_ name: String) -> String {
+        let lowerName = name.lowercased()
+        if lowerName.contains("apotek") || lowerName.contains("hospital") || lowerName.contains("rs ") || lowerName.contains("rumah sakit") { return "cross.case.fill" }
+        if lowerName.contains("kopi") || lowerName.contains("cafe") || lowerName.contains("seafood") || lowerName.contains("makan") || lowerName.contains("resto") { return "cup.and.saucer.fill" }
+        if lowerName.contains("univ") || lowerName.contains("school") || lowerName.contains("ciputra") { return "graduationcap.fill" }
+        if lowerName.contains("hotel") || lowerName.contains("residence") { return "bed.double.fill" }
+        return "mappin"
     }
 }
 
-// MARK: - 3. BOTTOM SHEET (Detail Lokasi)
+// MARK: - 2. BOTTOM SHEET (Detail Lokasi)
 struct PlaceDetailSheet: View {
     let place: FSQPlace
-    
-    // Fitur bawaan SwiftUI untuk menutup sheet
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            
-            // Header: Judul dan Tombol Close
             HStack {
                 Text("SELECTED PLACE")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.gray)
-                
                 Spacer()
-                
-                // Tombol Cross (X) untuk menutup sheet
-                Button(action: {
-                    dismiss()
-                }) {
+                Button(action: { dismiss() }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
                         .foregroundColor(.gray.opacity(0.8))
@@ -229,46 +238,37 @@ struct PlaceDetailSheet: View {
             
             HStack(spacing: 16) {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.blue.opacity(0.3))
+                    .fill(LinearGradient(colors: [Color(red: 0/255, green: 173/255, blue: 133/255), Color.teal], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 80, height: 80)
                     .overlay(
-                        Image(systemName: "photo")
-                            .foregroundColor(.white)
+                        Image(systemName: "building.2.crop.circle.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.white.opacity(0.8))
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(place.name)
                         .font(.title3)
                         .fontWeight(.bold)
-                    
-                    Text("Destination")
+                    Text(place.location?.locality ?? "Destination")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
                     HStack {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
-                            .font(.caption)
-                        Text("4.9")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                        Text("•")
-                            .foregroundColor(.gray)
-                        
-                        // Menampilkan jarak dan mengonversinya ke Kilometer jika lebih dari 1000m
-                        if let distance = place.distance {
-                            Text(formatDistance(distance))
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                        Image(systemName: "star.fill").foregroundColor(.yellow).font(.caption)
+                        Text(String(format: "%.1f", place.rating ?? 4.9)).font(.caption).fontWeight(.bold)
+                        Text("•").foregroundColor(.gray)
+                        if let distance = place.distance, distance > 0 {
+                            Text(formatDistance(distance)).font(.caption).foregroundColor(.gray)
                         }
                     }
                 }
             }
-            
             Spacer()
             
             Button(action: {
                 print("Tambahkan \(place.name) ke Itinerary")
+                dismiss()
             }) {
                 HStack {
                     Image(systemName: "plus")
@@ -287,74 +287,11 @@ struct PlaceDetailSheet: View {
         .padding(.top, 10)
     }
     
-    // Fungsi bantuan untuk merapikan format jarak
     private func formatDistance(_ meters: Int) -> String {
         if meters >= 1000 {
             let kilometers = Double(meters) / 1000.0
             return String(format: "%.1f km away", kilometers)
-        } else {
-            return "\(meters) m away"
-        }
-    }
-}
-
-// MARK: - 4. UI COMPONENTS 
-struct CategoryPill: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-            Text(title)
-        }
-        .font(.system(size: 14, weight: .semibold))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(isSelected ? Color(red: 0/255, green: 173/255, blue: 133/255) : Color(.systemBackground))
-        .foregroundColor(isSelected ? .white : .primary)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
-    }
-}
-
-struct MapPinView: View {
-    let place: FSQPlace
-    let isSelected: Bool
-    
-    var body: some View {
-        ZStack {
-            if isSelected {
-                Text(place.name)
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color(red: 34/255, green: 40/255, blue: 49/255))
-                    .cornerRadius(8)
-                    .shadow(radius: 3)
-                    .offset(y: -35)
-            }
-            
-            ZStack {
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 24, height: 24)
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                
-                Circle()
-                    .fill(Color(red: 0/255, green: 173/255, blue: 133/255)) 
-                    .frame(width: 10, height: 10)
-                
-                if isSelected {
-                    Circle()
-                        .stroke(Color(red: 0/255, green: 173/255, blue: 133/255).opacity(0.5), lineWidth: 4)
-                        .frame(width: 32, height: 32)
-                }
-            }
-        }
+        } else { return "\(meters) m away" }
     }
 }
 
