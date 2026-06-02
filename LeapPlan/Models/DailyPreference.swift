@@ -14,12 +14,3 @@ struct DailyPreference: Identifiable, Equatable, Hashable {
     var meals: Int
     var places: Int
 }
-
-// MARK: - Random Trip Preferences
-struct RandomTripPreferences {
-    var locationName: String
-    var startDate: Date
-    var endDate: Date
-    
-    var dailyPreferences: [DailyPreference]
-}
