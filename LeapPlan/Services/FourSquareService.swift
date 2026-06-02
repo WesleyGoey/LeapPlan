@@ -92,7 +92,10 @@ class FourSquareService: FourSquareServiceProtocol {
                 name: result.text.full,
                 distance: 0,
                 latitude: geoItem.center?.latitude ?? 0.0,
-                longitude: geoItem.center?.longitude ?? 0.0
+                longitude: geoItem.center?.longitude ?? 0.0,
+                location: nil,
+                rating: nil,
+                stats: nil
             )
         }
     }

@@ -11,25 +11,39 @@ import Combine
 @MainActor
 class HomeViewModel: ObservableObject {
     @Published var trendingPlaces: [FSQPlace] = []
+    @Published var recentTrip: Trip? = nil // Menampung trip dari Firebase
+    
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    @Published var selectedCategory: String = "All"
-    
     private let fourSquareService: FourSquareServiceProtocol
+    private let tripRepository: TripRepositoryProtocol
     
-    init(fourSquareService: FourSquareServiceProtocol = FourSquareService()) {
+    // Inject repository (Pastikan TripRepository() sudah kamu buat sesuai class aslinya)
+    init(fourSquareService: FourSquareServiceProtocol = FourSquareService(),
+         tripRepository: TripRepositoryProtocol = TripRepository()) {
         self.fourSquareService = fourSquareService
+        self.tripRepository = tripRepository
     }
     
-    func loadTrendingPlaces(for city: String = "Surabaya") {
+    // Fungsi digabung untuk meload Foursquare dan Firebase sekaligus
+    func loadDashboardData(userID: String) {
         isLoading = true
         errorMessage = nil
         
         Task {
             do {
-                let places = try await fourSquareService.fetchTrendingPlaces(city: city)
+                // 1. Tarik Data Destinasi (API)
+                let places = try await fourSquareService.fetchTrendingPlaces(city: "Surabaya")
                 self.trendingPlaces = places
+                
+                // 2. Tarik Data Trip (Firebase)
+                let allTrips = try await tripRepository.fetchTrips(forUserID: userID)
+                
+                // Filter hanya yang upcoming/ongoing, lalu urutkan yang paling dekat
+                let activeTrips = allTrips.filter { $0.status == .upcoming || $0.status == .ongoing }
+                self.recentTrip = activeTrips.sorted(by: { $0.startDate < $1.startDate }).first
+                
                 self.isLoading = false
             } catch {
                 self.errorMessage = error.localizedDescription
