@@ -10,7 +10,7 @@ import Foundation
 class FourSquareService: FourSquareServiceProtocol {
     
     // Ganti dengan API Key Foursquare milikmu sendiri dari Developer Console Foursquare
-    private let apiKey = "fsq3_YOUR_ACTUAL_API_KEY_HERE"
+    private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
     private let baseURL = "https://api.foursquare.com/v3"
     
     // Helper untuk membuat URLRequest dengan Header Otentikasi Foursquare

@@ -16,7 +16,7 @@ class SearchViewModel: ObservableObject {
     @Published var searchResults: [FSQPlace] = []
     @Published var selectedPlace: FSQPlace?
     @Published var isLoading: Bool = false
-    @Published var errorMessage: String? = nil // Tambahan variabel penampung error
+    @Published var errorMessage: String? = nil
     
     @Published var mapRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688), // Default Surabaya
@@ -33,6 +33,11 @@ class SearchViewModel: ObservableObject {
         self.locationService = locationService
         
         setupLiveSearch()
+        
+        // Opsional: Langsung arahkan kamera peta ke lokasi pengguna saat aplikasi pertama dibuka
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.centerToCurrentLocation()
+        }
     }
     
     private func setupLiveSearch() {
@@ -54,21 +59,24 @@ class SearchViewModel: ObservableObject {
     func performSearch() {
         guard !searchQuery.isEmpty else { return }
         isLoading = true
-        errorMessage = nil // Reset error setiap mulai mencari
+        errorMessage = nil
         
-        let center = mapRegion.center
+        // PERUBAHAN UTAMA:
+        // Coba ambil lokasi GPS asli pengguna. Jika gagal/belum diizinkan, fallback ke titik tengah peta.
+        let searchLatitude = locationService.currentLocation?.latitude ?? mapRegion.center.latitude
+        let searchLongitude = locationService.currentLocation?.longitude ?? mapRegion.center.longitude
         
         Task {
             do {
+                // Mengirimkan titik GPS pengguna ke Foursquare, sehingga jarak (distance) menjadi valid dari titik user berdiri
                 let results = try await fourSquareService.searchPlaces(
                     query: searchQuery,
-                    latitude: center.latitude,
-                    longitude: center.longitude
+                    latitude: searchLatitude,
+                    longitude: searchLongitude
                 )
                 self.searchResults = results
                 self.isLoading = false
             } catch {
-                // Tampilkan pesan error asli ke UI text
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
                 print("Error searching places: \(error.localizedDescription)")
@@ -86,9 +94,15 @@ class SearchViewModel: ObservableObject {
         )
     }
     
+    // PERUBAHAN UTAMA KEDUA:
+    // Tombol "Center to Location" sekarang benar-benar membawa kamera ke titik GPS asli pengguna
     func centerToCurrentLocation() {
+        // Ambil koordinat asli, jika tidak ada, baru lempar ke Surabaya
+        let lat = locationService.currentLocation?.latitude ?? -7.2504
+        let lon = locationService.currentLocation?.longitude ?? 112.7688
+        
         self.mapRegion = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688),
+            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     }

@@ -201,13 +201,31 @@ struct SearchInputScreen: View {
 struct PlaceDetailSheet: View {
     let place: FSQPlace
     
+    // Fitur bawaan SwiftUI untuk menutup sheet
+    @Environment(\.dismiss) var dismiss
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("SELECTED PLACE")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.gray)
-                .padding(.top, 10)
+            
+            // Header: Judul dan Tombol Close
+            HStack {
+                Text("SELECTED PLACE")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.gray)
+                
+                Spacer()
+                
+                // Tombol Cross (X) untuk menutup sheet
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.gray.opacity(0.8))
+                }
+            }
+            .padding(.top, 10)
             
             HStack(spacing: 16) {
                 RoundedRectangle(cornerRadius: 12)
@@ -223,7 +241,7 @@ struct PlaceDetailSheet: View {
                         .font(.title3)
                         .fontWeight(.bold)
                     
-                    Text("Destination") 
+                    Text("Destination")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
@@ -237,8 +255,9 @@ struct PlaceDetailSheet: View {
                         Text("•")
                             .foregroundColor(.gray)
                         
+                        // Menampilkan jarak dan mengonversinya ke Kilometer jika lebih dari 1000m
                         if let distance = place.distance {
-                            Text("\(distance) m away")
+                            Text(formatDistance(distance))
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
@@ -259,12 +278,23 @@ struct PlaceDetailSheet: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(red: 0/255, green: 173/255, blue: 133/255)) 
+                .background(Color(red: 0/255, green: 173/255, blue: 133/255))
                 .cornerRadius(12)
             }
             .padding(.bottom, 20)
         }
         .padding(.horizontal, 24)
+        .padding(.top, 10)
+    }
+    
+    // Fungsi bantuan untuk merapikan format jarak
+    private func formatDistance(_ meters: Int) -> String {
+        if meters >= 1000 {
+            let kilometers = Double(meters) / 1000.0
+            return String(format: "%.1f km away", kilometers)
+        } else {
+            return "\(meters) m away"
+        }
     }
 }
 

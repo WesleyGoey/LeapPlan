@@ -12,12 +12,15 @@ import Combine
 
 class LocationService: NSObject, ObservableObject, LocationServiceProtocol, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
-    @Published var currentLocation: CLLocation?
+    
+    @Published var currentLocation: CLLocationCoordinate2D?
     
     override init() {
         super.init()
         locationManager.delegate = self
+        // Akurasi terbaik untuk pencarian tempat
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        requestLocationPermission()
     }
     
     func requestLocationPermission() {
@@ -25,9 +28,15 @@ class LocationService: NSObject, ObservableObject, LocationServiceProtocol, CLLo
         locationManager.startUpdatingLocation()
     }
     
+    // Fungsi ini dipanggil otomatis oleh iOS tiap kali HP bergerak
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        self.currentLocation = location
-        locationManager.stopUpdatingLocation() // Hemat baterai
+        DispatchQueue.main.async {
+            self.currentLocation = location.coordinate
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Gagal mendapatkan lokasi GPS: \(error.localizedDescription)")
     }
 }
