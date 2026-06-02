@@ -18,99 +18,59 @@ class TripGenerationService: TripGenerationServiceProtocol {
         var dayPlans: [DayPlan] = []
         let calendar = Calendar.current
 
-        // 1. KATEGORI KHUSUS OBJEK WISATA SAJA (HAPUS KATEGORI RESTORAN)
-        // 16000 = Landmarks, 10027 = Museum, 10055 = Theme Park, 16032 = Park, 16003 = Beach, 10044 = Historic Site
-        let placeCategories = "16000,10027,10055,16032,16003,10044"
+        // HANYA kategori wisata (16000=Landmarks, 10027=Museum, 10055=Theme Park, 16032=Park, 10044=Historic)
+        let placeCategories = "16000,10027,10055,16032,10044"
 
-        // Kita tarik 50 data agar cadangannya banyak kalau yang aneh-aneh dibuang
+        // Tarik 50 data agar filter bisa bekerja maksimal
         var availablePlaces = try await foursquareService.fetchPlaces(near: preferences.locationName, categoryID: placeCategories, limit: 50)
 
-        // ==========================================================
-        // 2. FILTERING KATA "ULTRA-STRICT" (Anti Data Ngaco)
-        // ==========================================================
-        
-        // Daftar kata yang HARAM muncul sebagai Objek Wisata (Termasuk Kampus & Tempat Ibadah)
-        let invalidPlaceWords = [
-            // Tempat Ibadah & Agama
-            "vihara", "masjid", "gereja", "pura", "temple", "shrine", "mosque", "church", "wihara",
-            // Pendidikan
-            "sekolah", "kampus", "universitas", "school", "university", "college", "institut", "akademi",
-            // Perbelanjaan harian
-            "toko", "store", "shop", "gift", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", "apotek",
-            // Keuangan
-            "bank", "atm", "bca", "mandiri", "bni", "bri", "cimb",
-            // Penginapan
-            "hotel", "resort", "villa", "guest house", "penginapan", "kost",
-            // Makanan
-            "warung", "resto", "restaurant", "cafe", "kopi", "coffee", "depot", "rumah makan", "kedai", "canteen", "kantin",
-            "bakso", "soto", "sate", "nasi", "mie", "ayam", "bebek", "ikan", "seafood", "bakar", "goreng", "martabak", "kue", "bakery", "burger", "pizza",
-            // Kesehatan & Bioskop
-            "rs", "klinik", "hospital", "puskesmas", "xxi", "cgv", "cinema", "bioskop"
+        // FILTER KATA "HARAM" (Biar gak muncul Toko, Masjid, dll)
+        let invalidWords = [
+            "toko", "store", "shop", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", // Perbelanjaan
+            "masjid", "vihara", "gereja", "pura", "temple", "shrine", // Ibadah
+            "bank", "atm", "bca", "mandiri", // Keuangan
+            "hotel", "penginapan", "kost", // Penginapan
+            "resto", "cafe", "warung", "bakso", "soto", "nasi", "mie", // Makanan
+            "rs", "klinik", "hospital", "xxi", "cgv", "bioskop" // Kesehatan & Bioskop
         ]
         
-        // Eksekusi filter pembersihan (Sapu bersih tempat aneh!)
         availablePlaces.removeAll { place in
             let lowerName = place.name.lowercased()
-            return invalidPlaceWords.contains(where: { lowerName.contains($0) })
+            return invalidWords.contains(where: { lowerName.contains($0) })
         }
 
-        // ==========================================================
-        // 3. PROSES NORMAL (Hapus Duplikat & Acak)
-        // ==========================================================
         availablePlaces = availablePlaces.removingDuplicates()
         availablePlaces.shuffle()
 
         var usedPlaceIDs = Set<String>()
 
-        // 4. Loop per Hari
         for (dayIndex, dayPref) in preferences.dailyPreferences.enumerated() {
             guard let currentDate = calendar.date(byAdding: .day, value: dayIndex, to: preferences.startDate) else { continue }
-
             var destinations: [TripDestination] = []
-            
-            // HANYA MENGAMBIL JUMLAH "PLACES" DARI PREFERENSI (Abaikan Meals)
-            let placesToVisit = dayPref.places
 
-            for orderIndex in 0..<placesToVisit {
-                var selectedPlace: FSQPlace? = nil
-
-                // Cari tempat dari array yang BELUM PERNAH digunakan di trip ini
+            for orderIndex in 0..<dayPref.places {
                 if let index = availablePlaces.firstIndex(where: { !usedPlaceIDs.contains($0.fsq_place_id) }) {
-                    selectedPlace = availablePlaces.remove(at: index)
+                    let selectedPlace = availablePlaces.remove(at: index)
+                    usedPlaceIDs.insert(selectedPlace.fsq_place_id)
+
+                    let dest = TripDestination(
+                        id: UUID().uuidString,
+                        name: selectedPlace.name,
+                        category: "Objek Wisata",
+                        foursquareID: selectedPlace.fsq_place_id,
+                        latitude: selectedPlace.latitude,
+                        longitude: selectedPlace.longitude,
+                        orderIndex: orderIndex,
+                        stayDurationMinutes: 120,
+                        transitTimeToNextMinutes: 30
+                    )
+                    destinations.append(dest)
                 }
-
-                // Catat ID tempat ini agar tidak dipakai lagi di hari selanjutnya
-                if let placeID = selectedPlace?.fsq_place_id {
-                    usedPlaceIDs.insert(placeID)
-                }
-
-                // Fallback cerdas jika kebetulan semua data dari Foursquare terlalu ngaco dan habis
-                let name = selectedPlace?.name ?? "Famous Landmark \(orderIndex + 1)"
-                let duration = 120 // Default durasi wisata 2 jam
-
-                let dest = TripDestination(
-                    id: UUID().uuidString,
-                    name: name,
-                    category: "Objek Wisata",
-                    foursquareID: selectedPlace?.fsq_place_id,
-                    latitude: selectedPlace?.latitude ?? 0.0,
-                    longitude: selectedPlace?.longitude ?? 0.0,
-                    orderIndex: orderIndex,
-                    stayDurationMinutes: duration,
-                    transitTimeToNextMinutes: 30
-                )
-                destinations.append(dest)
             }
 
-            let plan = DayPlan(
-                id: UUID().uuidString,
-                dayNumber: dayPref.dayNumber,
-                date: currentDate,
-                destinations: destinations
-            )
+            let plan = DayPlan(id: UUID().uuidString, dayNumber: dayPref.dayNumber, date: currentDate, destinations: destinations)
             dayPlans.append(plan)
         }
-
         return dayPlans
     }
 }

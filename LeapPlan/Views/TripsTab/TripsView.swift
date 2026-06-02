@@ -399,7 +399,7 @@ struct TripsEditSheetView: View {
                 }
             }
         }
-    }
+    }    
 }
 
 // MARK: - Preview Mocks (Disingkat agar muat)
