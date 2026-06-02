@@ -73,11 +73,38 @@ class FourSquareService: FourSquareServiceProtocol {
         return fsqResponse.results
     }
     
-    // MARK: - 3. Autocomplete Location (UNTUK FITUR TRIPS TAB TEMAN KAMU)
-    func autocompleteLocation(query: String) async throws -> [FSQPlace] {
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else {
-            throw URLError(.badURL)
+    // MARK: - 3. Autocomplete Location
+        func autocompleteLocation(query: String) async throws -> [FSQPlace] {
+            guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                  let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else {
+                throw URLError(.badURL)
+            }
+            
+            let request = createRequest(url: url)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                throw URLError(.badServerResponse)
+            }
+            
+            let fsqResponse = try JSONDecoder().decode(FSQAutocompleteResponse.self, from: data)
+            
+            return fsqResponse.results.compactMap { result in
+                guard let geoItem = result.geo else { return nil }
+                
+                // Gabungkan primary (Misal: "Surabaya") dan secondary (Misal: "East Java")
+                let cityName = result.text.primary
+                let detail = result.text.secondary ?? ""
+                let fullName = detail.isEmpty ? cityName : "\(cityName), \(detail)"
+                
+                return FSQPlace(
+                    fsq_place_id: result.text.primary,
+                    name: fullName,
+                    distance: 0,
+                    latitude: geoItem.center?.latitude ?? 0.0,
+                    longitude: geoItem.center?.longitude ?? 0.0
+                )
+            }
         }
         
         let request = createRequest(url: url)
@@ -92,7 +119,10 @@ class FourSquareService: FourSquareServiceProtocol {
                 name: result.text.full,
                 distance: 0,
                 latitude: geoItem.center?.latitude ?? 0.0,
-                longitude: geoItem.center?.longitude ?? 0.0
+                longitude: geoItem.center?.longitude ?? 0.0,
+                location: nil,
+                rating: nil,
+                stats: nil
             )
         }
     }
@@ -117,6 +147,9 @@ class FourSquareService: FourSquareServiceProtocol {
 private struct FSQSearchResponse: Codable { let results: [FSQPlace] }
 private struct FSQAutocompleteResponse: Codable { let results: [AutocompleteResult] }
 private struct AutocompleteResult: Codable { let text: TextWrapper; let geo: GeoWrapper? }
-private struct TextWrapper: Codable { let primary: String; let full: String }
+private struct TextWrapper: Codable {
+    let primary: String
+    let secondary: String?
+}
 private struct GeoWrapper: Codable { let center: CenterCoordinates? }
 private struct CenterCoordinates: Codable { let latitude: Double; let longitude: Double }

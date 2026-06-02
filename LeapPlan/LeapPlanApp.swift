@@ -24,7 +24,7 @@ struct LeapPlanApp: App {
   var body: some Scene {
     WindowGroup {
       NavigationView {
-        ExploreView()
+        TripsView()
       }
     }
   }

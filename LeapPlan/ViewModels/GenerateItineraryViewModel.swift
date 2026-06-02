@@ -18,42 +18,39 @@ class GenerateItineraryViewModel: ObservableObject {
     @Published var dailyPreferences: [DailyPreference] = []
     @Published var selectedDayNumber: Int = 1
     
-    // Status Autocomplete Foursquare
-    @Published var searchResults: [FSQPlace] = []
+    @Published var searchResults: [String] = []
     @Published var isShowingDropdown: Bool = false
     
     private let foursquareService: FourSquareServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(foursquareService: FourSquareServiceProtocol = MockFourSquareService()) {
+    init(foursquareService: FourSquareServiceProtocol = FourSquareService()) {
         self.foursquareService = foursquareService
         updateDailyPreferences()
         
-        // Memantau setiap ketikan user di TextField dengan jeda 600 milidetik
         $destination
             .removeDuplicates()
-            .debounce(for: .milliseconds(600), scheduler: RunLoop.main)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { [weak self] query in
-                self?.performSearch(query: query)
+                self?.performFoursquareSearch(query: query)
             }
             .store(in: &cancellables)
     }
     
-    private func performSearch(query: String) {
-        // Hanya mencari jika ketikan lebih dari 2 huruf
+    private func performFoursquareSearch(query: String) {
         guard query.count > 2 else {
-            searchResults = []
-            isShowingDropdown = false
+            self.searchResults = []
+            self.isShowingDropdown = false
             return
         }
         
         Task {
             do {
                 let results = try await foursquareService.autocompleteLocation(query: query)
-                self.searchResults = results
+                self.searchResults = results.map { $0.name }
                 self.isShowingDropdown = !results.isEmpty
             } catch {
-                print("Error Autocomplete Foursquare: \(error.localizedDescription)")
+                print("Foursquare Error: \(error.localizedDescription)")
             }
         }
     }
@@ -62,7 +59,6 @@ class GenerateItineraryViewModel: ObservableObject {
         let calendar = Calendar.current
         let start = calendar.startOfDay(for: startDate)
         let end = calendar.startOfDay(for: endDate)
-        
         if end < start { self.endDate = start; return }
         
         let components = calendar.dateComponents([.day], from: start, to: end)

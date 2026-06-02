@@ -29,8 +29,7 @@ class MockFourSquareService: FourSquareServiceProtocol {
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         if shouldReturnError { throw URLError(.badServerResponse) }
         
-        // PERBAIKAN: Masukkan angka 0 untuk distance, bukan tulisan "Int" atau "Int?"
-        return [FSQPlace(fsq_place_id: UUID().uuidString, name: query + " City", distance: 0, latitude: 0.0, longitude: 0.0)]
+        return [FSQPlace(fsq_place_id: UUID().uuidString, name: query + " City", distance: 0, latitude: 0.0, longitude: 0.0, location: nil, rating: nil, stats: nil)]
     }
 
     func fetchPlaces(near city: String, categoryID: String, limit: Int)
