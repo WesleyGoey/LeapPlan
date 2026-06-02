@@ -20,4 +20,6 @@ protocol TripRepositoryProtocol {
     
     // ⬇️ TAMBAHKAN BARIS BARU INI DI DALAM PROTOKOL ⬇️
     func saveGeneratedTripWithDayPlans(trip: Trip, dayPlans: [DayPlan], userID: String) async throws
+    
+    func deleteDayPlan(planID: String, tripID: String, userID: String) async throws
 }

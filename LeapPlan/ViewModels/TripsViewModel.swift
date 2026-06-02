@@ -26,13 +26,16 @@ class TripsViewModel: ObservableObject {
         self.tripGenService = tripGenService
     }
     
+    // MARK: - HELPER UNTUK MENDAPATKAN USER
+    // Jika belum login, gunakan "dummy_user_123" agar testing tetap bisa berjalan
+    private var activeUserID: String {
+        return authService.getCurrentUserID() ?? "dummy_user_123"
+    }
+    
     func loadUserTrips() {
-        guard let userID = authService.getCurrentUserID() else {
-            self.errorMessage = "User not logged in"
-            return
-        }
-        
+        let userID = activeUserID
         isLoading = true
+        
         Task {
             do {
                 self.trips = try await tripRepository.fetchTrips(forUserID: userID)
@@ -45,7 +48,7 @@ class TripsViewModel: ObservableObject {
     }
     
     func createManualTrip(title: String, location: String, start: Date, end: Date) {
-        guard let userID = authService.getCurrentUserID() else { return }
+        let userID = activeUserID
         let newTrip = Trip(title: title, locationName: location, startDate: start, endDate: end, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
         
         Task {
@@ -58,23 +61,21 @@ class TripsViewModel: ObservableObject {
         }
     }
     
-    func generateRandomTrip(preferences: RandomTripPreferences, title: String) {
-        guard let userID = authService.getCurrentUserID() else { return }
+    func generateRandomTrip(preferences: RandomTripPreferences, title: String) async throws -> Trip {
+        let userID = activeUserID
         
-        let newTrip = Trip(title: title, locationName: preferences.locationName, startDate: preferences.startDate, endDate: preferences.endDate, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
+        var newTrip = Trip(title: title, locationName: preferences.locationName, startDate: preferences.startDate, endDate: preferences.endDate, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
+        newTrip.coverImageUrl = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop"
         
-        // Memanggil API Asli Foursquare membutuhkan Task dan 'try await'
-        Task {
-            do {
-                let generatedDayPlans = try await tripGenService.generateRandomItinerary(preferences: preferences)
-                
-                // Simpan serentak ke Firestore
-                try await tripRepository.saveGeneratedTripWithDayPlans(trip: newTrip, dayPlans: generatedDayPlans, userID: userID)
-                
-                loadUserTrips() // Refresh List di Home
-            } catch {
-                self.errorMessage = error.localizedDescription
-            }
-        }
+        // 1. Generate Jadwal dari Foursquare
+        let generatedDayPlans = try await tripGenService.generateRandomItinerary(preferences: preferences)
+        
+        // 2. Simpan ke Firebase dengan ID Pengguna Sementara
+        try await tripRepository.saveGeneratedTripWithDayPlans(trip: newTrip, dayPlans: generatedDayPlans, userID: userID)
+        
+        // 3. Refresh Halaman Utama
+        await MainActor.run { self.loadUserTrips() }
+        
+        return newTrip
     }
 }

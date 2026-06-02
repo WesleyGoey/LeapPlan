@@ -32,20 +32,26 @@ class TripDetailViewModel: ObservableObject {
         self.authService = authService
     }
     
-    // MARK: - 1. FIX FIX: Properti Pembantu untuk Mendapatkan Jadwal Hari Aktif
+    // MARK: - BYPASS LOGIN UNTUK TESTING
+    private var activeUserID: String {
+        return authService.getCurrentUserID() ?? "dummy_user_123"
+    }
+    
     var currentDayPlan: DayPlan? {
         guard dayPlans.indices.contains(selectedDayIndex) else { return nil }
         return dayPlans[selectedDayIndex]
     }
     
+    // MARK: - LOAD DATA
     func loadDayPlans() {
-        guard let tripID = trip.id, let userID = authService.getCurrentUserID() else { return }
+        guard let tripID = trip.id else { return }
+        let userID = activeUserID // Menggunakan ID Bypass
+        
         isLoading = true
         
         Task {
             do {
                 let fetchedPlans = try await tripRepository.fetchDayPlans(forTripID: tripID, userID: userID)
-                // Urutkan berdasarkan hari agar tidak acak-acakan di UI
                 self.dayPlans = fetchedPlans.sorted(by: { $0.dayNumber < $1.dayNumber })
                 calculateRouteForSelectedDay()
                 self.isLoading = false
@@ -61,48 +67,51 @@ class TripDetailViewModel: ObservableObject {
             self.mapRoute = nil
             return
         }
-        
         let destinations = dayPlans[selectedDayIndex].destinations
         guard destinations.count > 1 else {
             self.mapRoute = nil
             return
         }
-        
-        // Konversi destinasi menjadi titik koordinat MapKit
         var coordinates = destinations.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
         self.mapRoute = MKPolyline(coordinates: &coordinates, count: coordinates.count)
     }
     
-    // MARK: - 2. FIX FIX: Logika Geser Urutan (Drag and Drop Reorder) untuk TripDetailView
+    // MARK: - FITUR TIMELINE (Reorder, Delete)
     func moveDestination(from source: IndexSet, to destination: Int) {
         guard dayPlans.indices.contains(selectedDayIndex) else { return }
-        
-        // Geser data di memori lokal HP agar UI langsung berubah mulus
         dayPlans[selectedDayIndex].destinations.move(fromOffsets: source, toOffset: destination)
-        
-        // Setel ulang orderIndex-nya dari 0 lagi
+        saveCurrentDayPlanOrder()
+    }
+    
+    func deleteDestination(destID: String) {
+        guard dayPlans.indices.contains(selectedDayIndex) else { return }
+        // Hapus destinasi dari array lokal
+        dayPlans[selectedDayIndex].destinations.removeAll { $0.id == destID }
+        saveCurrentDayPlanOrder()
+    }
+    
+    private func saveCurrentDayPlanOrder() {
+        // Susun ulang nomor urutannya
         for (index, _) in dayPlans[selectedDayIndex].destinations.enumerated() {
             dayPlans[selectedDayIndex].destinations[index].orderIndex = index
         }
         
-        // Simpan urutan baru ini secara permanen ke Firebase Firestore
-        guard let userID = authService.getCurrentUserID(), let tripID = trip.id else { return }
+        guard let tripID = trip.id else { return }
         let updatedDayPlan = dayPlans[selectedDayIndex]
+        let userID = activeUserID
         
         Task {
             do {
                 try await tripRepository.saveDayPlan(updatedDayPlan, forTripID: tripID, userID: userID)
+                calculateRouteForSelectedDay()
             } catch {
-                print("Gagal menyimpan urutan baru ke Firebase: \(error.localizedDescription)")
+                print("Gagal menyimpan perubahan destinasi: \(error.localizedDescription)")
             }
         }
     }
     
-    // MARK: - 3. FIX FIX: Kalkulator Waktu Linimasa (Timeline Card) otomatis
     func calculateTime(for destination: TripDestination, in dayPlan: DayPlan) -> String {
         guard let index = dayPlan.destinations.firstIndex(where: { $0.id == destination.id }) else { return "" }
-        
-        // Rencana harian kita asumsikan selalu dimulai pukul 09:00 AM (540 menit dari jam 00:00)
         var totalMinutes = 9 * 60
         
         for i in 0..<index {
@@ -110,12 +119,69 @@ class TripDetailViewModel: ObservableObject {
             totalMinutes += prevDest.stayDurationMinutes
             totalMinutes += prevDest.transitTimeToNextMinutes ?? 0
         }
-        
         let hours = (totalMinutes / 60) % 24
         let minutes = totalMinutes % 60
         let ampm = hours >= 12 ? "PM" : "AM"
         let displayHours = hours > 12 ? hours - 12 : (hours == 0 ? 12 : hours)
-        
         return String(format: "%02d:%02d %@", displayHours, minutes, ampm)
+    }
+    
+    // MARK: - FITUR EDIT TRIP
+    func updateTripDetails(title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
+        isLoading = true
+        var updatedTrip = trip
+        updatedTrip.title = title
+        updatedTrip.startDate = startDate
+        updatedTrip.endDate = endDate
+        if !coverImageUrl.isEmpty { updatedTrip.coverImageUrl = coverImageUrl }
+        
+        guard let tripID = updatedTrip.id else { return }
+        let userID = activeUserID
+        
+        do {
+            try await tripRepository.updateTrip(updatedTrip, forUserID: userID)
+            self.trip = updatedTrip
+            
+            let calendar = Calendar.current
+            let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate), to: calendar.startOfDay(for: endDate))
+            let totalDays = max(1, (components.day ?? 0) + 1)
+            
+            if dayPlans.count > totalDays {
+                let plansToDelete = Array(dayPlans[totalDays...])
+                for plan in plansToDelete {
+                    if let planID = plan.id {
+                        try await tripRepository.deleteDayPlan(planID: planID, tripID: tripID, userID: userID)
+                    }
+                }
+                self.dayPlans.removeLast(dayPlans.count - totalDays)
+                if selectedDayIndex >= totalDays { selectedDayIndex = totalDays - 1 }
+            } else if dayPlans.count < totalDays {
+                for i in (dayPlans.count + 1)...totalDays {
+                    guard let newDate = calendar.date(byAdding: .day, value: i - 1, to: calendar.startOfDay(for: startDate)) else { continue }
+                    let newPlan = DayPlan(id: UUID().uuidString, dayNumber: i, date: newDate, destinations: [])
+                    try await tripRepository.saveDayPlan(newPlan, forTripID: tripID, userID: userID)
+                    self.dayPlans.append(newPlan)
+                }
+            }
+            isLoading = false
+            calculateRouteForSelectedDay()
+        } catch {
+            print("Error updating trip: \(error.localizedDescription)")
+            isLoading = false
+        }
+    }
+    
+    // HELPER UNTUK MENYIMPAN GAMBAR KE FOLDER LOKAL HP
+    func saveImageLocally(image: UIImage) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.6) else { return nil }
+        let filename = UUID().uuidString + ".jpg"
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(filename)
+        do {
+            try data.write(to: url)
+            return url.absoluteString // Menghasilkan format "file://..."
+        } catch {
+            print("Gagal save gambar: \(error)")
+            return nil
+        }
     }
 }

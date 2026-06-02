@@ -16,7 +16,7 @@ enum TripRoute: Hashable {
 struct TripsView: View {
     @StateObject var viewModel: TripsViewModel
     @State private var selectedTab: TripStatus = .upcoming
-    
+
     @State private var isShowingFABMenu: Bool = false
     @State private var navigationPath = NavigationPath()
 
@@ -24,28 +24,36 @@ struct TripsView: View {
     init(viewModel: TripsViewModel? = nil) {
         _viewModel = StateObject(wrappedValue: viewModel ?? TripsViewModel())
     }
-    
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
                 Color(hex: "#F9F9F9")
                     .ignoresSafeArea()
-                
+
                 // Overlay gelap saat FAB Menu terbuka
                 if isShowingFABMenu {
                     Color.black.opacity(0.2)
                         .ignoresSafeArea()
                         .onTapGesture {
-                            withAnimation(.spring()) { isShowingFABMenu = false }
+                            withAnimation(.spring()) {
+                                isShowingFABMenu = false
+                            }
                         }
                         .zIndex(1)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 0) {
                     // Header
                     HStack(alignment: .bottom) {
                         Text("My Trips")
-                            .font(.system(size: 34, weight: .bold, design: .default))
+                            .font(
+                                .system(
+                                    size: 34,
+                                    weight: .bold,
+                                    design: .default
+                                )
+                            )
                             .foregroundColor(.leapSecondary)
                         Spacer()
                         Text("\(viewModel.trips.count) trips total")
@@ -55,22 +63,28 @@ struct TripsView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
-                    
+
                     statusTabBar
                         .padding(.top, 20)
                         .padding(.bottom, 10)
-                    
+
                     ScrollView(.vertical, showsIndicators: false) {
                         LazyVStack(spacing: 24) {
-                            let filteredTrips = viewModel.trips.filter { $0.status == selectedTab }
-                            
+                            let filteredTrips = viewModel.trips.filter {
+                                $0.status == selectedTab
+                            }
+
                             if filteredTrips.isEmpty {
                                 emptyStateView
                             } else {
                                 ForEach(filteredTrips) { trip in
-                                    // Pindah layar menggunakan Enum Route
-                                    NavigationLink(value: TripRoute.tripDetail(trip)) {
-                                        TripCardView(trip: trip, placesCount: trip.totalPlaces)
+                                    NavigationLink(
+                                        value: TripRoute.tripDetail(trip)
+                                    ) {
+                                        TripCardView(
+                                            trip: trip,
+                                            placesCount: trip.totalPlaces
+                                        )
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -81,18 +95,39 @@ struct TripsView: View {
                         .padding(.bottom, 120)
                     }
                 }
-                
+
                 createTripFAB
                     .zIndex(2)
             }
             .navigationDestination(for: TripRoute.self) { route in
                 switch route {
                 case .tripDetail(let trip):
-                    Text("TripDetailView for \(trip.title)") // TODO: Ganti dengan TripDetailView
+                    TripDetailView(trip: trip)
+
                 case .generateRandom:
-                    GenerateItineraryView()
+                    // MENGHUBUNGKAN UI DENGAN LOGIKA GENERATE
+                    GenerateItineraryView { preferences in
+                        let title = "\(preferences.locationName) Trip"
+
+                        do {
+                            // Tunggu proses download Foursquare selesai
+                            let newTrip =
+                                try await viewModel.generateRandomTrip(
+                                    preferences: preferences,
+                                    title: title
+                                )
+
+                            // MAGIC: Tutup layar Generate, dan Pindah ke TripDetailView
+                            navigationPath.removeLast()
+                            navigationPath.append(TripRoute.tripDetail(newTrip))
+
+                        } catch {
+                            print("Gagal generate: \(error)")
+                        }
+                    }
+
                 case .createManual:
-                    Text("Create Manual View") // TODO: Ganti dengan CreateManualView
+                    Text("Create Manual View")  // Placeholder
                 }
             }
             .onAppear {
@@ -100,7 +135,7 @@ struct TripsView: View {
             }
         }
     }
-    
+
     // MARK: - Subviews
     private var statusTabBar: some View {
         HStack(spacing: 0) {
@@ -113,11 +148,11 @@ struct TripsView: View {
         }
         .padding(8)
     }
-    
+
     private func tabButton(title: String, status: TripStatus) -> some View {
         let isActive = selectedTab == status
         let count = viewModel.trips.filter { $0.status == status }.count
-        
+
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = status
@@ -126,17 +161,25 @@ struct TripsView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 6) {
                     Text(title)
-                        .font(.system(size: 16, weight: isActive ? .bold : .medium))
+                        .font(
+                            .system(
+                                size: 16,
+                                weight: isActive ? .bold : .medium
+                            )
+                        )
                         .foregroundColor(isActive ? .leapPrimary : .gray)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
-                    
+
                     Text("\(count)")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(isActive ? .white : .gray)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(isActive ? Color.leapPrimary : Color.gray.opacity(0.2))
+                        .background(
+                            isActive
+                                ? Color.leapPrimary : Color.gray.opacity(0.2)
+                        )
                         .clipShape(Capsule())
                 }
                 Rectangle()
@@ -146,11 +189,10 @@ struct TripsView: View {
             }
         }
     }
-    
+
     private var createTripFAB: some View {
         VStack(alignment: .trailing, spacing: 16) {
             if isShowingFABMenu {
-                // Button Create Manual
                 Button {
                     withAnimation { isShowingFABMenu = false }
                     navigationPath.append(TripRoute.createManual)
@@ -169,8 +211,7 @@ struct TripsView: View {
                     .shadow(color: .black.opacity(0.1), radius: 5, y: 2)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                
-                // Button Create Random
+
                 Button {
                     withAnimation { isShowingFABMenu = false }
                     navigationPath.append(TripRoute.generateRandom)
@@ -190,8 +231,7 @@ struct TripsView: View {
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            
-            // Main FAB
+
             Button {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     isShowingFABMenu.toggle()
@@ -201,16 +241,26 @@ struct TripsView: View {
                     .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 64, height: 64)
-                    .background(isShowingFABMenu ? Color.leapSecondary : Color.leapPrimary)
+                    .background(
+                        isShowingFABMenu
+                            ? Color.leapSecondary : Color.leapPrimary
+                    )
                     .clipShape(Circle())
-                    .shadow(color: (isShowingFABMenu ? Color.leapSecondary : Color.leapPrimary).opacity(0.4), radius: 10, y: 5)
+                    .shadow(
+                        color: (isShowingFABMenu
+                            ? Color.leapSecondary : Color.leapPrimary).opacity(
+                                0.4
+                            ),
+                        radius: 10,
+                        y: 5
+                    )
                     .rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
             }
         }
         .padding(.trailing, 24)
         .padding(.bottom, 24)
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Image(systemName: "folder.badge.questionmark")
@@ -230,64 +280,102 @@ struct TripsView: View {
 
 // MARK: - Preview Mocks
 #if DEBUG
-private class PreviewTripRepository: TripRepositoryProtocol {
-    var dummyTrips: [Trip] = []
-    
-    func fetchTrips(forUserID userID: String) async throws -> [Trip] { return dummyTrips }
-    func createTrip(_ trip: Trip, forUserID userID: String) async throws {}
-    func updateTrip(_ trip: Trip, forUserID userID: String) async throws {}
-    func deleteTrip(tripID: String, forUserID userID: String) async throws {}
-    
-    func fetchDayPlans(forTripID tripID: String, userID: String) async throws -> [DayPlan] { return [] }
-    func saveDayPlan(_ dayPlan: DayPlan, forTripID tripID: String, userID: String) async throws {}
-    func saveGeneratedTripWithDayPlans(trip: Trip, dayPlans: [DayPlan], userID: String) async throws {}
-}
+    private class PreviewTripRepository: TripRepositoryProtocol {
+        var dummyTrips: [Trip] = []
 
-private class PreviewAuthService: AuthServiceProtocol {
-    func register(email: String, password: String) async throws -> String { return "user1" }
-    func login(email: String, password: String) async throws -> String { return "user1" }
-    func getCurrentUserID() -> String? { return "user1" }
-    func updateEmail(currentPassword: String, newEmail: String) async throws {}
-    func updatePassword(currentPassword: String, newPassword: String) async throws {}
-    func deleteUser(password: String) async throws {}
-    func logout() throws {}
-}
+        func fetchTrips(forUserID userID: String) async throws -> [Trip] {
+            return dummyTrips
+        }
+        func createTrip(_ trip: Trip, forUserID userID: String) async throws {}
+        func updateTrip(_ trip: Trip, forUserID userID: String) async throws {}
+        func deleteTrip(tripID: String, forUserID userID: String) async throws {
+        }
 
-private class PreviewTripGenService: TripGenerationServiceProtocol {
-    func generateRandomItinerary(preferences: RandomTripPreferences) -> [DayPlan] { return [] }
-}
+        func fetchDayPlans(forTripID tripID: String, userID: String)
+            async throws -> [DayPlan]
+        { return [] }
+        func saveDayPlan(
+            _ dayPlan: DayPlan,
+            forTripID tripID: String,
+            userID: String
+        ) async throws {}
+        func saveGeneratedTripWithDayPlans(
+            trip: Trip,
+            dayPlans: [DayPlan],
+            userID: String
+        ) async throws {}
+        
+        func deleteDayPlan(planID: String, tripID: String, userID: String) async throws {}
+    }
 
+    private class PreviewAuthService: AuthServiceProtocol {
+        func register(email: String, password: String) async throws -> String {
+            return "user1"
+        }
+        func login(email: String, password: String) async throws -> String {
+            return "user1"
+        }
+        func getCurrentUserID() -> String? { return "user1" }
+        func updateEmail(currentPassword: String, newEmail: String) async throws
+        {}
+        func updatePassword(currentPassword: String, newPassword: String)
+            async throws
+        {}
+        func deleteUser(password: String) async throws {}
+        func logout() throws {}
+    }
 
+    private class PreviewTripGenService: TripGenerationServiceProtocol {
+        func generateRandomItinerary(preferences: RandomTripPreferences)
+            async throws -> [DayPlan]
+        { return [] }
+    }
 
-#Preview("Trips View") {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy/MM/dd"
-    
-    let trip1 = Trip(
-        id: "1", title: "Kyoto Autumn Trip", locationName: "Kyoto, Japan",
-        startDate: formatter.date(from: "2026/11/10")!, endDate: formatter.date(from: "2026/11/18")!, status: .upcoming,
-        coverImageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
-        participantIDs: ["user1"], totalPlaces: 8, createdAt: Date(), createdBy: "user1"
-    )
-    
-    let trip2 = Trip(
-        id: "2", title: "Santorini Getaway", locationName: "Santorini, Greece",
-        startDate: formatter.date(from: "2026/08/14")!, endDate: formatter.date(from: "2026/08/20")!, status: .upcoming,
-        coverImageUrl: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=800&auto=format&fit=crop",
-        participantIDs: ["user1"], totalPlaces: 6, createdAt: Date(), createdBy: "user1"
-    )
-    
-    let previewRepo = PreviewTripRepository()
-    previewRepo.dummyTrips = [trip1, trip2]
-    
-    let viewModel = TripsViewModel(
-        tripRepository: previewRepo,
-        authService: PreviewAuthService(),
-        tripGenService: PreviewTripGenService()
-    )
-    
-    viewModel.trips = previewRepo.dummyTrips
-    
-    return TripsView(viewModel: viewModel)
-}
+    #Preview("Trips View") {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+
+        let trip1 = Trip(
+            id: "1",
+            title: "Kyoto Autumn Trip",
+            locationName: "Kyoto, Japan",
+            startDate: formatter.date(from: "2026/11/10")!,
+            endDate: formatter.date(from: "2026/11/18")!,
+            status: .upcoming,
+            coverImageUrl:
+                "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
+            participantIDs: ["user1"],
+            totalPlaces: 8,
+            createdAt: Date(),
+            createdBy: "user1"
+        )
+
+        let trip2 = Trip(
+            id: "2",
+            title: "Santorini Getaway",
+            locationName: "Santorini, Greece",
+            startDate: formatter.date(from: "2026/08/14")!,
+            endDate: formatter.date(from: "2026/08/20")!,
+            status: .upcoming,
+            coverImageUrl:
+                "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=800&auto=format&fit=crop",
+            participantIDs: ["user1"],
+            totalPlaces: 6,
+            createdAt: Date(),
+            createdBy: "user1"
+        )
+
+        let previewRepo = PreviewTripRepository()
+        previewRepo.dummyTrips = [trip1, trip2]
+
+        let viewModel = TripsViewModel(
+            tripRepository: previewRepo,
+            authService: PreviewAuthService(),
+            tripGenService: PreviewTripGenService()
+        )
+
+        viewModel.trips = previewRepo.dummyTrips
+
+        return TripsView(viewModel: viewModel)
+    }
 #endif
