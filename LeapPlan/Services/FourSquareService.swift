@@ -9,69 +9,71 @@ import Foundation
 
 class FourSquareService: FourSquareServiceProtocol {
     
-    // API KEY MILIKMU (TIDAK DIUBAH)
+    // API KEY MILIKMU
     private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
     
-    // FIX: Base URL yang benar untuk Foursquare v3 adalah ini, BUKAN diakhiri dengan /places/search
-    private let baseURL = "https://places-api.foursquare.com/places/search"
+    // BASE URL UTAMA (Root dari API Baru Foursquare)
+    private let baseURL = "https://places-api.foursquare.com"
     
-    // Helper untuk membuat URLRequest dengan Header Otentikasi Foursquare
+    // HELPER: Mengatur keamanan untuk SEMUA fungsi sekaligus
     private func createRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: "accept")
-        request.addValue(apiKey, forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Wajib menggunakan Bearer untuk API baru
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        
+        // Wajib menggunakan Version Date untuk API baru
+        request.addValue("2025-06-17", forHTTPHeaderField: "X-Places-Api-Version")
+        
         request.timeoutInterval = 10.0
         return request
     }
     
-    func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
-            var components = URLComponents(string: baseURL)!
-            components.queryItems = [
-                URLQueryItem(name: "near", value: city),
-                URLQueryItem(name: "sort", value: "RATING"),
-                URLQueryItem(name: "limit", value: "10")
-            ]
-            return try await performRequest(url: components.url!)
-        }
-        
-        func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
-            var components = URLComponents(string: baseURL)!
-            components.queryItems = [
-                URLQueryItem(name: "query", value: query),
-                URLQueryItem(name: "ll", value: "\(latitude),\(longitude)"),
-                URLQueryItem(name: "limit", value: "15")
-            ]
-            return try await performRequest(url: components.url!)
-        }
-        
-        private func performRequest(url: URL) async throws -> [FSQPlace] {
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.addValue("application/json", forHTTPHeaderField: "Accept")
-            
-            // 1. Menggunakan format Bearer yang benar
-            request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-            
-            // 2. Menggunakan versi tanggal yang sah sesuai dokumen baru Foursquare
-            request.addValue("2025-06-17", forHTTPHeaderField: "X-Places-Api-Version")
-            
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    let decoded = try JSONDecoder().decode(FSQResponse.self, from: data)
-                    return decoded.results
-                } else {
-                    let errorMessage = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-                    let message = errorMessage?["message"] as? String ?? "Unknown Error"
-                    throw NSError(domain: "FoursquareAPI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Error \(httpResponse.statusCode): \(message)"])
-                }
-            }
+    // HELPER: Menangani error agar log di Xcode jelas
+    private func handleResponse(data: Data, response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
+        if httpResponse.statusCode != 200 {
+            let errorMsg = String(data: data, encoding: .utf8) ?? "Unknown Error"
+            print("Foursquare Error [\(httpResponse.statusCode)]: \(errorMsg)")
+            throw NSError(domain: "FoursquareAPI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Error \(httpResponse.statusCode): Foursquare menolak request."])
+        }
+    }
+
+    // MARK: - 1. Fetch Trending Places
+    func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
+        guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&sort=RELEVANCE&limit=10") else {
+            throw URLError(.badURL)
+        }
+        
+        let request = createRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try handleResponse(data: data, response: response)
+        
+        let fsqResponse = try JSONDecoder().decode(FSQSearchResponse.self, from: data)
+        return fsqResponse.results
+    }
     
-    // MARK: - 3. Autocomplete Location
+    // MARK: - 2. Search Places by Coordinates (UNTUK FITUR SEARCH KAMU DI PETA)
+    func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
+        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15") else {
+            throw URLError(.badURL)
+        }
+        
+        let request = createRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try handleResponse(data: data, response: response)
+        
+        let fsqResponse = try JSONDecoder().decode(FSQSearchResponse.self, from: data)
+        return fsqResponse.results
+    }
+    
+    // MARK: - 3. Autocomplete Location (UNTUK FITUR TRIPS TAB TEMAN KAMU)
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else {
@@ -80,10 +82,7 @@ class FourSquareService: FourSquareServiceProtocol {
         
         let request = createRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
+        try handleResponse(data: data, response: response)
         
         let fsqResponse = try JSONDecoder().decode(FSQAutocompleteResponse.self, from: data)
         return fsqResponse.results.compactMap { result in
@@ -98,7 +97,7 @@ class FourSquareService: FourSquareServiceProtocol {
         }
     }
     
-    // MARK: - 4. Fetch Places
+    // MARK: - 4. Fetch Places (TAMBAHAN UNTUK TEMAN KAMU)
     func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
         guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY") else {
@@ -107,10 +106,7 @@ class FourSquareService: FourSquareServiceProtocol {
         
         let request = createRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
+        try handleResponse(data: data, response: response)
         
         let fsqResponse = try JSONDecoder().decode(FSQSearchResponse.self, from: data)
         return fsqResponse.results
