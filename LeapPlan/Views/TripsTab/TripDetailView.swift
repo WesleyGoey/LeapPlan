@@ -9,214 +9,407 @@ import MapKit
 import PhotosUI
 import SwiftUI
 
+enum PlaceMode {
+    case add
+    case edit
+}
+
 struct TripDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailViewModel
 
     @State private var position: MapCameraPosition = .automatic
     @State private var isShowingEditSheet = false
+    @State private var isShowingFABMenu = false
+    @State private var isShowingAddPlaceSheet = false
+    @State private var selectedDestinationToEdit: TripDestination? = nil
 
     init(trip: Trip) {
         _viewModel = StateObject(wrappedValue: TripDetailViewModel(trip: trip))
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-
-            // 1. HEADER PETA (MapKit)
-            ZStack(alignment: .topLeading) {
-                Map(position: $position) {
-                    if let dayPlan = viewModel.currentDayPlan {
-                        let validDestinations = dayPlan.destinations.filter {
-                            $0.latitude != 0.0 && $0.longitude != 0.0
-                        }
-                        let coordinates = validDestinations.map {
-                            CLLocationCoordinate2D(
-                                latitude: $0.latitude,
-                                longitude: $0.longitude
-                            )
-                        }
-
-                        MapPolyline(coordinates: coordinates).stroke(
-                            Color.leapPrimary,
-                            style: StrokeStyle(lineWidth: 3, dash: [6, 6])
-                        )
-
-                        ForEach(
-                            Array(validDestinations.enumerated()),
-                            id: \.element.id
-                        ) { index, dest in
-                            Annotation(
-                                dest.name,
-                                coordinate: CLLocationCoordinate2D(
-                                    latitude: dest.latitude,
-                                    longitude: dest.longitude
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                // HEADER PETA
+                ZStack(alignment: .topLeading) {
+                    Map(position: $position) {
+                        if let dayPlan = viewModel.currentDayPlan {
+                            let validDestinations = dayPlan.destinations.filter
+                            { $0.latitude != 0.0 && $0.longitude != 0.0 }
+                            let coordinates = validDestinations.map {
+                                CLLocationCoordinate2D(
+                                    latitude: $0.latitude,
+                                    longitude: $0.longitude
                                 )
-                            ) {
-                                ZStack {
-                                    Circle().fill(
-                                        dest.category == "Tempat Makan"
-                                            ? Color.pink : Color.leapPrimary
-                                    ).frame(width: 24, height: 24)
-                                    Circle().fill(Color.white).frame(
-                                        width: 10,
-                                        height: 10
+                            }
+                            MapPolyline(coordinates: coordinates).stroke(
+                                Color.leapPrimary,
+                                style: StrokeStyle(lineWidth: 3, dash: [6, 6])
+                            )
+                            ForEach(
+                                Array(validDestinations.enumerated()),
+                                id: \.element.id
+                            ) { index, dest in
+                                Annotation(
+                                    dest.name,
+                                    coordinate: CLLocationCoordinate2D(
+                                        latitude: dest.latitude,
+                                        longitude: dest.longitude
                                     )
-                                }.shadow(radius: 3)
+                                ) {
+                                    ZStack {
+                                        Circle().fill(
+                                            dest.category == "Tempat Makan"
+                                                ? Color.pink : Color.leapPrimary
+                                        ).frame(width: 24, height: 24)
+                                        Circle().fill(Color.white).frame(
+                                            width: 10,
+                                            height: 10
+                                        )
+                                    }.shadow(radius: 3)
+                                }
                             }
                         }
-                    }
-                }
-                .frame(height: 280)
+                    }.frame(height: 280)
 
-                HStack {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "arrow.left").font(
-                            .system(size: 20, weight: .semibold)
-                        ).foregroundColor(.black).padding(12).background(
-                            Color.white
-                        ).clipShape(Circle()).shadow(radius: 5)
-                    }
-                    Spacer()
-                    Text("\(viewModel.trip.locationName) 📍").font(
-                        .subheadline.bold()
-                    ).padding(.horizontal, 20).padding(.vertical, 10)
-                        .background(Color.white).clipShape(Capsule()).shadow(
-                            radius: 5
-                        )
-                    Spacer()
-                    Button {
-                        isShowingEditSheet = true
-                    } label: {
-                        Image(systemName: "ellipsis").font(
-                            .system(size: 20, weight: .semibold)
-                        ).foregroundColor(.black).padding(12).background(
-                            Color.white
-                        ).clipShape(Circle()).shadow(radius: 5)
-                    }
-                }
-                .padding(.horizontal, 20).padding(.top, 60)
-            }
-
-            // 2. DAY SELECTOR (Pills)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(
-                        Array(viewModel.dayPlans.enumerated()),
-                        id: \.element.id
-                    ) { index, plan in
+                    HStack {
                         Button {
-                            withAnimation { viewModel.selectedDayIndex = index }
+                            dismiss()
                         } label: {
-                            Text("Day \(plan.dayNumber)").font(
-                                .subheadline.bold()
-                            ).padding(.horizontal, 20).padding(.vertical, 10)
-                                .background(
-                                    viewModel.selectedDayIndex == index
-                                        ? Color.leapPrimary
-                                        : Color.gray.opacity(0.1)
-                                ).foregroundColor(
-                                    viewModel.selectedDayIndex == index
-                                        ? .white : .gray
-                                ).clipShape(Capsule())
+                            Image(systemName: "arrow.left").font(
+                                .system(size: 20, weight: .semibold)
+                            ).foregroundColor(.black).padding(12).background(
+                                Color.white
+                            ).clipShape(Circle()).shadow(radius: 5)
+                        }
+                        Spacer()
+                        Text("\(viewModel.trip.locationName) 📍").font(
+                            .subheadline.bold()
+                        ).padding(.horizontal, 20).padding(.vertical, 10)
+                            .background(Color.white).clipShape(Capsule())
+                            .shadow(radius: 5)
+                        Spacer()
+                        Button {
+                            isShowingEditSheet = true
+                        } label: {
+                            Image(systemName: "ellipsis").font(
+                                .system(size: 20, weight: .semibold)
+                            ).foregroundColor(.black).padding(12).background(
+                                Color.white
+                            ).clipShape(Circle()).shadow(radius: 5)
+                        }
+                    }.padding(.horizontal, 20).padding(.top, 60)
+                }
+
+                // DAY SELECTOR
+                if !viewModel.dayPlans.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(
+                                Array(viewModel.dayPlans.enumerated()),
+                                id: \.element.id
+                            ) { index, plan in
+                                Button {
+                                    withAnimation {
+                                        viewModel.selectedDayIndex = index
+                                    }
+                                } label: {
+                                    Text("Day \(plan.dayNumber)").font(
+                                        .subheadline.bold()
+                                    ).padding(.horizontal, 20).padding(
+                                        .vertical,
+                                        10
+                                    ).background(
+                                        viewModel.selectedDayIndex == index
+                                            ? Color.leapPrimary
+                                            : Color.gray.opacity(0.1)
+                                    ).foregroundColor(
+                                        viewModel.selectedDayIndex == index
+                                            ? .white : .gray
+                                    ).clipShape(Capsule())
+                                }
+                            }
+                        }.padding(.horizontal, 20).padding(.vertical, 16)
+                    }.background(Color.white)
+                }
+
+                // DAFTAR DESTINASI
+                Group {
+                    if viewModel.isLoading {
+                        VStack {
+                            Spacer()
+                            ProgressView("Generating...").scaleEffect(1.2)
+                            Spacer()
+                        }
+                    } else if let currentDayPlan = viewModel.currentDayPlan {
+                        if currentDayPlan.destinations.isEmpty {
+                            VStack {
+                                Spacer()
+                                Image(systemName: "mappin.and.ellipse").font(
+                                    .system(size: 40)
+                                ).foregroundColor(.gray.opacity(0.5)).padding(
+                                    .bottom,
+                                    8
+                                )
+                                Text("No destinations for this day.").font(
+                                    .headline
+                                ).foregroundColor(.gray)
+                                Spacer()
+                            }.frame(maxWidth: .infinity)
+                        } else {
+                            List {
+                                ForEach(currentDayPlan.destinations) { dest in
+                                    let time = viewModel.calculateTime(
+                                        for: dest,
+                                        in: currentDayPlan
+                                    )
+                                    let isLast =
+                                        dest.id
+                                        == currentDayPlan.destinations.last?.id
+
+                                    TimelineRowView(
+                                        destination: dest,
+                                        time: time,
+                                        isLast: isLast,
+                                        onEdit: {
+                                            selectedDestinationToEdit = dest
+                                        },
+                                        onDelete: {
+                                            withAnimation {
+                                                viewModel.deleteDestination(
+                                                    destID: dest.id
+                                                )
+                                            }
+                                        }
+                                    )
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                }.onMove { source, destination in
+                                    viewModel.moveDestination(
+                                        from: source,
+                                        to: destination
+                                    )
+                                }
+                                Color.clear.frame(height: 100).listRowInsets(
+                                    EdgeInsets()
+                                ).listRowSeparator(.hidden).listRowBackground(
+                                    Color.clear
+                                )
+                            }.listStyle(.plain).scrollContentBackground(.hidden)
                         }
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 16)
+                }.background(Color(hex: "#F9F9F9"))
+            }.edgesIgnoringSafeArea(.top)
+
+            if isShowingFABMenu {
+                Color.black.opacity(0.2).ignoresSafeArea().onTapGesture {
+                    withAnimation(.spring()) { isShowingFABMenu = false }
+                }.zIndex(1)
             }
-
-            // 3. TIMELINE LIST & FIX SPACING PETA
-            if let currentDayPlan = viewModel.currentDayPlan {
-                if currentDayPlan.destinations.isEmpty {
-                    VStack {
-                        Spacer()
-                        Text("No destinations for this day.").foregroundColor(
-                            .gray
-                        )
-                        Spacer()
-                    }.frame(maxWidth: .infinity)
-                } else {
-                    List {
-                        ForEach(currentDayPlan.destinations) { dest in
-                            let time = viewModel.calculateTime(
-                                for: dest,
-                                in: currentDayPlan
-                            )
-                            let isLast =
-                                dest.id == currentDayPlan.destinations.last?.id
-
-                            TimelineRowView(
-                                destination: dest,
-                                time: time,
-                                isLast: isLast,
-                                onEdit: {},
-                                onDelete: {
-                                    withAnimation {
-                                        viewModel.deleteDestination(
-                                            destID: dest.id
-                                        )
-                                    }
-                                }
-                            )
-                            .listRowInsets(EdgeInsets()).listRowSeparator(
-                                .hidden
-                            ).listRowBackground(Color.clear)
-                        }
-                        .onMove { source, destination in
-                            viewModel.moveDestination(
-                                from: source,
-                                to: destination
-                            )
-                        }
-
-                        Button(action: {}) {
-                            HStack {
-                                Image(systemName: "plus.circle").font(.title2)
-                                    .foregroundColor(.gray)
-                                Text("Tap + to add more destinations")
-                                    .foregroundColor(.gray)
-                            }.padding(.leading, 64).padding(.top, 16).padding(
-                                .bottom,
-                                80
-                            )
-                        }.listRowInsets(EdgeInsets()).listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                    }.listStyle(.plain).scrollContentBackground(.hidden)
-                        .background(Color(hex: "#F9F9F9"))
-                }
-            } else if viewModel.isLoading {
-                // FIX: Menghapus Spacer atas agar peta tidak terdorong ke bawah
-                VStack {
-                    ProgressView().padding(.top, 40)
-                    Spacer()
-                }
-            } else {
-                Spacer()  // Mendorong peta ke atas jika list kosong
-            }
+            detailFABMenu.zIndex(2)
         }
-        .background(Color(hex: "#F9F9F9").ignoresSafeArea())
-        .navigationBarHidden(true)
-        .ignoresSafeArea(edges: .top)
-        .onAppear { viewModel.loadDayPlans() }
+        .navigationBarHidden(true).onAppear { viewModel.loadDayPlans() }
         .sheet(isPresented: $isShowingEditSheet) {
             TripEditView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $isShowingAddPlaceSheet) {
+            AddOrEditPlaceSheetView(
+                viewModel: viewModel,
+                mode: .add,
+                destinationToEdit: nil
+            )
+        }
+        .sheet(item: $selectedDestinationToEdit) { destination in
+            AddOrEditPlaceSheetView(
+                viewModel: viewModel,
+                mode: .edit,
+                destinationToEdit: destination
+            )
+        }
+    }
+
+    private var detailFABMenu: some View {
+        VStack(alignment: .trailing, spacing: 16) {
+            if isShowingFABMenu {
+                Button {
+                    withAnimation { isShowingFABMenu = false }
+                    isShowingAddPlaceSheet = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "plus.circle").foregroundColor(.gray)
+                        Text("Add Places").fontWeight(.semibold)
+                            .foregroundColor(.leapSecondary)
+                    }.padding(.horizontal, 20).padding(.vertical, 14)
+                        .background(Color.white).clipShape(Capsule()).shadow(
+                            color: .black.opacity(0.1),
+                            radius: 5,
+                            y: 2
+                        )
+                }.transition(.move(edge: .bottom).combined(with: .opacity))
+                Button {
+                    withAnimation { isShowingFABMenu = false }
+                    viewModel.generateOneRandomPlace()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles").foregroundColor(
+                            .leapPrimary
+                        )
+                        Text("Generate Place").fontWeight(.semibold)
+                            .foregroundColor(.leapPrimary)
+                    }.padding(.horizontal, 20).padding(.vertical, 14)
+                        .background(Color.white).clipShape(Capsule()).shadow(
+                            color: .black.opacity(0.1),
+                            radius: 5,
+                            y: 2
+                        )
+                }.transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            Button {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    isShowingFABMenu.toggle()
+                }
+            } label: {
+                Image(systemName: isShowingFABMenu ? "xmark" : "plus").font(
+                    .system(size: 24, weight: .medium)
+                ).foregroundColor(.white).frame(width: 64, height: 64)
+                    .background(
+                        isShowingFABMenu
+                            ? Color.leapSecondary : Color.leapPrimary
+                    ).clipShape(Circle()).shadow(
+                        color: (isShowingFABMenu
+                            ? Color.leapSecondary : Color.leapPrimary).opacity(
+                                0.4
+                            ),
+                        radius: 10,
+                        y: 5
+                    ).rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
+            }
+        }.padding(.trailing, 24).padding(.bottom, 24)
+    }
+}
+
+// MARK: - SHEET TAMBAH/EDIT DESTINASI (1 SEARCH BOX SAJA)
+struct AddOrEditPlaceSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: TripDetailViewModel
+
+    let mode: PlaceMode
+    let destinationToEdit: TripDestination?
+
+    @State private var searchQuery: String = ""
+    @State private var selectedCategory = "Objek Wisata"
+    @State private var stayDurationHours: Int = 2
+    @State private var stayDurationMinutes: Int = 0
+    @State private var selectedPlace: FSQPlace?
+    @FocusState private var isSearchFocused: Bool
+
+    init(
+        viewModel: TripDetailViewModel,
+        mode: PlaceMode,
+        destinationToEdit: TripDestination?
+    ) {
+        self.viewModel = viewModel
+        self.mode = mode
+        self.destinationToEdit = destinationToEdit
+
+        if mode == .edit, let dest = destinationToEdit {
+            _searchQuery = State(initialValue: dest.name)
+            _selectedCategory = State(initialValue: dest.category)
+            _stayDurationHours = State(
+                initialValue: dest.stayDurationMinutes / 60
+            )
+            _stayDurationMinutes = State(
+                initialValue: dest.stayDurationMinutes % 60
+            )
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Search Location") {
+                    // DROPDOWN AUTOCOMPLETE
+                    VStack(alignment: .leading) {
+                        TextField(
+                            "Search in \(viewModel.trip.locationName)",
+                            text: $searchQuery
+                        )
+                        .focused($isSearchFocused)
+                        .onChange(of: searchQuery) { newValue in
+                            viewModel.searchPlacesAroundCity(query: newValue)
+                        }
+
+                        if isSearchFocused
+                            && !viewModel.addSearchResults.isEmpty
+                        {
+                            List(viewModel.addSearchResults, id: \.fsq_place_id)
+                            { place in
+                                Button(action: {
+                                    selectedPlace = place
+                                    searchQuery = place.name
+                                    viewModel.addSearchResults = []
+                                }) {
+                                    Text(place.name)
+                                }
+                            }
+                            .frame(height: 150)
+                        }
+                    }
+                }
+
+                Section("Category") {
+                    Picker("Category", selection: $selectedCategory) {
+                        Text("Objek Wisata").tag("Objek Wisata")
+                        Text("Tempat Makan").tag("Tempat Makan")
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("Stay Duration") {
+                    HStack {
+                        Picker("Hours", selection: $stayDurationHours) {
+                            ForEach(0..<24) { i in Text("\(i) hrs").tag(i) }
+                        }.pickerStyle(.wheel).frame(width: 100, height: 100)
+                        Picker("Minutes", selection: $stayDurationMinutes) {
+                            ForEach(0..<60) { i in Text("\(i) mins").tag(i) }
+                        }.pickerStyle(.wheel).frame(width: 100, height: 100)
+                    }
+                }
+            }
+            .navigationTitle(
+                mode == .add ? "Add Destination" : "Edit Destination"
+            )
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let totalMinutes =
+                            (stayDurationHours * 60) + stayDurationMinutes
+                        viewModel.addManualDestination(
+                            name: searchQuery,
+                            category: selectedCategory,
+                            durationMinutes: totalMinutes,
+                            place: selectedPlace
+                        )
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
 
-// MARK: - EDITOR TRIP DENGAN UPLOAD FOTO
+// MARK: - KELENGKAPAN LAINNYA
 struct TripEditView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDetailViewModel
-
     @State private var title: String
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var coverImageUrl: String
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedUIImage: UIImage?
-
     init(viewModel: TripDetailViewModel) {
         self.viewModel = viewModel
         _title = State(initialValue: viewModel.trip.title)
@@ -224,7 +417,6 @@ struct TripEditView: View {
         _endDate = State(initialValue: viewModel.trip.endDate)
         _coverImageUrl = State(initialValue: viewModel.trip.coverImageUrl ?? "")
     }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -250,8 +442,7 @@ struct TripEditView: View {
                                 8
                             )
                         }
-                    }
-                    .onChange(of: selectedPhotoItem) { newItem in
+                    }.onChange(of: selectedPhotoItem) { newItem in
                         Task {
                             if let data = try? await newItem?.loadTransferable(
                                 type: Data.self
@@ -280,9 +471,9 @@ struct TripEditView: View {
                         displayedComponents: .date
                     )
                 }
-            }
-            .navigationTitle("Edit Trip").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            }.navigationTitle("Edit Trip").navigationBarTitleDisplayMode(
+                .inline
+            ).toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
@@ -312,14 +503,12 @@ struct TripEditView: View {
     }
 }
 
-// MARK: - TIMELINE ROW DENGAN HOVER MENU (3-DOT)
 struct TimelineRowView: View {
     let destination: TripDestination
     let time: String
     let isLast: Bool
     var onEdit: () -> Void
     var onDelete: () -> Void
-
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             VStack(spacing: 0) {
@@ -347,7 +536,6 @@ struct TimelineRowView: View {
                         ).padding(.top, 8)
                 }
             }.padding(.leading, 20)
-
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top) {
@@ -368,26 +556,24 @@ struct TimelineRowView: View {
                                         0.1
                                     )
                             ).clipShape(Capsule())
-
                         Menu {
-                            Button(action: { /* Buka Edit Place View */  }) {
+                            Button(action: onEdit) {
                                 Label("Edit Place", systemImage: "pencil")
                             }
                             Button(role: .destructive, action: onDelete) {
                                 Label("Delete Place", systemImage: "trash")
                             }
                         } label: {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 18, weight: .bold))
-                                .padding(8)
-                                .background(Color.gray.opacity(0.1))
+                            Image(systemName: "ellipsis").font(
+                                .system(size: 18, weight: .bold)
+                            ).padding(8).background(Color.gray.opacity(0.1))
                                 .clipShape(Circle())
                         }
                     }
                     HStack(spacing: 6) {
                         Image(systemName: "clock")
                         Text(
-                            "Stay Duration: \(destination.stayDurationMinutes / 60) Hours"
+                            "Stay Duration: \(destination.stayDurationMinutes / 60)h \(destination.stayDurationMinutes % 60)m"
                         )
                     }.font(.caption.bold()).foregroundColor(
                         destination.category == "Tempat Makan"
@@ -398,7 +584,6 @@ struct TimelineRowView: View {
                     radius: 5,
                     y: 2
                 )
-
                 if !isLast {
                     HStack(spacing: 6) {
                         Image(systemName: "car.fill")
@@ -415,6 +600,7 @@ struct TimelineRowView: View {
         }.padding(.vertical, 8)
     }
 }
+
 struct Line: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()

@@ -5,20 +5,11 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
-//
-//  TripsView.swift
-//  LeapPlan
-//
-//  Created by Sean tandjaja on 02/06/26.
-//
-
-import PhotosUI  // PENTING: Untuk layar edit foto
+import PhotosUI
 import SwiftUI
 
 enum TripRoute: Hashable {
     case tripDetail(Trip)
-    case generateRandom
-    case createManual
 }
 
 struct TripsView: View {
@@ -28,8 +19,10 @@ struct TripsView: View {
     @State private var isShowingFABMenu: Bool = false
     @State private var navigationPath = NavigationPath()
 
-    // State untuk mengetahui Trip mana yang sedang diedit dari Context Menu
     @State private var tripToEdit: Trip? = nil
+
+    @State private var isShowingGenerateSheet = false
+    @State private var isShowingManualSheet = false
 
     @MainActor
     init(viewModel: TripsViewModel? = nil) {
@@ -39,45 +32,27 @@ struct TripsView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
-                Color(hex: "#F9F9F9")
-                    .ignoresSafeArea()
+                Color(hex: "#F9F9F9").ignoresSafeArea()
 
-                // Overlay gelap saat FAB Menu terbuka
                 if isShowingFABMenu {
-                    Color.black.opacity(0.2)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.spring()) {
-                                isShowingFABMenu = false
-                            }
-                        }
-                        .zIndex(1)
+                    Color.black.opacity(0.2).ignoresSafeArea().onTapGesture {
+                        withAnimation(.spring()) { isShowingFABMenu = false }
+                    }.zIndex(1)
                 }
 
                 VStack(alignment: .leading, spacing: 0) {
-                    // Header
                     HStack(alignment: .bottom) {
-                        Text("My Trips")
-                            .font(
-                                .system(
-                                    size: 34,
-                                    weight: .bold,
-                                    design: .default
-                                )
-                            )
-                            .foregroundColor(.leapSecondary)
+                        Text("My Trips").font(
+                            .system(size: 34, weight: .bold, design: .default)
+                        ).foregroundColor(.leapSecondary)
                         Spacer()
-                        Text("\(viewModel.trips.count) trips total")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .padding(.bottom, 6)
+                        Text("\(viewModel.trips.count) trips total").font(
+                            .subheadline
+                        ).foregroundColor(.gray).padding(.bottom, 6)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
+                    .padding(.horizontal, 20).padding(.top, 16)
 
-                    statusTabBar
-                        .padding(.top, 20)
-                        .padding(.bottom, 10)
+                    statusTabBar.padding(.top, 20).padding(.bottom, 10)
 
                     ScrollView(.vertical, showsIndicators: false) {
                         LazyVStack(spacing: 24) {
@@ -98,11 +73,8 @@ struct TripsView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
-
-                                    // MARK: - FITUR HOLD (CONTEXT MENU)
                                     .contextMenu {
                                         Button {
-                                            // Buka Halaman Edit
                                             tripToEdit = trip
                                         } label: {
                                             Label(
@@ -110,9 +82,7 @@ struct TripsView: View {
                                                 systemImage: "pencil"
                                             )
                                         }
-
                                         Button(role: .destructive) {
-                                            // Hapus Trip
                                             if let tripID = trip.id {
                                                 withAnimation {
                                                     viewModel.deleteTrip(
@@ -130,45 +100,48 @@ struct TripsView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                        .padding(.bottom, 120)
+                        .padding(.horizontal, 20).padding(.top, 10).padding(
+                            .bottom,
+                            120
+                        )
                     }
                 }
-
-                createTripFAB
-                    .zIndex(2)
+                createTripFAB.zIndex(2)
             }
             .navigationDestination(for: TripRoute.self) { route in
                 switch route {
-                case .tripDetail(let trip):
-                    TripDetailView(trip: trip)
-
-                case .generateRandom:
-                    GenerateItineraryView { preferences in
-                        let title = "\(preferences.locationName) Trip"
-                        do {
-                            let newTrip =
-                                try await viewModel.generateRandomTrip(
-                                    preferences: preferences,
-                                    title: title
-                                )
-                            navigationPath.removeLast()
-                            navigationPath.append(TripRoute.tripDetail(newTrip))
-                        } catch { print("Gagal generate: \(error)") }
-                    }
-
-                case .createManual:
-                    Text("Create Manual View")
+                case .tripDetail(let trip): TripDetailView(trip: trip)
                 }
             }
-            .onAppear {
-                viewModel.loadUserTrips()
-            }
-
-            // MARK: - MUNCULKAN HALAMAN EDIT DARI LUAR
+            .onAppear { viewModel.loadUserTrips() }
             .sheet(item: $tripToEdit) { trip in
                 TripsEditSheetView(viewModel: viewModel, trip: trip)
+            }
+
+            // MARK: - FIX: KEMBALI KE HOME SETELAH GENERATE/CREATE (CEGAH BLANK SCREEN)
+            .sheet(isPresented: $isShowingGenerateSheet) {
+                GenerateItineraryView { preferences in
+                    let title = "\(preferences.locationName) Trip"
+                    do {
+                        _ = try await viewModel.generateRandomTrip(
+                            preferences: preferences,
+                            title: title
+                        )
+                        isShowingGenerateSheet = false  // Tutup sheet dan tetap di Home
+                    } catch { print("Gagal generate: \(error)") }
+                }
+            }
+            .sheet(isPresented: $isShowingManualSheet) {
+                CreateManualTripView { location, start, end in
+                    do {
+                        _ = try await viewModel.createManualTrip(
+                            location: location,
+                            start: start,
+                            end: end
+                        )
+                        isShowingManualSheet = false  // Tutup sheet dan tetap di Home
+                    } catch { print("Gagal: \(error)") }
+                }
             }
         }
     }
@@ -189,7 +162,6 @@ struct TripsView: View {
     private func tabButton(title: String, status: TripStatus) -> some View {
         let isActive = selectedTab == status
         let count = viewModel.trips.filter { $0.status == status }.count
-
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = status
@@ -221,7 +193,7 @@ struct TripsView: View {
             if isShowingFABMenu {
                 Button {
                     withAnimation { isShowingFABMenu = false }
-                    navigationPath.append(TripRoute.createManual)
+                    isShowingManualSheet = true
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "pencil").foregroundColor(.gray)
@@ -234,10 +206,9 @@ struct TripsView: View {
                             y: 2
                         )
                 }.transition(.move(edge: .bottom).combined(with: .opacity))
-
                 Button {
                     withAnimation { isShowingFABMenu = false }
-                    navigationPath.append(TripRoute.generateRandom)
+                    isShowingGenerateSheet = true
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles").foregroundColor(
@@ -292,19 +263,17 @@ struct TripsView: View {
     }
 }
 
-// MARK: - TAMPILAN EDITOR DARI HALAMAN UTAMA
+// MARK: - EDITOR DARI HALAMAN UTAMA
 struct TripsEditSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripsViewModel
     let trip: Trip
-
     @State private var title: String
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var coverImageUrl: String
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedUIImage: UIImage?
-
     init(viewModel: TripsViewModel, trip: Trip) {
         self.viewModel = viewModel
         self.trip = trip
@@ -313,7 +282,6 @@ struct TripsEditSheetView: View {
         _endDate = State(initialValue: trip.endDate)
         _coverImageUrl = State(initialValue: trip.coverImageUrl ?? "")
     }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -339,8 +307,7 @@ struct TripsEditSheetView: View {
                                 8
                             )
                         }
-                    }
-                    .onChange(of: selectedPhotoItem) { newItem in
+                    }.onChange(of: selectedPhotoItem) { newItem in
                         Task {
                             if let data = try? await newItem?.loadTransferable(
                                 type: Data.self
@@ -369,9 +336,9 @@ struct TripsEditSheetView: View {
                         displayedComponents: .date
                     )
                 }
-            }
-            .navigationTitle("Edit Trip").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            }.navigationTitle("Edit Trip").navigationBarTitleDisplayMode(
+                .inline
+            ).toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
@@ -399,9 +366,8 @@ struct TripsEditSheetView: View {
                 }
             }
         }
-    }    
+    }
 }
-
 // MARK: - Preview Mocks (Disingkat agar muat)
 #if DEBUG
     private class PreviewTripRepository: TripRepositoryProtocol {

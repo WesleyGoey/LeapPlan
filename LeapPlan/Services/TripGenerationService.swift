@@ -14,7 +14,9 @@ class TripGenerationService: TripGenerationServiceProtocol {
         self.foursquareService = foursquareService
     }
 
-    func generateRandomItinerary(preferences: RandomTripPreferences) async throws -> [DayPlan] {
+    func generateRandomItinerary(preferences: RandomTripPreferences)
+        async throws -> [DayPlan]
+    {
         var dayPlans: [DayPlan] = []
         let calendar = Calendar.current
 
@@ -22,18 +24,23 @@ class TripGenerationService: TripGenerationServiceProtocol {
         let placeCategories = "16000,10027,10055,16032,10044"
 
         // Tarik 50 data agar filter bisa bekerja maksimal
-        var availablePlaces = try await foursquareService.fetchPlaces(near: preferences.locationName, categoryID: placeCategories, limit: 50)
+        var availablePlaces = try await foursquareService.fetchPlaces(
+            near: preferences.locationName,
+            categoryID: placeCategories,
+            limit: 50
+        )
 
         // FILTER KATA "HARAM" (Biar gak muncul Toko, Masjid, dll)
         let invalidWords = [
-            "toko", "store", "shop", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", // Perbelanjaan
-            "masjid", "vihara", "gereja", "pura", "temple", "shrine", // Ibadah
-            "bank", "atm", "bca", "mandiri", // Keuangan
-            "hotel", "penginapan", "kost", // Penginapan
-            "resto", "cafe", "warung", "bakso", "soto", "nasi", "mie", // Makanan
-            "rs", "klinik", "hospital", "xxi", "cgv", "bioskop" // Kesehatan & Bioskop
+            "toko", "store", "shop", "mart", "market", "pasar", "supermarket",
+            "indomaret", "alfamart",  // Perbelanjaan
+            "masjid", "vihara", "gereja", "pura", "temple", "shrine",  // Ibadah
+            "bank", "atm", "bca", "mandiri",  // Keuangan
+            "hotel", "penginapan", "kost",  // Penginapan
+            "resto", "cafe", "warung", "bakso", "soto", "nasi", "mie",  // Makanan
+            "rs", "klinik", "hospital", "xxi", "cgv", "bioskop",  // Kesehatan & Bioskop
         ]
-        
+
         availablePlaces.removeAll { place in
             let lowerName = place.name.lowercased()
             return invalidWords.contains(where: { lowerName.contains($0) })
@@ -45,11 +52,19 @@ class TripGenerationService: TripGenerationServiceProtocol {
         var usedPlaceIDs = Set<String>()
 
         for (dayIndex, dayPref) in preferences.dailyPreferences.enumerated() {
-            guard let currentDate = calendar.date(byAdding: .day, value: dayIndex, to: preferences.startDate) else { continue }
+            guard
+                let currentDate = calendar.date(
+                    byAdding: .day,
+                    value: dayIndex,
+                    to: preferences.startDate
+                )
+            else { continue }
             var destinations: [TripDestination] = []
 
             for orderIndex in 0..<dayPref.places {
-                if let index = availablePlaces.firstIndex(where: { !usedPlaceIDs.contains($0.fsq_place_id) }) {
+                if let index = availablePlaces.firstIndex(where: {
+                    !usedPlaceIDs.contains($0.fsq_place_id)
+                }) {
                     let selectedPlace = availablePlaces.remove(at: index)
                     usedPlaceIDs.insert(selectedPlace.fsq_place_id)
 
@@ -58,8 +73,11 @@ class TripGenerationService: TripGenerationServiceProtocol {
                         name: selectedPlace.name,
                         category: "Objek Wisata",
                         foursquareID: selectedPlace.fsq_place_id,
-                        latitude: selectedPlace.latitude,
-                        longitude: selectedPlace.longitude,
+
+                        // PERBAIKAN: Tambahkan ?? 0.0 agar Swift tidak error
+                        latitude: selectedPlace.latitude ?? 0.0,
+                        longitude: selectedPlace.longitude ?? 0.0,
+
                         orderIndex: orderIndex,
                         stayDurationMinutes: 120,
                         transitTimeToNextMinutes: 30
@@ -68,7 +86,12 @@ class TripGenerationService: TripGenerationServiceProtocol {
                 }
             }
 
-            let plan = DayPlan(id: UUID().uuidString, dayNumber: dayPref.dayNumber, date: currentDate, destinations: destinations)
+            let plan = DayPlan(
+                id: UUID().uuidString,
+                dayNumber: dayPref.dayNumber,
+                date: currentDate,
+                destinations: destinations
+            )
             dayPlans.append(plan)
         }
         return dayPlans
