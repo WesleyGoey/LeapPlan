@@ -17,10 +17,11 @@ class ProfileViewModel: ObservableObject {
     private let userRepository: UserRepositoryProtocol
     private let authService: AuthServiceProtocol
     
-    init(userRepository: UserRepositoryProtocol = UserRepository(),
-         authService: AuthServiceProtocol = AuthService()) {
-        self.userRepository = userRepository
-        self.authService = authService
+    // MARK: - PERBAIKAN INIT PROFILE VIEW MODEL
+    init(userRepository: UserRepositoryProtocol? = nil, authService: AuthServiceProtocol? = nil) {
+        // Jika tidak ada repository yang di-inject (misal saat running app asli), gunakan class default-nya
+        self.userRepository = userRepository ?? UserRepository()
+        self.authService = authService ?? AuthService()
     }
     
     func loadProfile() {

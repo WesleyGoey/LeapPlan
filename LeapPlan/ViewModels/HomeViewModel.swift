@@ -20,10 +20,10 @@ class HomeViewModel: ObservableObject {
     private let tripRepository: TripRepositoryProtocol
     
     // Inject repository (Pastikan TripRepository() sudah kamu buat sesuai class aslinya)
-    init(fourSquareService: FourSquareServiceProtocol = FourSquareService(),
-         tripRepository: TripRepositoryProtocol = TripRepository()) {
-        self.fourSquareService = fourSquareService
-        self.tripRepository = tripRepository
+    init(fourSquareService: FourSquareServiceProtocol? = nil,
+         tripRepository: TripRepositoryProtocol? = nil) {
+        self.fourSquareService = fourSquareService ?? FourSquareService()
+        self.tripRepository = tripRepository ?? TripRepository()
     }
     
     // Fungsi digabung untuk meload Foursquare dan Firebase sekaligus

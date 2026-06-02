@@ -19,8 +19,14 @@ class TripsViewModel: ObservableObject {
     private let authService: AuthServiceProtocol
     private let tripGenService: TripGenerationServiceProtocol
     
-    init(tripRepository: TripRepositoryProtocol = TripRepository(), authService: AuthServiceProtocol = AuthService(), tripGenService: TripGenerationServiceProtocol = TripGenerationService()) {
-        self.tripRepository = tripRepository; self.authService = authService; self.tripGenService = tripGenService
+    init(
+        tripRepository: TripRepositoryProtocol? = nil,
+        authService: AuthServiceProtocol? = nil,
+        tripGenService: TripGenerationServiceProtocol? = nil
+    ) {
+        self.tripRepository = tripRepository ?? TripRepository()
+        self.authService = authService ?? AuthService()
+        self.tripGenService = tripGenService ?? TripGenerationService()
     }
     
     // BYPASS LOGIN

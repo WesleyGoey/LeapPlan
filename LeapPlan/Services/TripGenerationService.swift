@@ -58,8 +58,8 @@ class TripGenerationService: TripGenerationServiceProtocol {
                         name: selectedPlace.name,
                         category: "Objek Wisata",
                         foursquareID: selectedPlace.fsq_place_id,
-                        latitude: selectedPlace.latitude,
-                        longitude: selectedPlace.longitude,
+                        latitude: selectedPlace.latitude!,
+                        longitude: selectedPlace.longitude!,
                         orderIndex: orderIndex,
                         stayDurationMinutes: 120,
                         transitTimeToNextMinutes: 30

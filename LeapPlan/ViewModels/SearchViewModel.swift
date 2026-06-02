@@ -27,14 +27,13 @@ class SearchViewModel: ObservableObject {
     private let locationService: LocationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(fourSquareService: FourSquareServiceProtocol = FourSquareService(),
-         locationService: LocationServiceProtocol = LocationService()) {
-        self.fourSquareService = fourSquareService
-        self.locationService = locationService
+    init(fourSquareService: FourSquareServiceProtocol? = nil,
+         locationService: LocationServiceProtocol? = nil) {
+        self.fourSquareService = fourSquareService ?? FourSquareService()
+        self.locationService = locationService ?? LocationService()
         
         setupLiveSearch()
         
-        // Opsional: Langsung arahkan kamera peta ke lokasi pengguna saat aplikasi pertama dibuka
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.centerToCurrentLocation()
         }

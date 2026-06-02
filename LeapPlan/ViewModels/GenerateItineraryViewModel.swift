@@ -24,8 +24,8 @@ class GenerateItineraryViewModel: ObservableObject {
     private let foursquareService: FourSquareServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(foursquareService: FourSquareServiceProtocol = FourSquareService()) {
-        self.foursquareService = foursquareService
+    init(foursquareService: FourSquareServiceProtocol? = nil) {
+        self.foursquareService = foursquareService ?? FourSquareService()
         updateDailyPreferences()
         
         $destination

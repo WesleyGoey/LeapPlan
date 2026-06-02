@@ -1,12 +1,4 @@
 //
-//  FSQResponse 2.swift
-//  LeapPlan
-//
-//  Created by Wesley Goey on 02/06/26.
-//
-
-
-//
 //  FSQPlace.swift
 //  LeapPlan
 //

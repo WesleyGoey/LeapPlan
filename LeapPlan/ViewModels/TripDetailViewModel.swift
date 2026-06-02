@@ -29,14 +29,14 @@ class TripDetailViewModel: ObservableObject {
     
     init(
         trip: Trip,
-        tripRepository: TripRepositoryProtocol = TripRepository(),
-        authService: AuthServiceProtocol = AuthService(),
-        tripGenService: TripGenerationServiceProtocol = TripGenerationService()
+        tripRepository: TripRepositoryProtocol? = nil,
+        authService: AuthServiceProtocol? = nil,
+        tripGenService: TripGenerationServiceProtocol? = nil
     ) {
         self.trip = trip
-        self.tripRepository = tripRepository
-        self.authService = authService
-        self.tripGenService = tripGenService
+        self.tripRepository = tripRepository ?? TripRepository()
+        self.authService = authService ?? AuthService()
+        self.tripGenService = tripGenService ?? TripGenerationService()
     }
     
     // MARK: - BYPASS LOGIN UNTUK TESTING
