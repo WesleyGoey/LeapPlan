@@ -11,7 +11,7 @@ class FourSquareService: FourSquareServiceProtocol {
     
     // Ganti dengan API Key Foursquare milikmu sendiri dari Developer Console Foursquare
     private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
-    private let baseURL = "https://api.foursquare.com/v3"
+    private let baseURL = "https://places-api.foursquare.com/places/search"
     
     // Helper untuk membuat URLRequest dengan Header Otentikasi Foursquare
     private func createRequest(url: URL) -> URLRequest {
