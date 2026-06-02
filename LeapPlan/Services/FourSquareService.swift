@@ -9,9 +9,11 @@ import Foundation
 
 class FourSquareService: FourSquareServiceProtocol {
     
-    // Ganti dengan API Key Foursquare milikmu sendiri dari Developer Console Foursquare
+    // API KEY MILIKMU (TIDAK DIUBAH)
     private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
-    private let baseURL = "https://places-api.foursquare.com/places/search"
+    
+    // FIX: Base URL yang benar untuk Foursquare v3 adalah ini, BUKAN diakhiri dengan /places/search
+    private let baseURL = "https://api.foursquare.com/v3"
     
     // Helper untuk membuat URLRequest dengan Header Otentikasi Foursquare
     private func createRequest(url: URL) -> URLRequest {
@@ -25,7 +27,6 @@ class FourSquareService: FourSquareServiceProtocol {
     
     // MARK: - 1. Fetch Trending Places
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
-        // Menggunakan Place Search dengan sorting popularity/relevance sebagai alternatif trending
         guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&sort=RELEVANCE&limit=10") else {
             throw URLError(.badURL)
@@ -60,10 +61,9 @@ class FourSquareService: FourSquareServiceProtocol {
         return fsqResponse.results
     }
     
-    // MARK: - 3. BARU: Autocomplete Location (Mencari Kota/Tujuan saat user mengetik)
+    // MARK: - 3. Autocomplete Location
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              // Kita kunci types=geo agar Foursquare fokus mengembalikan nama daerah/kota, bukan toko spesifik
               let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else {
             throw URLError(.badURL)
         }
@@ -75,15 +75,12 @@ class FourSquareService: FourSquareServiceProtocol {
             throw URLError(.badServerResponse)
         }
         
-        // Foursquare Autocomplete mengembalikan struktur bungkusan sedikit berbeda (results berisi data geo)
         let fsqResponse = try JSONDecoder().decode(FSQAutocompleteResponse.self, from: data)
-        
-        // Map hasil autocomplete menjadi FSQPlace agar seragam dengan fungsi lainnya
         return fsqResponse.results.compactMap { result in
             guard let geoItem = result.geo else { return nil }
             return FSQPlace(
-                fsq_place_id: result.text.primary, // Menggunakan teks nama kota sebagai ID unik sementara
-                name: result.text.full,            // Nama lengkap kota (Contoh: "Tokyo, Japan")
+                fsq_place_id: result.text.primary,
+                name: result.text.full,
                 distance: 0,
                 latitude: geoItem.center?.latitude ?? 0.0,
                 longitude: geoItem.center?.longitude ?? 0.0
@@ -91,7 +88,7 @@ class FourSquareService: FourSquareServiceProtocol {
         }
     }
     
-    // MARK: - 4. BARU: Fetch Places (Mencari Restoran/Wisata Nyata di Kota Tersebut)
+    // MARK: - 4. Fetch Places
     func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
         guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY") else {
@@ -110,31 +107,10 @@ class FourSquareService: FourSquareServiceProtocol {
     }
 }
 
-// MARK: - Helper Codable Structs untuk response JSON Foursquare API
-
-private struct FSQSearchResponse: Codable {
-    let results: [FSQPlace]
-}
-
-private struct FSQAutocompleteResponse: Codable {
-    let results: [AutocompleteResult]
-}
-
-private struct AutocompleteResult: Codable {
-    let text: TextWrapper
-    let geo: GeoWrapper?
-}
-
-private struct TextWrapper: Codable {
-    let primary: String
-    let full: String
-}
-
-private struct GeoWrapper: Codable {
-    let center: CenterCoordinates?
-}
-
-private struct CenterCoordinates: Codable {
-    let latitude: Double
-    let longitude: Double
-}
+// MARK: - Helper Codable Structs
+private struct FSQSearchResponse: Codable { let results: [FSQPlace] }
+private struct FSQAutocompleteResponse: Codable { let results: [AutocompleteResult] }
+private struct AutocompleteResult: Codable { let text: TextWrapper; let geo: GeoWrapper? }
+private struct TextWrapper: Codable { let primary: String; let full: String }
+private struct GeoWrapper: Codable { let center: CenterCoordinates? }
+private struct CenterCoordinates: Codable { let latitude: Double; let longitude: Double }

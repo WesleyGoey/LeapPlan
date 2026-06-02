@@ -16,6 +16,7 @@ class TripRepository: TripRepositoryProtocol {
         let snapshot = try await db.collection("Users").document(userID).collection("Trips")
             .order(by: "startDate", descending: false)
             .getDocuments()
+        
         return snapshot.documents.compactMap { try? $0.data(as: Trip.self) }
     }
     
@@ -44,6 +45,7 @@ class TripRepository: TripRepositoryProtocol {
             .collection("DayPlans")
             .order(by: "dayNumber")
             .getDocuments()
+            
         return snapshot.documents.compactMap { try? $0.data(as: DayPlan.self) }
     }
     
@@ -51,14 +53,14 @@ class TripRepository: TripRepositoryProtocol {
         let collectionRef = db.collection("Users").document(userID)
             .collection("Trips").document(tripID)
             .collection("DayPlans")
+            
         let docRef = dayPlan.id != nil ? collectionRef.document(dayPlan.id!) : collectionRef.document()
         var newPlan = dayPlan
         newPlan.id = docRef.documentID
         try docRef.setData(from: newPlan)
     }
     
-    // MARK: - Save Generated Trip Atomically (Batch Write)
-    // FUNGSI BARU UNTUK MENYIMPAN TRIP GENERATE SEKALIGUS
+    // MARK: - BATCH WRITE (PENTING UNTUK GENERATE TRIP)
     func saveGeneratedTripWithDayPlans(trip: Trip, dayPlans: [DayPlan], userID: String) async throws {
         let batch = db.batch()
         
