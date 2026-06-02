@@ -22,24 +22,27 @@ class TripDetailViewModel: ObservableObject {
     
     @Published var mapRoute: MKPolyline?
     @Published var isLoading: Bool = false
+    @Published var addSearchResults: [FSQPlace] = [] // State untuk Pencarian Tempat
     
     private let tripRepository: TripRepositoryProtocol
     private let authService: AuthServiceProtocol
     private let tripGenService: TripGenerationServiceProtocol
+    private let fourSquareService: FourSquareServiceProtocol
     
     init(
         trip: Trip,
-        tripRepository: TripRepositoryProtocol? = nil,
-        authService: AuthServiceProtocol? = nil,
-        tripGenService: TripGenerationServiceProtocol? = nil
+        tripRepository: TripRepositoryProtocol = TripRepository(),
+        authService: AuthServiceProtocol = AuthService(),
+        tripGenService: TripGenerationServiceProtocol = TripGenerationService(),
+        fourSquareService: FourSquareServiceProtocol = FourSquareService()
     ) {
         self.trip = trip
-        self.tripRepository = tripRepository ?? TripRepository()
-        self.authService = authService ?? AuthService()
-        self.tripGenService = tripGenService ?? TripGenerationService()
+        self.tripRepository = tripRepository
+        self.authService = authService
+        self.tripGenService = tripGenService
+        self.fourSquareService = fourSquareService
     }
     
-    // MARK: - BYPASS LOGIN UNTUK TESTING
     private var activeUserID: String {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
@@ -49,16 +52,33 @@ class TripDetailViewModel: ObservableObject {
         return dayPlans[selectedDayIndex]
     }
     
-    // MARK: - LOAD DATA
-    func loadDayPlans() {
-        guard let tripID = trip.id else { return }
-        let userID = activeUserID // Menggunakan ID Bypass
+    func searchPlacesAroundCity(query: String) {
+        guard query.count > 2 else {
+            self.addSearchResults = []
+            return
+        }
         
-        isLoading = true
-        
+        let city = trip.locationName
+        guard !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { self.addSearchResults = []; return }
         Task {
             do {
-                let fetchedPlans = try await tripRepository.fetchDayPlans(forTripID: tripID, userID: userID)
+                // Pencarian Foursquare yang dikunci pada kota trip
+                let results = try await fourSquareService.fetchPlaces(near: city, categoryID: "", limit: 10)
+                // Filter hasil berdasarkan query user
+                self.addSearchResults = results.filter { $0.name.localizedCaseInsensitiveContains(query) }
+            } catch {
+                print("Search error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // MARK: - LOAD DATA & ROUTE
+    func loadDayPlans() {
+        guard let tripID = trip.id else { return }
+        isLoading = true
+        Task {
+            do {
+                let fetchedPlans = try await tripRepository.fetchDayPlans(forTripID: tripID, userID: activeUserID)
                 self.dayPlans = fetchedPlans.sorted(by: { $0.dayNumber < $1.dayNumber })
                 calculateRouteForSelectedDay()
                 self.isLoading = false
@@ -92,13 +112,11 @@ class TripDetailViewModel: ObservableObject {
     
     func deleteDestination(destID: String) {
         guard dayPlans.indices.contains(selectedDayIndex) else { return }
-        // Hapus destinasi dari array lokal
         dayPlans[selectedDayIndex].destinations.removeAll { $0.id == destID }
         saveCurrentDayPlanOrder()
     }
     
     private func saveCurrentDayPlanOrder() {
-        // Susun ulang nomor urutannya
         for (index, _) in dayPlans[selectedDayIndex].destinations.enumerated() {
             dayPlans[selectedDayIndex].destinations[index].orderIndex = index
         }
@@ -133,7 +151,7 @@ class TripDetailViewModel: ObservableObject {
         return String(format: "%02d:%02d %@", displayHours, minutes, ampm)
     }
     
-    // MARK: - FITUR EDIT TRIP
+    // MARK: - EDIT TRIP (DYNAMIC DAY TABS)
     func updateTripDetails(title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
         isLoading = true
         var updatedTrip = trip
@@ -160,68 +178,141 @@ class TripDetailViewModel: ObservableObject {
                         try await tripRepository.deleteDayPlan(planID: planID, tripID: tripID, userID: userID)
                     }
                 }
-                self.dayPlans.removeLast(dayPlans.count - totalDays)
-                if selectedDayIndex >= totalDays { selectedDayIndex = totalDays - 1 }
             } else if dayPlans.count < totalDays {
                 for i in (dayPlans.count + 1)...totalDays {
                     guard let newDate = calendar.date(byAdding: .day, value: i - 1, to: calendar.startOfDay(for: startDate)) else { continue }
                     let newPlan = DayPlan(id: UUID().uuidString, dayNumber: i, date: newDate, destinations: [])
                     try await tripRepository.saveDayPlan(newPlan, forTripID: tripID, userID: userID)
-                    self.dayPlans.append(newPlan)
                 }
             }
-            isLoading = false
-            calculateRouteForSelectedDay()
+            
+            // RELOAD SEMUA DATA AGAR TAB DAY 2, DAY 3, DLL LANGSUNG MUNCUL
+            self.loadDayPlans()
+            
         } catch {
             print("Error updating trip: \(error.localizedDescription)")
             isLoading = false
         }
     }
     
-    // HELPER UNTUK MENYIMPAN GAMBAR KE FOLDER LOKAL HP
     func saveImageLocally(image: UIImage) -> String? {
         guard let data = image.jpegData(compressionQuality: 0.6) else { return nil }
         let filename = UUID().uuidString + ".jpg"
         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(filename)
         do {
             try data.write(to: url)
-            return url.absoluteString // Menghasilkan format "file://..."
+            return url.absoluteString
         } catch {
             print("Gagal save gambar: \(error)")
             return nil
         }
     }
     
-    // Tambahkan fungsi ini di dalam TripDetailViewModel.swift
-    func generateRandomPlacesForTrip() {
+    // MARK: - GENERATE 1 RANDOM PLACE
+    // FUNGSI YANG SEBELUMNYA ERROR KARENA BELUM ADA
+    func generateOneRandomPlace() {
+        guard dayPlans.indices.contains(selectedDayIndex) else { return }
         isLoading = true
-        
-        // Pastikan pakai ID Bypass supaya tidak error auth
-        let userID = authService.getCurrentUserID() ?? "dummy_user_123"
         
         Task {
             do {
-                // Panggil service generator
-                let preferences = RandomTripPreferences(
-                    locationName: trip.locationName,
-                    startDate: trip.startDate,
-                    endDate: trip.endDate,
-                    dailyPreferences: [DailyPreference(dayNumber: 1, meals: 0, places: 5)] // Sesuaikan preferensi
-                )
+                let placeCategories = "16000,10027,10055,16032,10044"
+                var availablePlaces = try await fourSquareService.fetchPlaces(near: trip.locationName, categoryID: placeCategories, limit: 30)
                 
-                let newDayPlans = try await tripGenService.generateRandomItinerary(preferences: preferences)
-                
-                // Simpan ke Firebase
-                for plan in newDayPlans {
-                    try await tripRepository.saveDayPlan(plan, forTripID: trip.id ?? "", userID: userID)
+                let invalidWords = ["toko", "store", "shop", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", "masjid", "vihara", "gereja", "pura", "temple", "shrine", "bank", "atm", "hotel", "penginapan", "kost", "resto", "cafe", "warung", "bakso", "soto", "nasi", "mie", "rs", "klinik", "hospital", "xxi", "cgv", "bioskop"]
+                availablePlaces.removeAll { place in
+                    let lowerName = place.name.lowercased()
+                    return invalidWords.contains(where: { lowerName.contains($0) })
                 }
                 
-                // Refresh UI setelah selesai
-                loadDayPlans()
+                let existingIDs = Set(dayPlans[selectedDayIndex].destinations.compactMap { $0.foursquareID })
+                availablePlaces.removeAll { existingIDs.contains($0.fsq_place_id) }
+                
+                if let randomPlace = availablePlaces.randomElement() {
+                    let newDest = TripDestination(
+                        id: UUID().uuidString,
+                        name: randomPlace.name,
+                        category: "Objek Wisata",
+                        foursquareID: randomPlace.fsq_place_id,
+                        latitude: randomPlace.latitude ?? 0.0,
+                        longitude: randomPlace.longitude ?? 0.0,
+                        orderIndex: dayPlans[selectedDayIndex].destinations.count,
+                        stayDurationMinutes: 120, // Default 2 jam
+                        transitTimeToNextMinutes: 30
+                    )
+                    dayPlans[selectedDayIndex].destinations.append(newDest)
+                    saveCurrentDayPlanOrder()
+                }
             } catch {
-                print("Gagal generate: \(error.localizedDescription)")
+                print("Generate error: \(error.localizedDescription)")
             }
             isLoading = false
+        }
+    }
+    
+    // MARK: - LIVE SEARCH UNTUK ADD / EDIT PLACE
+    func searchPlaceForAdding(query: String) {
+        guard query.count > 2 else {
+            addSearchResults = []
+            return
+        }
+        
+        let city = trip.locationName
+        Task {
+            do {
+                guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                      let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                      let url = URL(string: "https://api.foursquare.com/v3/places/search?near=\(encodedCity)&query=\(encodedQuery)&limit=15") else { return }
+                
+                var request = URLRequest(url: url)
+                request.addValue("application/json", forHTTPHeaderField: "accept")
+                
+                request.addValue("RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY", forHTTPHeaderField: "Authorization")
+                
+                let (data, _) = try await URLSession.shared.data(for: request)
+                struct FSQSearchResponse: Codable { let results: [FSQPlace] }
+                let fsqResponse = try JSONDecoder().decode(FSQSearchResponse.self, from: data)
+                
+                await MainActor.run { self.addSearchResults = fsqResponse.results }
+            } catch {
+                print("Error searching places: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - ADD & UPDATE DESTINATIONS
+    func addManualDestination(name: String, category: String, durationMinutes: Int, place: FSQPlace?) {
+        guard dayPlans.indices.contains(selectedDayIndex) else { return }
+        
+        let newDest = TripDestination(
+            id: UUID().uuidString,
+            name: name,
+            category: category,
+            foursquareID: place?.fsq_place_id,
+            latitude: place?.latitude ?? 0.0,
+            longitude: place?.longitude ?? 0.0,
+            orderIndex: dayPlans[selectedDayIndex].destinations.count,
+            stayDurationMinutes: durationMinutes,
+            transitTimeToNextMinutes: 30
+        )
+        dayPlans[selectedDayIndex].destinations.append(newDest)
+        saveCurrentDayPlanOrder()
+    }
+    
+    func updateDestination(id: String, newName: String, category: String, newDuration: Int, place: FSQPlace?) {
+        guard dayPlans.indices.contains(selectedDayIndex) else { return }
+        
+        if let index = dayPlans[selectedDayIndex].destinations.firstIndex(where: { $0.id == id }) {
+            dayPlans[selectedDayIndex].destinations[index].name = newName
+            dayPlans[selectedDayIndex].destinations[index].category = category
+            dayPlans[selectedDayIndex].destinations[index].stayDurationMinutes = newDuration
+            
+            if let newPlace = place {
+                dayPlans[selectedDayIndex].destinations[index].foursquareID = newPlace.fsq_place_id
+                dayPlans[selectedDayIndex].destinations[index].latitude = newPlace.latitude ?? 0.0
+                dayPlans[selectedDayIndex].destinations[index].longitude = newPlace.longitude ?? 0.0
+            }
+            saveCurrentDayPlanOrder()
         }
     }
 }
