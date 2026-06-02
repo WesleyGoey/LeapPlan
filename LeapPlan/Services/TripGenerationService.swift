@@ -10,81 +10,91 @@ import Foundation
 class TripGenerationService: TripGenerationServiceProtocol {
     private let foursquareService: FourSquareServiceProtocol
 
-    // Gunakan Dependency Injection agar bisa di-mock saat testing
-    init(foursquareService: FourSquareServiceProtocol = MockFourSquareService())
-    {
+    init(foursquareService: FourSquareServiceProtocol = FourSquareService()) {
         self.foursquareService = foursquareService
     }
 
-    func generateRandomItinerary(preferences: RandomTripPreferences)
-        async throws -> [DayPlan]
-    {
+    func generateRandomItinerary(preferences: RandomTripPreferences) async throws -> [DayPlan] {
         var dayPlans: [DayPlan] = []
         let calendar = Calendar.current
 
-        // 1. Tarik Data NYATA dari Foursquare berdasarkan Kota
-        // 13000 = Dining and Drinking, 16000 = Landmarks and Outdoors
-        var availableMeals = try await foursquareService.fetchPlaces(
-            near: preferences.locationName,
-            categoryID: "13000",
-            limit: 30
-        )
-        var availablePlaces = try await foursquareService.fetchPlaces(
-            near: preferences.locationName,
-            categoryID: "16000",
-            limit: 30
-        )
+        // 1. KATEGORI KHUSUS OBJEK WISATA SAJA (HAPUS KATEGORI RESTORAN)
+        // 16000 = Landmarks, 10027 = Museum, 10055 = Theme Park, 16032 = Park, 16003 = Beach, 10044 = Historic Site
+        let placeCategories = "16000,10027,10055,16032,16003,10044"
 
-        // 2. Loop berdasarkan jumlah hari yang diatur user
+        // Kita tarik 50 data agar cadangannya banyak kalau yang aneh-aneh dibuang
+        var availablePlaces = try await foursquareService.fetchPlaces(near: preferences.locationName, categoryID: placeCategories, limit: 50)
+
+        // ==========================================================
+        // 2. FILTERING KATA "ULTRA-STRICT" (Anti Data Ngaco)
+        // ==========================================================
+        
+        // Daftar kata yang HARAM muncul sebagai Objek Wisata (Termasuk Kampus & Tempat Ibadah)
+        let invalidPlaceWords = [
+            // Tempat Ibadah & Agama
+            "vihara", "masjid", "gereja", "pura", "temple", "shrine", "mosque", "church", "wihara",
+            // Pendidikan
+            "sekolah", "kampus", "universitas", "school", "university", "college", "institut", "akademi",
+            // Perbelanjaan harian
+            "toko", "store", "shop", "gift", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", "apotek",
+            // Keuangan
+            "bank", "atm", "bca", "mandiri", "bni", "bri", "cimb",
+            // Penginapan
+            "hotel", "resort", "villa", "guest house", "penginapan", "kost",
+            // Makanan
+            "warung", "resto", "restaurant", "cafe", "kopi", "coffee", "depot", "rumah makan", "kedai", "canteen", "kantin",
+            "bakso", "soto", "sate", "nasi", "mie", "ayam", "bebek", "ikan", "seafood", "bakar", "goreng", "martabak", "kue", "bakery", "burger", "pizza",
+            // Kesehatan & Bioskop
+            "rs", "klinik", "hospital", "puskesmas", "xxi", "cgv", "cinema", "bioskop"
+        ]
+        
+        // Eksekusi filter pembersihan (Sapu bersih tempat aneh!)
+        availablePlaces.removeAll { place in
+            let lowerName = place.name.lowercased()
+            return invalidPlaceWords.contains(where: { lowerName.contains($0) })
+        }
+
+        // ==========================================================
+        // 3. PROSES NORMAL (Hapus Duplikat & Acak)
+        // ==========================================================
+        availablePlaces = availablePlaces.removingDuplicates()
+        availablePlaces.shuffle()
+
+        var usedPlaceIDs = Set<String>()
+
+        // 4. Loop per Hari
         for (dayIndex, dayPref) in preferences.dailyPreferences.enumerated() {
-            guard
-                let currentDate = calendar.date(
-                    byAdding: .day,
-                    value: dayIndex,
-                    to: preferences.startDate
-                )
-            else { continue }
+            guard let currentDate = calendar.date(byAdding: .day, value: dayIndex, to: preferences.startDate) else { continue }
 
             var destinations: [TripDestination] = []
-            var mealsRemaining = dayPref.meals
-            var placesRemaining = dayPref.places
+            
+            // HANYA MENGAMBIL JUMLAH "PLACES" DARI PREFERENSI (Abaikan Meals)
+            let placesToVisit = dayPref.places
 
-            // Susun secara berselang-seling (Makan -> Wisata -> Makan)
-            var dailyCategories: [String] = []
-            while mealsRemaining > 0 || placesRemaining > 0 {
-                if mealsRemaining > 0 {
-                    dailyCategories.append("Tempat Makan")
-                    mealsRemaining -= 1
+            for orderIndex in 0..<placesToVisit {
+                var selectedPlace: FSQPlace? = nil
+
+                // Cari tempat dari array yang BELUM PERNAH digunakan di trip ini
+                if let index = availablePlaces.firstIndex(where: { !usedPlaceIDs.contains($0.fsq_place_id) }) {
+                    selectedPlace = availablePlaces.remove(at: index)
                 }
-                if placesRemaining > 0 {
-                    dailyCategories.append("Objek Wisata")
-                    placesRemaining -= 1
+
+                // Catat ID tempat ini agar tidak dipakai lagi di hari selanjutnya
+                if let placeID = selectedPlace?.fsq_place_id {
+                    usedPlaceIDs.insert(placeID)
                 }
-            }
 
-            // 3. Gabungkan kategori dengan Data Asli Foursquare
-            for (orderIndex, category) in dailyCategories.enumerated() {
-                let isMeal = (category == "Tempat Makan")
-
-                // Ambil tempat nyata dari array. Jika API habis/kosong, gunakan nama dummy.
-                let realPlace =
-                    isMeal
-                    ? (availableMeals.isEmpty
-                        ? nil : availableMeals.removeFirst())
-                    : (availablePlaces.isEmpty
-                        ? nil : availablePlaces.removeFirst())
-
-                let name =
-                    realPlace?.name ?? "Generated \(category) \(orderIndex + 1)"
-                let duration = isMeal ? 60 : 120
+                // Fallback cerdas jika kebetulan semua data dari Foursquare terlalu ngaco dan habis
+                let name = selectedPlace?.name ?? "Famous Landmark \(orderIndex + 1)"
+                let duration = 120 // Default durasi wisata 2 jam
 
                 let dest = TripDestination(
                     id: UUID().uuidString,
                     name: name,
-                    category: category,
-                    foursquareID: realPlace?.fsq_place_id,
-                    latitude: realPlace?.latitude ?? 0.0,
-                    longitude: realPlace?.longitude ?? 0.0,
+                    category: "Objek Wisata",
+                    foursquareID: selectedPlace?.fsq_place_id,
+                    latitude: selectedPlace?.latitude ?? 0.0,
+                    longitude: selectedPlace?.longitude ?? 0.0,
                     orderIndex: orderIndex,
                     stayDurationMinutes: duration,
                     transitTimeToNextMinutes: 30
@@ -102,5 +112,15 @@ class TripGenerationService: TripGenerationServiceProtocol {
         }
 
         return dayPlans
+    }
+}
+
+// MARK: - Helper Extension
+extension Array where Element == FSQPlace {
+    func removingDuplicates() -> [FSQPlace] {
+        var addedDict = [String: Bool]()
+        return filter {
+            addedDict.updateValue(true, forKey: $0.fsq_place_id) == nil
+        }
     }
 }

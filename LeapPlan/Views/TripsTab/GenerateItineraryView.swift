@@ -76,7 +76,7 @@ struct GenerateItineraryView: View {
 
                     if let selectedIndex = viewModel.dailyPreferences.firstIndex(where: { $0.dayNumber == viewModel.selectedDayNumber }) {
                         VStack(spacing: 16) {
-                            stepperCard(icon: "fork.knife", title: "Meals per day", subtitle: "Restaurants & cafes", value: $viewModel.dailyPreferences[selectedIndex].meals)
+                            // Cuma menyisakan Stepper untuk Places to visit (Objek Wisata)
                             stepperCard(icon: "camera", title: "Places to visit", subtitle: "Attractions per day", value: $viewModel.dailyPreferences[selectedIndex].places)
                         }
                     }

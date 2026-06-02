@@ -5,6 +5,14 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
+//
+//  TripsView.swift
+//  LeapPlan
+//
+//  Created by Sean tandjaja on 02/06/26.
+//
+
+import PhotosUI  // PENTING: Untuk layar edit foto
 import SwiftUI
 
 enum TripRoute: Hashable {
@@ -19,6 +27,9 @@ struct TripsView: View {
 
     @State private var isShowingFABMenu: Bool = false
     @State private var navigationPath = NavigationPath()
+
+    // State untuk mengetahui Trip mana yang sedang diedit dari Context Menu
+    @State private var tripToEdit: Trip? = nil
 
     @MainActor
     init(viewModel: TripsViewModel? = nil) {
@@ -87,6 +98,35 @@ struct TripsView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
+
+                                    // MARK: - FITUR HOLD (CONTEXT MENU)
+                                    .contextMenu {
+                                        Button {
+                                            // Buka Halaman Edit
+                                            tripToEdit = trip
+                                        } label: {
+                                            Label(
+                                                "Edit Trip",
+                                                systemImage: "pencil"
+                                            )
+                                        }
+
+                                        Button(role: .destructive) {
+                                            // Hapus Trip
+                                            if let tripID = trip.id {
+                                                withAnimation {
+                                                    viewModel.deleteTrip(
+                                                        tripID: tripID
+                                                    )
+                                                }
+                                            }
+                                        } label: {
+                                            Label(
+                                                "Delete Trip",
+                                                systemImage: "trash"
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -105,33 +145,30 @@ struct TripsView: View {
                     TripDetailView(trip: trip)
 
                 case .generateRandom:
-                    // MENGHUBUNGKAN UI DENGAN LOGIKA GENERATE
                     GenerateItineraryView { preferences in
                         let title = "\(preferences.locationName) Trip"
-
                         do {
-                            // Tunggu proses download Foursquare selesai
                             let newTrip =
                                 try await viewModel.generateRandomTrip(
                                     preferences: preferences,
                                     title: title
                                 )
-
-                            // MAGIC: Tutup layar Generate, dan Pindah ke TripDetailView
                             navigationPath.removeLast()
                             navigationPath.append(TripRoute.tripDetail(newTrip))
-
-                        } catch {
-                            print("Gagal generate: \(error)")
-                        }
+                        } catch { print("Gagal generate: \(error)") }
                     }
 
                 case .createManual:
-                    Text("Create Manual View")  // Placeholder
+                    Text("Create Manual View")
                 }
             }
             .onAppear {
                 viewModel.loadUserTrips()
+            }
+
+            // MARK: - MUNCULKAN HALAMAN EDIT DARI LUAR
+            .sheet(item: $tripToEdit) { trip in
+                TripsEditSheetView(viewModel: viewModel, trip: trip)
             }
         }
     }
@@ -139,14 +176,14 @@ struct TripsView: View {
     // MARK: - Subviews
     private var statusTabBar: some View {
         HStack(spacing: 0) {
-            tabButton(title: "Upcoming", status: .upcoming)
-                .frame(maxWidth: .infinity)
-            tabButton(title: "Ongoing", status: .ongoing)
-                .frame(maxWidth: .infinity)
-            tabButton(title: "Past", status: .past)
-                .frame(maxWidth: .infinity)
-        }
-        .padding(8)
+            tabButton(title: "Upcoming", status: .upcoming).frame(
+                maxWidth: .infinity
+            )
+            tabButton(title: "Ongoing", status: .ongoing).frame(
+                maxWidth: .infinity
+            )
+            tabButton(title: "Past", status: .past).frame(maxWidth: .infinity)
+        }.padding(8)
     }
 
     private func tabButton(title: String, status: TripStatus) -> some View {
@@ -160,32 +197,21 @@ struct TripsView: View {
         } label: {
             VStack(spacing: 8) {
                 HStack(spacing: 6) {
-                    Text(title)
-                        .font(
-                            .system(
-                                size: 16,
-                                weight: isActive ? .bold : .medium
-                            )
-                        )
-                        .foregroundColor(isActive ? .leapPrimary : .gray)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-
-                    Text("\(count)")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(isActive ? .white : .gray)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
+                    Text(title).font(
+                        .system(size: 16, weight: isActive ? .bold : .medium)
+                    ).foregroundColor(isActive ? .leapPrimary : .gray)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                    Text("\(count)").font(.system(size: 12, weight: .bold))
+                        .foregroundColor(isActive ? .white : .gray).padding(
+                            .horizontal,
+                            6
+                        ).padding(.vertical, 2).background(
                             isActive
                                 ? Color.leapPrimary : Color.gray.opacity(0.2)
-                        )
-                        .clipShape(Capsule())
+                        ).clipShape(Capsule())
                 }
-                Rectangle()
-                    .fill(isActive ? Color.leapPrimary : Color.clear)
-                    .frame(height: 3)
-                    .cornerRadius(1.5)
+                Rectangle().fill(isActive ? Color.leapPrimary : Color.clear)
+                    .frame(height: 3).cornerRadius(1.5)
             }
         }
     }
@@ -198,91 +224,188 @@ struct TripsView: View {
                     navigationPath.append(TripRoute.createManual)
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(.gray)
-                        Text("Create Manual")
-                            .fontWeight(.semibold)
+                        Image(systemName: "pencil").foregroundColor(.gray)
+                        Text("Create Manual").fontWeight(.semibold)
                             .foregroundColor(.leapSecondary)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(Color.white)
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.1), radius: 5, y: 2)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }.padding(.horizontal, 20).padding(.vertical, 14)
+                        .background(Color.white).clipShape(Capsule()).shadow(
+                            color: .black.opacity(0.1),
+                            radius: 5,
+                            y: 2
+                        )
+                }.transition(.move(edge: .bottom).combined(with: .opacity))
 
                 Button {
                     withAnimation { isShowingFABMenu = false }
                     navigationPath.append(TripRoute.generateRandom)
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "sparkles")
+                        Image(systemName: "sparkles").foregroundColor(
+                            .leapPrimary
+                        )
+                        Text("Create Random").fontWeight(.semibold)
                             .foregroundColor(.leapPrimary)
-                        Text("Create Random")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.leapPrimary)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(Color.white)
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.1), radius: 5, y: 2)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }.padding(.horizontal, 20).padding(.vertical, 14)
+                        .background(Color.white).clipShape(Capsule()).shadow(
+                            color: .black.opacity(0.1),
+                            radius: 5,
+                            y: 2
+                        )
+                }.transition(.move(edge: .bottom).combined(with: .opacity))
             }
-
             Button {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     isShowingFABMenu.toggle()
                 }
             } label: {
-                Image(systemName: isShowingFABMenu ? "xmark" : "plus")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 64, height: 64)
+                Image(systemName: isShowingFABMenu ? "xmark" : "plus").font(
+                    .system(size: 24, weight: .medium)
+                ).foregroundColor(.white).frame(width: 64, height: 64)
                     .background(
                         isShowingFABMenu
                             ? Color.leapSecondary : Color.leapPrimary
-                    )
-                    .clipShape(Circle())
-                    .shadow(
+                    ).clipShape(Circle()).shadow(
                         color: (isShowingFABMenu
                             ? Color.leapSecondary : Color.leapPrimary).opacity(
                                 0.4
                             ),
                         radius: 10,
                         y: 5
-                    )
-                    .rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
+                    ).rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
             }
-        }
-        .padding(.trailing, 24)
-        .padding(.bottom, 24)
+        }.padding(.trailing, 24).padding(.bottom, 24)
     }
 
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "folder.badge.questionmark")
-                .font(.system(size: 50))
-                .foregroundColor(.gray.opacity(0.5))
-            Text("No \(selectedTab.rawValue) trips found.")
-                .font(.headline)
+            Image(systemName: "folder.badge.questionmark").font(
+                .system(size: 50)
+            ).foregroundColor(.gray.opacity(0.5))
+            Text("No \(selectedTab.rawValue) trips found.").font(.headline)
                 .foregroundColor(.gray)
-            Text("Tap the + button to create a new itinerary.")
-                .font(.subheadline)
-                .foregroundColor(.gray.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .padding(.top, 60)
+            Text("Tap the + button to create a new itinerary.").font(
+                .subheadline
+            ).foregroundColor(.gray.opacity(0.8)).multilineTextAlignment(
+                .center
+            )
+        }.padding(.top, 60)
     }
 }
 
-// MARK: - Preview Mocks
+// MARK: - TAMPILAN EDITOR DARI HALAMAN UTAMA
+struct TripsEditSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: TripsViewModel
+    let trip: Trip
+
+    @State private var title: String
+    @State private var startDate: Date
+    @State private var endDate: Date
+    @State private var coverImageUrl: String
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedUIImage: UIImage?
+
+    init(viewModel: TripsViewModel, trip: Trip) {
+        self.viewModel = viewModel
+        self.trip = trip
+        _title = State(initialValue: trip.title)
+        _startDate = State(initialValue: trip.startDate)
+        _endDate = State(initialValue: trip.endDate)
+        _coverImageUrl = State(initialValue: trip.coverImageUrl ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Trip Cover Image") {
+                    PhotosPicker(
+                        selection: $selectedPhotoItem,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        if let selectedUIImage {
+                            Image(uiImage: selectedUIImage).resizable()
+                                .scaledToFill().frame(height: 150).clipShape(
+                                    RoundedRectangle(cornerRadius: 12)
+                                )
+                        } else {
+                            HStack {
+                                Image(systemName: "photo.badge.plus").font(
+                                    .title2
+                                )
+                                Text("Upload image from phone")
+                            }.foregroundColor(.leapPrimary).padding(
+                                .vertical,
+                                8
+                            )
+                        }
+                    }
+                    .onChange(of: selectedPhotoItem) { newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(
+                                type: Data.self
+                            ), let img = UIImage(data: data) {
+                                selectedUIImage = img
+                            }
+                        }
+                    }
+                }
+                Section("Trip Information") {
+                    TextField("Trip Name", text: $title)
+                }
+                Section(
+                    footer: Text(
+                        "If you reduce the travel dates, the extra days from your itinerary will be permanently deleted."
+                    )
+                ) {
+                    DatePicker(
+                        "Start Date",
+                        selection: $startDate,
+                        displayedComponents: .date
+                    )
+                    DatePicker(
+                        "End Date",
+                        selection: $endDate,
+                        displayedComponents: .date
+                    )
+                }
+            }
+            .navigationTitle("Edit Trip").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        Task {
+                            var finalImageUrl = coverImageUrl
+                            if let selectedUIImage,
+                                let localPath = viewModel.saveImageLocally(
+                                    image: selectedUIImage
+                                )
+                            {
+                                finalImageUrl = localPath
+                            }
+                            await viewModel.updateTripDetails(
+                                trip: trip,
+                                title: title,
+                                startDate: startDate,
+                                endDate: endDate,
+                                coverImageUrl: finalImageUrl
+                            )
+                            dismiss()
+                        }
+                    }.bold()
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Preview Mocks (Disingkat agar muat)
 #if DEBUG
     private class PreviewTripRepository: TripRepositoryProtocol {
         var dummyTrips: [Trip] = []
-
         func fetchTrips(forUserID userID: String) async throws -> [Trip] {
             return dummyTrips
         }
@@ -290,7 +413,6 @@ struct TripsView: View {
         func updateTrip(_ trip: Trip, forUserID userID: String) async throws {}
         func deleteTrip(tripID: String, forUserID userID: String) async throws {
         }
-
         func fetchDayPlans(forTripID tripID: String, userID: String)
             async throws -> [DayPlan]
         { return [] }
@@ -304,10 +426,10 @@ struct TripsView: View {
             dayPlans: [DayPlan],
             userID: String
         ) async throws {}
-        
-        func deleteDayPlan(planID: String, tripID: String, userID: String) async throws {}
+        func deleteDayPlan(planID: String, tripID: String, userID: String)
+            async throws
+        {}
     }
-
     private class PreviewAuthService: AuthServiceProtocol {
         func register(email: String, password: String) async throws -> String {
             return "user1"
@@ -324,21 +446,18 @@ struct TripsView: View {
         func deleteUser(password: String) async throws {}
         func logout() throws {}
     }
-
     private class PreviewTripGenService: TripGenerationServiceProtocol {
         func generateRandomItinerary(preferences: RandomTripPreferences)
             async throws -> [DayPlan]
         { return [] }
     }
-
     #Preview("Trips View") {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"
-
         let trip1 = Trip(
             id: "1",
-            title: "Kyoto Autumn Trip",
-            locationName: "Kyoto, Japan",
+            title: "Kyoto Trip",
+            locationName: "Kyoto",
             startDate: formatter.date(from: "2026/11/10")!,
             endDate: formatter.date(from: "2026/11/18")!,
             status: .upcoming,
@@ -349,33 +468,14 @@ struct TripsView: View {
             createdAt: Date(),
             createdBy: "user1"
         )
-
-        let trip2 = Trip(
-            id: "2",
-            title: "Santorini Getaway",
-            locationName: "Santorini, Greece",
-            startDate: formatter.date(from: "2026/08/14")!,
-            endDate: formatter.date(from: "2026/08/20")!,
-            status: .upcoming,
-            coverImageUrl:
-                "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=800&auto=format&fit=crop",
-            participantIDs: ["user1"],
-            totalPlaces: 6,
-            createdAt: Date(),
-            createdBy: "user1"
-        )
-
         let previewRepo = PreviewTripRepository()
-        previewRepo.dummyTrips = [trip1, trip2]
-
+        previewRepo.dummyTrips = [trip1]
         let viewModel = TripsViewModel(
             tripRepository: previewRepo,
             authService: PreviewAuthService(),
             tripGenService: PreviewTripGenService()
         )
-
         viewModel.trips = previewRepo.dummyTrips
-
         return TripsView(viewModel: viewModel)
     }
 #endif

@@ -25,11 +25,18 @@ class TripDetailViewModel: ObservableObject {
     
     private let tripRepository: TripRepositoryProtocol
     private let authService: AuthServiceProtocol
+    private let tripGenService: TripGenerationServiceProtocol
     
-    init(trip: Trip, tripRepository: TripRepositoryProtocol = TripRepository(), authService: AuthServiceProtocol = AuthService()) {
+    init(
+        trip: Trip,
+        tripRepository: TripRepositoryProtocol = TripRepository(),
+        authService: AuthServiceProtocol = AuthService(),
+        tripGenService: TripGenerationServiceProtocol = TripGenerationService()
+    ) {
         self.trip = trip
         self.tripRepository = tripRepository
         self.authService = authService
+        self.tripGenService = tripGenService
     }
     
     // MARK: - BYPASS LOGIN UNTUK TESTING
@@ -184,4 +191,38 @@ class TripDetailViewModel: ObservableObject {
             return nil
         }
     }
+    
+    // Tambahkan fungsi ini di dalam TripDetailViewModel.swift
+    func generateRandomPlacesForTrip() {
+        isLoading = true
+        
+        // Pastikan pakai ID Bypass supaya tidak error auth
+        let userID = authService.getCurrentUserID() ?? "dummy_user_123"
+        
+        Task {
+            do {
+                // Panggil service generator
+                let preferences = RandomTripPreferences(
+                    locationName: trip.locationName,
+                    startDate: trip.startDate,
+                    endDate: trip.endDate,
+                    dailyPreferences: [DailyPreference(dayNumber: 1, meals: 0, places: 5)] // Sesuaikan preferensi
+                )
+                
+                let newDayPlans = try await tripGenService.generateRandomItinerary(preferences: preferences)
+                
+                // Simpan ke Firebase
+                for plan in newDayPlans {
+                    try await tripRepository.saveDayPlan(plan, forTripID: trip.id ?? "", userID: userID)
+                }
+                
+                // Refresh UI setelah selesai
+                loadDayPlans()
+            } catch {
+                print("Gagal generate: \(error.localizedDescription)")
+            }
+            isLoading = false
+        }
+    }
 }
+
