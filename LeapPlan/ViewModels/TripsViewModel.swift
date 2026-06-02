@@ -19,17 +19,14 @@ class TripsViewModel: ObservableObject {
     private let authService: AuthServiceProtocol
     private let tripGenService: TripGenerationServiceProtocol
     
-    init(
-        tripRepository: TripRepositoryProtocol? = nil,
-        authService: AuthServiceProtocol? = nil,
-        tripGenService: TripGenerationServiceProtocol? = nil
-    ) {
+    init(tripRepository: TripRepositoryProtocol? = nil,
+         authService: AuthServiceProtocol? = nil,
+         tripGenService: TripGenerationServiceProtocol? = nil) {
         self.tripRepository = tripRepository ?? TripRepository()
         self.authService = authService ?? AuthService()
         self.tripGenService = tripGenService ?? TripGenerationService()
     }
     
-    // BYPASS LOGIN
     private var activeUserID: String {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
@@ -41,6 +38,50 @@ class TripsViewModel: ObservableObject {
             do { self.trips = try await tripRepository.fetchTrips(forUserID: userID); self.isLoading = false }
             catch { self.errorMessage = error.localizedDescription; self.isLoading = false }
         }
+    }
+    
+    // MARK: - BARU: FITUR TAMBAH TEMPAT DARI SEARCH TAB KE ITINERARY BATCH & MULTI-DAY
+    func addPlaceToTrip(place: FSQPlace, targetTrip: Trip, selectedDays: Set<Int>) async {
+        guard let tripID = targetTrip.id else { return }
+        let userID = activeUserID
+        isLoading = true
+        
+        do {
+            // 1. Tarik semua DayPlan yang ada di Trip tersebut dari Firebase
+            let existingPlans = try await tripRepository.fetchDayPlans(forTripID: tripID, userID: userID)
+            
+            // 2. Loop untuk menyisipkan ke setiap hari yang di-checklist oleh user
+            for dayNum in selectedDays {
+                if let targetPlanIndex = existingPlans.firstIndex(where: { $0.dayNumber == dayNum }) {
+                    var updatedPlan = existingPlans[targetPlanIndex]
+                    
+                    // Hitung urutan indeks paling bawah
+                    let nextIndex = updatedPlan.destinations.count
+                    
+                    // Ubah data Foursquare menjadi format TripDestination aplikasi kita
+                    let newDestination = TripDestination(
+                        id: UUID().uuidString,
+                        name: place.name,
+                        category: "Objek Wisata",
+                        foursquareID: place.fsq_place_id,
+                        latitude: place.latitude ?? -7.2504,
+                        longitude: place.longitude ?? 112.7688,
+                        orderIndex: nextIndex,
+                        stayDurationMinutes: 120, // Default 2 Jam kunjung
+                        transitTimeToNextMinutes: 15
+                    )
+                    
+                    updatedPlan.destinations.append(newDestination)
+                    
+                    // 3. Simpan perubahan kembali ke Firebase
+                    try await tripRepository.saveDayPlan(updatedPlan, forTripID: tripID, userID: userID)
+                }
+            }
+            loadUserTrips() // Refresh UI data lokal
+        } catch {
+            print("Gagal menambahkan destinasi: \(error.localizedDescription)")
+        }
+        isLoading = false
     }
     
     func createManualTrip(title: String, location: String, start: Date, end: Date) {
@@ -61,14 +102,13 @@ class TripsViewModel: ObservableObject {
         return newTrip
     }
     
-    // MARK: - FITUR BARU: DELETE TRIP
     func deleteTrip(tripID: String) {
         let userID = activeUserID
         isLoading = true
         Task {
             do {
                 try await tripRepository.deleteTrip(tripID: tripID, forUserID: userID)
-                await MainActor.run { self.loadUserTrips() } // Refresh UI langsung
+                await MainActor.run { self.loadUserTrips() }
             } catch {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
@@ -76,7 +116,6 @@ class TripsViewModel: ObservableObject {
         }
     }
     
-    // MARK: - FITUR BARU: EDIT TRIP (DARI HALAMAN DEPAN)
     func updateTripDetails(trip: Trip, title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
         isLoading = true
         var updatedTrip = trip
@@ -90,12 +129,9 @@ class TripsViewModel: ObservableObject {
         
         do {
             try await tripRepository.updateTrip(updatedTrip, forUserID: userID)
-            
-            // Hitung logika penambahan/pengurangan hari
             let calendar = Calendar.current
             let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate), to: calendar.startOfDay(for: endDate))
             let totalDays = max(1, (components.day ?? 0) + 1)
-            
             let existingDayPlans = try await tripRepository.fetchDayPlans(forTripID: tripID, userID: userID)
             
             if existingDayPlans.count > totalDays {
@@ -112,10 +148,8 @@ class TripsViewModel: ObservableObject {
                     try await tripRepository.saveDayPlan(newPlan, forTripID: tripID, userID: userID)
                 }
             }
-            
-            await MainActor.run { self.loadUserTrips() } // Refresh UI
+            await MainActor.run { self.loadUserTrips() }
         } catch {
-            print("Error updating trip: \(error.localizedDescription)")
             self.errorMessage = error.localizedDescription
             self.isLoading = false
         }
@@ -129,7 +163,6 @@ class TripsViewModel: ObservableObject {
             try data.write(to: url)
             return url.absoluteString
         } catch {
-            print("Gagal save gambar: \(error)")
             return nil
         }
     }

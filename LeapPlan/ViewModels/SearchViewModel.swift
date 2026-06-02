@@ -20,9 +20,6 @@ class SearchViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    // State baru untuk mengontrol Sheet Add to Itinerary
-    @Published var isShowingAddToItinerary: Bool = false
-    
     @Published var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
@@ -36,8 +33,8 @@ class SearchViewModel: ObservableObject {
          locationService: LocationServiceProtocol? = nil) {
         self.fourSquareService = fourSquareService ?? FourSquareService()
         self.locationService = locationService ?? LocationService()
-        
         setupLiveSearch()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.centerToCurrentLocation()
         }
@@ -72,7 +69,9 @@ class SearchViewModel: ObservableObject {
         Task {
             do {
                 let results = try await fourSquareService.searchPlaces(
-                    query: searchQuery, latitude: searchLatitude, longitude: searchLongitude
+                    query: searchQuery,
+                    latitude: searchLatitude,
+                    longitude: searchLongitude
                 )
                 self.searchResults = results
                 self.isLoading = false
@@ -86,12 +85,7 @@ class SearchViewModel: ObservableObject {
     func selectPlace(_ place: FSQPlace, isFromAppleMap: Bool = false) {
         self.selectedPlace = place
         self.searchQuery = place.name
-        
-        if isFromAppleMap {
-            self.displayedPins = []
-        } else {
-            self.displayedPins = [place]
-        }
+        self.displayedPins = isFromAppleMap ? [] : [place]
         
         self.cameraPosition = .region(MKCoordinateRegion(
             center: place.coordinate,
@@ -108,23 +102,22 @@ class SearchViewModel: ObservableObject {
         ))
     }
     
-    // MARK: - DIPINDAH DARI VIEW (Business Logic & Data Formatting)
-    
-    func handleAppleMapFeatureClick(title: String?, coordinate: CLLocationCoordinate2D) {
+    // MARK: - PEMINDAHAN HELPER LOGIC DARI VIEW (CLEAN CODE)
+    func handleAppleMapFeatureClick(_ feature: MapFeature) {
         let tempPlace = FSQPlace(
             fsq_place_id: UUID().uuidString,
-            name: title ?? "Selected Location",
+            name: feature.title ?? "Selected Location",
             distance: 0,
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude,
+            latitude: feature.coordinate.latitude,
+            longitude: feature.coordinate.longitude,
             location: FSQLocation(locality: nil, country: nil),
             rating: nil,
             stats: nil
         )
-        self.selectPlace(tempPlace, isFromAppleMap: true)
+        selectPlace(tempPlace, isFromAppleMap: true)
     }
     
-    func getIconForCategory(_ name: String) -> String {
+    func getIconForCategory(name: String) -> String {
         let lowerName = name.lowercased()
         if lowerName.contains("apotek") || lowerName.contains("hospital") || lowerName.contains("rs ") || lowerName.contains("rumah sakit") { return "cross.case.fill" }
         if lowerName.contains("kopi") || lowerName.contains("cafe") || lowerName.contains("seafood") || lowerName.contains("makan") || lowerName.contains("resto") { return "cup.and.saucer.fill" }
