@@ -1,3 +1,18 @@
+//
+//  FSQResponse 2.swift
+//  LeapPlan
+//
+//  Created by Wesley Goey on 02/06/26.
+//
+
+
+//
+//  FSQPlace.swift
+//  LeapPlan
+//
+//  Created by Wesley Goey on 02/06/26.
+//
+
 import Foundation
 import CoreLocation
 
@@ -5,18 +20,16 @@ import CoreLocation
 struct FSQResponse: Codable {
     let results: [FSQPlace]
 }
-<<<<<<< HEAD
-=======
 
 // MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
     let fsq_place_id: String  // ID Format Baru Foursquare
     let name: String
     let distance: Int?
-    let latitude: Double?     // Koordinat Format Baru Foursquare
+    let latitude: Double?     // Koordinat Format Baru
     let longitude: Double?
     
-    // 3 VARIABEL BARU UNTUK UI DINAMIS
+    // 3 Variabel Tambahan untuk UI Dinamis
     let location: FSQLocation?
     let rating: Double?
     let stats: FSQStats?
@@ -26,12 +39,15 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {
         return lhs.fsq_place_id == rhs.fsq_place_id
     }
+    
+    // PENTING: Jika API JSON dari Foursquare tidak "flat" (misal: latitude ada di dalam geocodes),
+    // kamu harus menambahkan CodingKeys di sini.
 }
 
-// MARK: - Struct Tambahan untuk Parsing JSON
+// MARK: - Helper Structs
 struct FSQLocation: Codable {
-    let locality: String? // Menyimpan Nama Kota
-    let country: String?  // Menyimpan Nama Negara
+    let locality: String? // Nama Kota
+    let country: String?  // Nama Negara
 }
 
 struct FSQStats: Codable {
@@ -47,4 +63,3 @@ extension FSQPlace {
         )
     }
 }
->>>>>>> main
