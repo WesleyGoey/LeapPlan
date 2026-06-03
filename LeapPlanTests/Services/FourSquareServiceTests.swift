@@ -26,7 +26,8 @@ final class FourSquareServiceTests: XCTestCase {
         super.tearDown()
     }
 
-    func testFetchTrendingPlaces_ShouldCallRepo() async throws {
+    // MARK: - Test Trending Places
+    func testFetchTrendingPlaces() async throws {
         mockRepo.mockPlaces = [
             FSQPlace(
                 fsq_place_id: "1",
@@ -63,18 +64,19 @@ final class FourSquareServiceTests: XCTestCase {
         )
     }
 
-    // MARK: - Test Semua Fungsi
-
-    func testFetchTrendingPlaces_AttachesPhotosCorrectly() async throws {
+    // MARK: - Test Attach Photos
+    func testFetchTrendingPlaces_WithPhotoAttachment() async throws {
         mockRepo.mockPlaces = [createDummyPlace(id: "1")]
         mockRepo.mockPhotoURL = "https://test.com/photo.jpg"
 
         let results = try await service.fetchTrendingPlaces(city: "Jakarta")
 
         XCTAssertTrue(mockRepo.didCallFetchPlaces)
-        XCTAssertEqual(results.first?.imageURL, "https://test.com/photo.jpg")
+        let imageURL1 = await MainActor.run { results.first?.imageURL }
+        XCTAssertEqual(imageURL1, "https://test.com/photo.jpg")
     }
 
+    // MARK: - Test Attach Photos for Search
     func testSearchPlaces_AttachesPhotosCorrectly() async throws {
         mockRepo.mockPlaces = [createDummyPlace(id: "2")]
         mockRepo.mockPhotoURL = "https://test.com/search.jpg"
@@ -86,9 +88,11 @@ final class FourSquareServiceTests: XCTestCase {
         )
 
         XCTAssertTrue(mockRepo.didCallSearchPlaces)
-        XCTAssertEqual(results.first?.imageURL, "https://test.com/search.jpg")
+        let imageURL2 = await MainActor.run { results.first?.imageURL }
+        XCTAssertEqual(imageURL2, "https://test.com/search.jpg")
     }
 
+    // MARK: - Test Attach Photos for Other Methods
     func testFetchPlaces_AttachesPhotosCorrectly() async throws {
         mockRepo.mockPlaces = [createDummyPlace(id: "3")]
         mockRepo.mockPhotoURL = "https://test.com/fetch.jpg"
@@ -100,9 +104,11 @@ final class FourSquareServiceTests: XCTestCase {
         )
 
         XCTAssertTrue(mockRepo.didCallFetchPlaces)
-        XCTAssertEqual(results.first?.imageURL, "https://test.com/fetch.jpg")
+        let imageURL3 = await MainActor.run { results.first?.imageURL }
+        XCTAssertEqual(imageURL3, "https://test.com/fetch.jpg")
     }
 
+    // MARK: - Test Attach Photos for City Search
     func testSearchPlacesByCity_AttachesPhotosCorrectly() async throws {
         mockRepo.mockPlaces = [createDummyPlace(id: "4")]
         mockRepo.mockPhotoURL = "https://test.com/city.jpg"
@@ -114,22 +120,25 @@ final class FourSquareServiceTests: XCTestCase {
         )
 
         XCTAssertTrue(mockRepo.didCallSearchPlacesByCity)
-        XCTAssertEqual(results.first?.imageURL, "https://test.com/city.jpg")
+        let imageURL4 = await MainActor.run { results.first?.imageURL }
+        XCTAssertEqual(imageURL4, "https://test.com/city.jpg")
     }
 
+    // MARK: - Test No Photo Attachment for Autocomplete
     func testAutocomplete_DoesNotAttachPhotos() async throws {
-        // Autocomplete tidak pakai TaskGroup attachPhotos, jadi harus nil
         mockRepo.mockPlaces = [createDummyPlace(id: "5")]
 
         let results = try await service.autocompleteLocation(query: "Sura")
 
         XCTAssertTrue(mockRepo.didCallAutocompleteLocation)
+        let imageURL5 = await MainActor.run { results.first?.imageURL }
         XCTAssertNil(
-            results.first?.imageURL,
+            imageURL5,
             "Autocomplete tidak boleh ada imageURL"
         )
     }
 
+    // MARK: - Test Error Propagation
     func testService_ErrorPropagation() async {
         mockRepo.shouldThrowError = true
 
@@ -141,3 +150,4 @@ final class FourSquareServiceTests: XCTestCase {
         }
     }
 }
+

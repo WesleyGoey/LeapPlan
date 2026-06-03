@@ -13,21 +13,17 @@ import XCTest
 final class AuthServiceIntegrationTests: XCTestCase {
 
     var authService: AuthService!
-    var mockAuthRepo: MockAuthRepository!  // Kita pakai mock untuk repo agar tidak menyimpan data ke Firestore asli
+    var mockAuthRepo: MockAuthRepository!
 
     override func setUp() {
         super.setUp()
 
-        // 1. Inisialisasi Mock Repository
         mockAuthRepo = MockAuthRepository()
 
-        // 2. Inisialisasi AuthService ASLI tanpa mengubah kodenya
-        // Kita inject mockAuthRepo agar kalaupun ada operasi database, dia tidak nyasar ke database asli
         authService = AuthService(authRepo: mockAuthRepo)
     }
 
     override func tearDown() {
-        // Logout jika masih ada sisa sesi dari test sebelumnya
         try? Auth.auth().signOut()
 
         authService = nil
@@ -35,13 +31,11 @@ final class AuthServiceIntegrationTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Test 1: Skenario Gagal (Paling Aman)
+    // MARK: - Test Login With Invalid Credentials
     func testLogin_WithInvalidCredentials_ShouldFail() async {
-        // Arrange
         let fakeEmail = "user_ngasal_123@leapplan.com"
         let fakePassword = "wrongpassword"
 
-        // Act & Assert
         do {
             _ = try await authService.login(
                 email: fakeEmail,
@@ -51,57 +45,51 @@ final class AuthServiceIntegrationTests: XCTestCase {
                 "Test harusnya gagal dan masuk ke block catch, karena akun tidak ada di Firebase."
             )
         } catch {
-            // Karena error, kita pastikan state isLoggedIn tetap false
+            let isLoggedIn = await MainActor.run { authService.isLoggedIn }
             XCTAssertFalse(
-                authService.isLoggedIn,
+                isLoggedIn,
                 "State isLoggedIn harus tetap false jika login gagal."
             )
         }
     }
 
-    // MARK: - Test 2: Skenario Sukses (Butuh Akun Asli di Firebase)
+    // MARK: - Test Login With Valid Credentials
     func testLogin() async throws {
-        // Arrange
-        // PENTING: Anda harus membuat akun ini secara manual di Firebase Console Anda
         let validEmail = "sean@gmail.com"
         let validPassword = "12345678"
 
-        // Act
         let uid = try await authService.login(
             email: validEmail,
             password: validPassword
         )
 
-        // Beri jeda 0.5 detik karena listener Auth.auth().addStateDidChangeListener
-        // di AuthService berjalan secara asynchronous di Main Thread
         try await Task.sleep(nanoseconds: 500_000_000)
 
-        // Assert
         XCTAssertNotNil(uid, "UID tidak boleh kosong dari Firebase.")
+        let isLoggedInAfterLogin = await MainActor.run { authService.isLoggedIn }
         XCTAssertTrue(
-            authService.isLoggedIn,
+            isLoggedInAfterLogin,
             "State isLoggedIn harus berubah menjadi true setelah login berhasil."
         )
+        let currentUID = await MainActor.run { authService.getCurrentUserID() }
         XCTAssertEqual(
-            authService.getCurrentUserID(),
+            currentUID,
             uid,
             "UID yang direturn harus sama dengan CurrentUserID."
         )
 
-        // Clean Up (Logout agar tidak mengganggu test lain)
-        try authService.logout()
+        try await authService.logout()
 
-        // Tunggu sebentar untuk proses logout
         try await Task.sleep(nanoseconds: 500_000_000)
+        let isLoggedInAfterLogout = await MainActor.run { authService.isLoggedIn }
         XCTAssertFalse(
-            authService.isLoggedIn,
+            isLoggedInAfterLogout,
             "State isLoggedIn harus kembali false setelah logout."
         )
     }
 
-    // MARK: - Test 3: Uji Logout secara Eksplisit
+    // MARK: - Test Logout
     func testLogout() async throws {
-        // Arrange: Login terlebih dahulu
         let validEmail = "sean@gmail.com"
         let validPassword = "12345678"
         _ = try await authService.login(
@@ -109,47 +97,44 @@ final class AuthServiceIntegrationTests: XCTestCase {
             password: validPassword
         )
         try await Task.sleep(nanoseconds: 500_000_000)
+        let isLoggedInPreLogout = await MainActor.run { authService.isLoggedIn }
         XCTAssertTrue(
-            authService.isLoggedIn,
+            isLoggedInPreLogout,
             "Harus login terlebih dahulu sebelum bisa test logout"
         )
 
-        // Act: Lakukan Logout
-        try authService.logout()
+        try await authService.logout()
         try await Task.sleep(nanoseconds: 500_000_000)
 
-        // Assert: Pastikan semuanya bersih
+        let isLoggedInPostLogout = await MainActor.run { authService.isLoggedIn }
         XCTAssertFalse(
-            authService.isLoggedIn,
+            isLoggedInPostLogout,
             "isLoggedIn harus bernilai false"
         )
+        let currentUIDAfterLogout = await MainActor.run { authService.getCurrentUserID() }
         XCTAssertNil(
-            authService.getCurrentUserID(),
+            currentUIDAfterLogout,
             "Current UID harus kosong setelah logout"
         )
     }
 
-    // MARK: - Test 4: Uji Siklus Penuh (Register -> Update Password -> Delete)
-    // Test ini akan membuat akun random, mengujinya, lalu menghapusnya agar database tetap bersih.
+    // MARK: - Test Register, Update Password, and Delete User
     func test_Register_Update_Delete() async throws {
-        // 1. Arrange (Siapkan Email & Password Acak)
         let randomString = UUID().uuidString.prefix(8)
         let randomEmail = "user_\(randomString)@leapplan.com"
         let initialPassword = "password123"
         let updatedPassword = "newpassword123"
 
-        // ==========================================
-        // ACT & ASSERT 1: REGISTER
-        // ==========================================
         let uid = try await authService.register(
             email: randomEmail,
             password: initialPassword
         )
-        try await Task.sleep(nanoseconds: 500_000_000)  // Tunggu sinkronisasi
+        try await Task.sleep(nanoseconds: 500_000_000)
 
         XCTAssertNotNil(uid, "Register harus mengembalikan UID yang valid")
+        let isLoggedInAfterRegister = await MainActor.run { authService.isLoggedIn }
         XCTAssertTrue(
-            authService.isLoggedIn,
+            isLoggedInAfterRegister,
             "isLoggedIn harus true setelah register"
         )
 
@@ -162,13 +147,16 @@ final class AuthServiceIntegrationTests: XCTestCase {
         try await authService.deleteUser(password: updatedPassword)
         try await Task.sleep(nanoseconds: 500_000_000)
 
+        let isLoggedInAfterDelete = await MainActor.run { authService.isLoggedIn }
         XCTAssertFalse(
-            authService.isLoggedIn,
+            isLoggedInAfterDelete,
             "State isLoggedIn harus kembali false setelah user dihapus"
         )
+        let currentUIDAfterDelete = await MainActor.run { authService.getCurrentUserID() }
         XCTAssertNil(
-            authService.getCurrentUserID(),
+            currentUIDAfterDelete,
             "UID harus nil karena user sudah tidak ada di database"
         )
     }
 }
+

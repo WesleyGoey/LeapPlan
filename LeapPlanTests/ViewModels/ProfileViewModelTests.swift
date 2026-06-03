@@ -38,10 +38,8 @@ final class ProfileViewModelTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Test Cases
-
-    func testLoadProfile_Success_CalculatesStats() async {
-        // Arrange
+    // MARK: - Test Load Profile
+    func testLoadProfile() async {
         let user = User(
             id: "u1",
             email: "test@test.com",
@@ -65,63 +63,54 @@ final class ProfileViewModelTests: XCTestCase {
         )
         mockFirestoreRepo.mockTrips = ["u1": [trip1]]
 
-        // Act
         viewModel.loadProfile()
 
-        // Tunggu sebentar karena loadProfile menggunakan Task (asynchronous)
         try? await Task.sleep(nanoseconds: 100_000_000)
 
-        // Assert
         XCTAssertEqual(viewModel.currentUser?.id, "u1")
         XCTAssertEqual(viewModel.totalTripsCount, 1)
         XCTAssertEqual(viewModel.upcomingTripsCount, 1)
         XCTAssertFalse(viewModel.isLoading)
     }
 
-    func testLogin_Success() async {
-        // Arrange
+    // MARK: - Test Login & Register
+    func testLogin() async {
         viewModel.authEmail = "test@test.com"
         viewModel.authPassword = "password123"
 
-        // Act
         let result = await viewModel.login()
 
-        // Assert
         XCTAssertTrue(result)
         XCTAssertTrue(mockAuthService.didCallLogin)
         XCTAssertNil(viewModel.errorMessage)
     }
 
-    func testRegister_Success() async {
-        // Arrange
+    // MARK: - Test Register
+    func testRegister() async {
         viewModel.authEmail = "new@test.com"
         viewModel.authPassword = "password123"
         viewModel.authFullName = "New User"
 
-        // Act
         let result = await viewModel.register()
 
-        // Assert
         XCTAssertTrue(result)
         XCTAssertTrue(mockAuthService.didCallRegister)
         XCTAssertTrue(mockAuthRepo.didCallSaveUser)
     }
 
-    func testLogout_ResetsState() {
-        // Arrange
+    // MARK: - Test Logout
+    func testLogout() {
         viewModel.totalTripsCount = 10
 
-        // Act
         viewModel.logout()
 
-        // Assert
         XCTAssertNil(viewModel.currentUser)
         XCTAssertEqual(viewModel.totalTripsCount, 0)
         XCTAssertTrue(mockAuthService.didCallLogout)
     }
 
+    // MARK: - Test Save Edited Profile if Email Changed but Password Empty
     func testSaveEditedProfile_RequiresPasswordForEmailChange() async {
-        // Arrange
         viewModel.currentUser = User(
             id: "u1",
             email: "old@test.com",
@@ -129,13 +118,11 @@ final class ProfileViewModelTests: XCTestCase {
             profileImageUrl: nil,
             joinedDate: Date()
         )
-        viewModel.editEmail = "new@test.com"  // Email diubah
-        viewModel.currentPassword = ""  // Password dikosongkan (salah)
+        viewModel.editEmail = "new@test.com"
+        viewModel.currentPassword = ""
 
-        // Act
         let result = await viewModel.saveEditedProfile(selectedImage: nil)
 
-        // Assert
         XCTAssertFalse(result)
         XCTAssertNotNil(
             viewModel.errorMessage,
@@ -143,8 +130,8 @@ final class ProfileViewModelTests: XCTestCase {
         )
     }
 
+    // MARK: - Test Save Edited Profile Success
     func testSaveEditedProfile_Success() async {
-        // Arrange
         let oldEmail = "old@test.com"
         viewModel.currentUser = User(
             id: "u1",
@@ -154,14 +141,11 @@ final class ProfileViewModelTests: XCTestCase {
             joinedDate: Date()
         )
 
-        // PERBAIKAN: Set editEmail supaya tidak dianggap sedang ganti email
         viewModel.editEmail = oldEmail
         viewModel.editFullName = "New Name"
 
-        // Act
         let result = await viewModel.saveEditedProfile(selectedImage: nil)
 
-        // Assert
         XCTAssertTrue(result)
         XCTAssertEqual(viewModel.currentUser?.fullName, "New Name")
         XCTAssertTrue(mockAuthRepo.didCallUpdateUser)

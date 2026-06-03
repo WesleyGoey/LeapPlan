@@ -9,6 +9,7 @@ import XCTest
 
 @testable import LeapPlan
 
+@MainActor
 final class FirestoreRepositoryTests: XCTestCase {
 
     var mockRepo: MockFirestoreRepository!
@@ -59,17 +60,19 @@ final class FirestoreRepositoryTests: XCTestCase {
         var trip = createDummyTrip()
         try await mockRepo.createTrip(trip, forUserID: testUserID)
 
-        trip.title = "Updated Name"
+        await MainActor.run {
+            trip.title = "Updated Name"
+        }
         try await mockRepo.updateTrip(trip, forUserID: testUserID)
 
-        XCTAssertEqual(
-            mockRepo.mockTrips[testUserID]?.first?.title,
-            "Updated Name"
-        )
+        let updatedTitle: String? = await MainActor.run {
+            mockRepo.mockTrips[testUserID]?.first?.title
+        }
+        XCTAssertEqual(updatedTitle, "Updated Name")
     }
 
     // MARK: - Test Delete Trip
-    func testDeleteTrip_RemovesData() async throws {
+    func testDeleteTrip() async throws {
         let trip = createDummyTrip()
         try await mockRepo.createTrip(trip, forUserID: testUserID)
 

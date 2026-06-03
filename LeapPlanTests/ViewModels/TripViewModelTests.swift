@@ -6,18 +6,19 @@
 //
 
 import XCTest
+
 @testable import LeapPlan
 
 @MainActor
 final class TripViewModelTests: XCTestCase {
-    
+
     var viewModel: TripViewModel!
     var mockFirestoreRepo: MockFirestoreRepository!
     var mockAuthService: MockAuthService!
     var mockTripService: MockTripService!
     var mockFourSquare: MockFourSquareService!
     var mockTripDestService: MockTripDestinationService!
-    
+
     override func setUp() {
         super.setUp()
         mockFirestoreRepo = MockFirestoreRepository()
@@ -25,7 +26,7 @@ final class TripViewModelTests: XCTestCase {
         mockTripService = MockTripService()
         mockFourSquare = MockFourSquareService()
         mockTripDestService = MockTripDestinationService()
-        
+
         viewModel = TripViewModel(
             firestoreRepo: mockFirestoreRepo,
             authService: mockAuthService,
@@ -34,7 +35,7 @@ final class TripViewModelTests: XCTestCase {
             tripDestinationService: mockTripDestService
         )
     }
-    
+
     override func tearDown() {
         viewModel = nil
         mockFirestoreRepo = nil
@@ -44,73 +45,104 @@ final class TripViewModelTests: XCTestCase {
         mockTripDestService = nil
         super.tearDown()
     }
-    
-    // MARK: - Test Cases
-    
-    func testLoadUserTrips_PopulatesTrips() async {
-        // Arrange
+
+    // MARK: - Test Load User Trips
+    func testLoadUserTrips() async {
         mockAuthService.isLoggedIn = true
-        let trip = Trip(id: "t1", title: "Bali", locationName: "Bali", startDate: Date(), endDate: Date(), status: .upcoming, participantIDs: [], createdAt: Date(), createdBy: "u1")
+        let trip = Trip(
+            id: "t1",
+            title: "Bali",
+            locationName: "Bali",
+            startDate: Date(),
+            endDate: Date(),
+            status: .upcoming,
+            participantIDs: [],
+            createdAt: Date(),
+            createdBy: "u1"
+        )
         mockFirestoreRepo.mockTrips = ["user_123": [trip]]
-        
-        // Act
+
         viewModel.loadUserTrips()
         try? await Task.sleep(nanoseconds: 100_000_000)
-        
-        // Assert
+
         XCTAssertEqual(viewModel.trips.count, 1)
         XCTAssertTrue(mockFirestoreRepo.didCallFetchTrips)
     }
-    
-    func testDeleteTrip_CallsRepo() async {
-        // Act
+
+    // MARK: - Test Delete Trip
+    func testDeleteTrip() async {
         viewModel.deleteTrip(tripID: "t1")
         try? await Task.sleep(nanoseconds: 100_000_000)
-        
-        // Assert
+
         XCTAssertTrue(mockFirestoreRepo.didCallDeleteTrip)
     }
-    
-    func testGenerateRandomTrip_CallsServiceAndSaves() async throws {
-        // Arrange
+
+    // MARK: - Test Generate Random Trip
+    func testGenerateRandomTrip() async throws {
         viewModel.destinationForm = "Bali"
-        let dayPlan = DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [])
+        let dayPlan = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: []
+        )
         mockTripService.mockDayPlans = [dayPlan]
-        
-        // Act
+
         _ = try await viewModel.generateRandomTrip()
-        
-        // Assert
+
         XCTAssertTrue(mockTripService.didCallGenerate)
         XCTAssertTrue(mockFirestoreRepo.didCallSaveGeneratedTrip)
     }
-    
-    func testTogglePlaceInDay_CallsService() async {
-        // Arrange
-        let trip = Trip(id: "t1", title: "Bali", locationName: "Bali", startDate: Date(), endDate: Date(), status: .upcoming, participantIDs: [], createdAt: Date(), createdBy: "u1")
-        let place = FSQPlace(fsq_place_id: "p1", name: "Beach", distance: 0, latitude: 0, longitude: 0, location: nil, rating: 5, stats: nil)
-        
-        // Act: Add
-        await viewModel.togglePlaceInDay(place: place, trip: trip, dayNum: 1, isAdding: true)
-        
-        // Assert
+
+    // MARK: - Test Toggle Place in Day
+    func testTogglePlaceInDay() async {
+        let trip = Trip(
+            id: "t1",
+            title: "Bali",
+            locationName: "Bali",
+            startDate: Date(),
+            endDate: Date(),
+            status: .upcoming,
+            participantIDs: [],
+            createdAt: Date(),
+            createdBy: "u1"
+        )
+        let place = FSQPlace(
+            fsq_place_id: "p1",
+            name: "Beach",
+            distance: 0,
+            latitude: 0,
+            longitude: 0,
+            location: nil,
+            rating: 5,
+            stats: nil
+        )
+
+        await viewModel.togglePlaceInDay(
+            place: place,
+            trip: trip,
+            dayNum: 1,
+            isAdding: true
+        )
+
         XCTAssertTrue(mockTripDestService.didCallAddPlace)
-        
-        // Act: Remove
-        await viewModel.togglePlaceInDay(place: place, trip: trip, dayNum: 1, isAdding: false)
-        
-        // Assert
+
+        await viewModel.togglePlaceInDay(
+            place: place,
+            trip: trip,
+            dayNum: 1,
+            isAdding: false
+        )
+
         XCTAssertTrue(mockTripDestService.didCallRemovePlace)
     }
-    
+
+    // MARK: - Test Create Manual Trip
     func testCreateManualTrip_SavesTrip() async throws {
-        // Arrange
         viewModel.destinationForm = "Bali"
-        
-        // Act
+
         _ = try await viewModel.createManualTrip()
-        
-        // Assert
+
         XCTAssertTrue(mockFirestoreRepo.didCallSaveGeneratedTrip)
     }
 }

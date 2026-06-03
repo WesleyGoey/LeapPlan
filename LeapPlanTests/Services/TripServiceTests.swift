@@ -36,7 +36,6 @@ final class TripServiceTests: XCTestCase {
     // MARK: - Test Cases
 
     func testGenerateRandomItinerary_FiltersInvalidPlaces() async throws {
-        // Arrange: Kita buat daftar tempat yang mengandung kata terlarang (toko, cafe, dll)
         let rawPlaces = [
             FSQPlace(
                 fsq_place_id: "1",
@@ -75,7 +74,9 @@ final class TripServiceTests: XCTestCase {
             locationName: "Surabaya",
             startDate: Date(),
             endDate: Date().addingTimeInterval(86400 * 3),
-            dailyPreferences: [DailyPreference(dayNumber: 1, meals: 1, places: 1)]
+            dailyPreferences: [
+                DailyPreference(dayNumber: 1, meals: 1, places: 1)
+            ]
         )
 
         // Act
@@ -85,8 +86,14 @@ final class TripServiceTests: XCTestCase {
 
         // Assert
         // Seharusnya hanya "Pantai Indah" yang tersisa (count 1)
-        XCTAssertEqual(result.first?.destinations.count, 1)
-        XCTAssertEqual(result.first?.destinations.first?.name, "Pantai Indah")
+        let firstDestinationsCount: Int = await MainActor.run {
+            result.first?.destinations.count ?? 0
+        }
+        let firstDestinationName: String? = await MainActor.run {
+            result.first?.destinations.first?.name
+        }
+        XCTAssertEqual(firstDestinationsCount, 1)
+        XCTAssertEqual(firstDestinationName, "Pantai Indah")
     }
 
     func testGenerateRandomItinerary_CreatesCorrectStructure() async throws {
@@ -108,8 +115,8 @@ final class TripServiceTests: XCTestCase {
             startDate: Date(),
             endDate: Date().addingTimeInterval(86400 * 3),
             dailyPreferences: [
-                DailyPreference(dayNumber: 1,meals: 1, places: 1),
-                DailyPreference(dayNumber: 2,meals: 3, places: 0)
+                DailyPreference(dayNumber: 1, meals: 1, places: 1),
+                DailyPreference(dayNumber: 2, meals: 3, places: 0),
             ]
         )
 
@@ -120,10 +127,15 @@ final class TripServiceTests: XCTestCase {
 
         // Assert
         XCTAssertEqual(result.count, 2, "Harus menghasilkan 2 hari perjalanan")
-        XCTAssertEqual(result[0].dayNumber, 1)
-        XCTAssertEqual(result[1].dayNumber, 2)
+        let firstDayNumber: Int = await MainActor.run { result[0].dayNumber }
+        let secondDayNumber: Int = await MainActor.run { result[1].dayNumber }
+        XCTAssertEqual(firstDayNumber, 1)
+        XCTAssertEqual(secondDayNumber, 2)
+        let isSecondDayDestinationsEmpty: Bool = await MainActor.run {
+            result[1].destinations.isEmpty
+        }
         XCTAssertTrue(
-            result[1].destinations.isEmpty,
+            isSecondDayDestinationsEmpty,
             "Hari kedua seharusnya tidak ada destinasi sesuai prefs"
         )
     }

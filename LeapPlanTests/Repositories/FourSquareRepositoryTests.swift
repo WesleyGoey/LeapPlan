@@ -37,30 +37,27 @@ final class FourSquareRepositoryTests: XCTestCase {
         )
     }
 
-    // MARK: - Test Cases
+    // MARK: - Test Search Places
     func testSearchPlaces_Success() async throws {
-        // Arrange
         let place = createDummyPlace()
         mockRepo.mockPlaces = [place]
 
-        // Act
         let results = try await mockRepo.searchPlaces(
             query: "Test",
             latitude: 0,
             longitude: 0
         )
 
-        // Assert
         XCTAssertTrue(mockRepo.didCallSearchPlaces)
         XCTAssertEqual(results.count, 1)
-        XCTAssertEqual(results.first?.name, "Test Place")
+        let firstName: String? = await MainActor.run { results.first?.name }
+        XCTAssertEqual(firstName, "Test Place")
     }
 
-    func testSearchPlaces_Failure() async {
-        // Arrange
+    // MARK: - Test Search Places Fail
+    func testSearchPlaces_Fail() async {
         mockRepo.shouldThrowError = true
 
-        // Act & Assert
         do {
             _ = try await mockRepo.searchPlaces(
                 query: "Test",
@@ -71,20 +68,18 @@ final class FourSquareRepositoryTests: XCTestCase {
         } catch {
             print(
                 "DEBUG: Catch block reached. didCallSearchPlaces = \(mockRepo.didCallSearchPlaces)"
-            )  
+            )
             XCTAssertTrue(error is MockFourSquareRepository.MockError)
             XCTAssertTrue(mockRepo.didCallSearchPlaces)
         }
     }
 
+    // MARK: - Test Fetch Photos
     func testFetchPhotos_Success() async throws {
-        // Arrange
         mockRepo.mockPhotoURL = "https://image.url"
 
-        // Act
         let url = try await mockRepo.fetchPlacePhotos(id: "123")
 
-        // Assert
         XCTAssertEqual(url, "https://image.url")
     }
 }

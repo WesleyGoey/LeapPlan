@@ -13,7 +13,6 @@ import Foundation
 class MockFourSquareService: FourSquareServiceProtocol {
     @Published var mockPlaces: [FSQPlace] = []
 
-    // TAMBAHKAN INI
     var shouldThrowError = false
     enum MockError: Error { case serviceError }
 
@@ -23,7 +22,6 @@ class MockFourSquareService: FourSquareServiceProtocol {
     var didCallFetchPlaces = false
     var didCallSearchByCity = false
 
-    // Update semua fungsi untuk mengecek error
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
         didCallFetchTrending = true
         if shouldThrowError { throw MockError.serviceError }

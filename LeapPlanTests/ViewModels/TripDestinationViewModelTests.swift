@@ -26,7 +26,6 @@ final class TripDestinationViewModelTests: XCTestCase {
         mockAuthService = MockAuthService()
         mockFourSquare = MockFourSquareService()
 
-        // Setup dummy trip
         let trip = Trip(
             id: "t1",
             title: "Bali Trip",
@@ -48,9 +47,8 @@ final class TripDestinationViewModelTests: XCTestCase {
         )
     }
 
-    // MARK: - Test Cases
-
-    func testLoadDayPlans_UpdatesState() async {
+    // MARK: - Test Load Day Plans
+    func testLoadDayPlans() async {
         // Arrange
         let day1 = DayPlan(
             id: "p1",
@@ -69,8 +67,8 @@ final class TripDestinationViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.isLoading)
     }
 
-    func testMoveDestination_CallsService() async {
-        // Arrange
+    // MARK: - Test Move Destination
+    func testMoveDestination() async {
         let dest = TripDestination(
             id: "d1",
             name: "Beach",
@@ -86,18 +84,15 @@ final class TripDestinationViewModelTests: XCTestCase {
             DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
         ]
 
-        // Act
         viewModel.moveDestination(from: IndexSet(integer: 0), to: 1)
 
-        // BERIKAN JEDA AGAR TASK SELESAI
         try? await Task.sleep(nanoseconds: 100_000_000)
 
-        // Assert
         XCTAssertTrue(mockTripDestService.didCallSaveReorder)
     }
 
-    func testDeleteDestination_RemovesFromList() async {
-        // Arrange
+    // MARK: - Test Delete Destination
+    func testDeleteDestination() async {
         let dest = TripDestination(
             id: "d1",
             name: "Beach",
@@ -113,37 +108,31 @@ final class TripDestinationViewModelTests: XCTestCase {
             DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
         ]
 
-        // Act
         viewModel.deleteDestination(destID: "d1")
 
-        // BERIKAN JEDA AGAR TASK SELESAI
         try? await Task.sleep(nanoseconds: 100_000_000)
 
-        // Assert
         XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 0)
         XCTAssertTrue(mockTripDestService.didCallSaveReorder)
     }
 
-    func testSearchPlacesAroundCity_PopulatesResults() async {
-        // Arrange
-        // Ubah bagian location: Location(locality: "Bali") menjadi location: nil
+    // MARK: - Test Search Places
+    func testSearchPlacesAroundCity() async {
         let place = FSQPlace(
             fsq_place_id: "p1",
             name: "Ubud Monkey Forest",
             distance: 0,
             latitude: 0,
             longitude: 0,
-            location: nil,  // <--- Cukup gunakan nil
+            location: nil,
             rating: 5,
             stats: nil
         )
         mockFourSquare.mockPlaces = [place]
 
-        // Act
         viewModel.searchPlacesAroundCity(query: "Monkey")
         try? await Task.sleep(nanoseconds: 200_000_000)
 
-        // Assert
         XCTAssertEqual(viewModel.addSearchResults.count, 1)
         XCTAssertEqual(
             viewModel.addSearchResults.first?.name,
@@ -151,13 +140,12 @@ final class TripDestinationViewModelTests: XCTestCase {
         )
     }
 
-    func testAddManualDestination_UpdatesList() async {
-        // Arrange
+    // MARK: - Test Add Manual Destination
+    func testAddManualDestination() async {
         viewModel.dayPlans = [
             DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [])
         ]
 
-        // Act
         viewModel.addManualDestination(
             name: "New Place",
             category: "Wisata",
@@ -165,12 +153,11 @@ final class TripDestinationViewModelTests: XCTestCase {
             place: nil
         )
 
-        // Assert
         XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 1)
     }
 
-    func testUpdateDestination_ModifiesValues() async {
-        // Arrange
+    // MARK: - Test Update Destination
+    func testUpdateDestination() async {
         let dest = TripDestination(
             id: "d1",
             name: "Old",
@@ -186,7 +173,6 @@ final class TripDestinationViewModelTests: XCTestCase {
             DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
         ]
 
-        // Act
         viewModel.updateDestination(
             id: "d1",
             newName: "New",
@@ -195,7 +181,6 @@ final class TripDestinationViewModelTests: XCTestCase {
             place: nil
         )
 
-        // Assert
         XCTAssertEqual(viewModel.dayPlans[0].destinations[0].name, "New")
         XCTAssertEqual(
             viewModel.dayPlans[0].destinations[0].stayDurationMinutes,
@@ -203,8 +188,8 @@ final class TripDestinationViewModelTests: XCTestCase {
         )
     }
 
-    func testGenerateOneRandomPlace_AddsToDestinations() async {
-        // Arrange
+    // MARK: - Test Generate Random Place
+    func testGenerateOneRandomPlace() async {
         viewModel.dayPlans = [
             DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [])
         ]
@@ -221,20 +206,17 @@ final class TripDestinationViewModelTests: XCTestCase {
             )
         ]
 
-        // Act
         viewModel.generateOneRandomPlace()
         try? await Task.sleep(nanoseconds: 200_000_000)
 
-        // Assert
         XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 1)
         XCTAssertEqual(viewModel.dayPlans[0].destinations.first?.name, "Random")
     }
 
-    func testDeleteThisTrip_CallsRepo() async {
-        // Act
+    // MARK: - Test Delete Trip
+    func testDeleteThisTrip() async {
         let success = await viewModel.deleteThisTrip()
 
-        // Assert
         XCTAssertTrue(success)
         XCTAssertTrue(mockFirestoreRepo.didCallDeleteTrip)
     }

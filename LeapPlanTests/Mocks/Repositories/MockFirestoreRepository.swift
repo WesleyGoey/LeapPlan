@@ -10,12 +10,9 @@ import Foundation
 @testable import LeapPlan
 
 class MockFirestoreRepository: FirestoreRepositoryProtocol {
+    var mockTrips: [String: [Trip]] = [:]
+    var mockDayPlans: [String: [DayPlan]] = [:]
 
-    // In-Memory Storage
-    var mockTrips: [String: [Trip]] = [:]  // [UserID: [Trips]]
-    var mockDayPlans: [String: [DayPlan]] = [:]  // [TripID: [DayPlans]]
-
-    // Spies
     var didCallFetchTrips = false
     var didCallCreateTrip = false
     var didCallUpdateTrip = false
@@ -24,11 +21,7 @@ class MockFirestoreRepository: FirestoreRepositoryProtocol {
     var didCallSaveDayPlan = false
     var didCallDeleteDayPlan = false
     var didCallSaveGeneratedTrip = false
-    
-    
 
-    // MARK: - Trip Operations
-    
     func fetchTrips(forUserID userID: String) async throws -> [Trip] {
         didCallFetchTrips = true
         return mockTrips[userID] ?? []
@@ -37,11 +30,11 @@ class MockFirestoreRepository: FirestoreRepositoryProtocol {
     func createTrip(_ trip: Trip, forUserID userID: String) async throws {
         didCallCreateTrip = true
         var newTrip = trip
-        
+
         if newTrip.id == nil {
             newTrip.id = UUID().uuidString
         }
-        
+
         mockTrips[userID, default: []].append(newTrip)
     }
 
@@ -58,7 +51,6 @@ class MockFirestoreRepository: FirestoreRepositoryProtocol {
         mockTrips[userID]?.removeAll { $0.id == tripID }
     }
 
-    // MARK: - DayPlan Operations
     func fetchDayPlans(forTripID tripID: String, userID: String) async throws
         -> [DayPlan]
     {
@@ -88,7 +80,6 @@ class MockFirestoreRepository: FirestoreRepositoryProtocol {
         mockDayPlans[tripID]?.removeAll { $0.id == planID }
     }
 
-    // MARK: - Batch Operations
     func saveGeneratedTripWithDayPlans(
         trip: Trip,
         dayPlans: [DayPlan],

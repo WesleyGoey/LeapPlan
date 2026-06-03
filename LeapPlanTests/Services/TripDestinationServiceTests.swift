@@ -26,10 +26,8 @@ final class TripDestinationServiceTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Test Functions
-
+    // MARK: - Test Add Place to Trip
     func testAddPlaceToTrip() async throws {
-        // Arrange
         let trip = Trip(
             id: "t1",
             title: "Bali",
@@ -60,29 +58,26 @@ final class TripDestinationServiceTests: XCTestCase {
         )
         mockRepo.mockDayPlans = ["t1": [plan]]
 
-        // Act
         try await service.addPlaceToTrip(
             place: place,
             targetTrip: trip,
             selectedDays: [1],
             userID: "u1"
         )
+        let savedPlansAfterAdd = mockRepo.mockDayPlans["t1"]
+        let firstPlanAfterAdd = savedPlansAfterAdd?.first
+        let destinationsCountAfterAdd = await firstPlanAfterAdd?.destinations
+            .count
+        let firstDestinationFoursquareID = await firstPlanAfterAdd?.destinations
+            .first?.foursquareID
 
-        // Assert
         XCTAssertTrue(mockRepo.didCallSaveDayPlan)
-        XCTAssertEqual(
-            mockRepo.mockDayPlans["t1"]?.first?.destinations.count,
-            1
-        )
-        XCTAssertEqual(
-            mockRepo.mockDayPlans["t1"]?.first?.destinations.first?
-                .foursquareID,
-            "fsq1"
-        )
+        XCTAssertEqual(destinationsCountAfterAdd, 1)
+        XCTAssertEqual(firstDestinationFoursquareID, "fsq1")
     }
 
+    // MARK: - Test Remove Place from Trip
     func testRemovePlaceFromTrip() async throws {
-        // Arrange
         let dest = TripDestination(
             id: "d1",
             name: "Beach",
@@ -103,25 +98,27 @@ final class TripDestinationServiceTests: XCTestCase {
         )
         mockRepo.mockDayPlans = ["t1": [plan]]
 
-        // Act
         try await service.removePlaceFromTrip(
             placeID: "fsq1",
             tripID: "t1",
             dayNum: 1,
             userID: "u1"
         )
+        let savedPlansAfterRemove = mockRepo.mockDayPlans["t1"]
+        let firstPlanAfterRemove = savedPlansAfterRemove?.first
+        let destinationsCountAfterRemove = await firstPlanAfterRemove?
+            .destinations.count
 
-        // Assert
         XCTAssertTrue(mockRepo.didCallSaveDayPlan)
         XCTAssertEqual(
-            mockRepo.mockDayPlans["t1"]?.first?.destinations.count,
+            destinationsCountAfterRemove,
             0,
             "Destinasi harusnya dihapus"
         )
     }
 
+    // MARK: - Test Save Reordered Destinations
     func testSaveReorderedDestinations() async throws {
-        // Arrange
         let d1 = TripDestination(
             id: "d1",
             name: "A",
@@ -151,23 +148,23 @@ final class TripDestinationServiceTests: XCTestCase {
             dayNumber: 1,
             date: Date(),
             destinations: [d1, d2]
-        )  // Urutan salah (1, 0)
+        )
 
-        // Act
         try await service.saveReorderedDestinations(
             dayPlan: plan,
             tripID: "t1",
             userID: "u1"
         )
 
-        // Assert
         let savedPlan = mockRepo.mockDayPlans["t1"]?.first
-        XCTAssertEqual(savedPlan?.destinations[0].orderIndex, 0)
-        XCTAssertEqual(savedPlan?.destinations[1].orderIndex, 1)
+        let firstOrderIndex = await savedPlan?.destinations[0].orderIndex
+        let secondOrderIndex = await savedPlan?.destinations[1].orderIndex
+        XCTAssertEqual(firstOrderIndex, 0)
+        XCTAssertEqual(secondOrderIndex, 1)
     }
 
+    // MARK: - Test Calculate Timeline
     func testCalculateTimeline() {
-        // Arrange
         let d1 = TripDestination(
             id: "d1",
             name: "A",
@@ -199,10 +196,7 @@ final class TripDestinationServiceTests: XCTestCase {
             destinations: [d1, d2]
         )
 
-        // Act (d2 harusnya mulai jam 9:00 + 60min(d1 stay) + 30min(d1 transit) = 10:30)
         let timeline = service.calculateTimeline(for: d2, in: plan)
-
-        // Assert
         XCTAssertEqual(timeline, "10:30 AM")
     }
 }

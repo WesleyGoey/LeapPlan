@@ -16,7 +16,6 @@ final class LocationServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // Inisialisasi Service Asli
         service = LocationService()
     }
 
@@ -25,10 +24,8 @@ final class LocationServiceTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Test Delegate Logic
-
+    // MARK: - Test Location Updates
     func testDidUpdateLocations() {
-        // Arrange
         let dummyCoordinate = CLLocationCoordinate2D(
             latitude: -7.2575,
             longitude: 112.7521
@@ -38,14 +35,11 @@ final class LocationServiceTests: XCTestCase {
             longitude: dummyCoordinate.longitude
         )
 
-        // Act: Memanggil fungsi delegate secara manual
         service.locationManager(
             CLLocationManager(),
             didUpdateLocations: [dummyLocation]
         )
 
-        // Assert: Pastikan lokasi ter-update
-        // Kita gunakan expectation karena DispatchQueue.main.async mungkin butuh waktu
         let expectation = XCTestExpectation(
             description: "Wait for main queue update"
         )
@@ -65,32 +59,28 @@ final class LocationServiceTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 
+    // MARK: - Test Empty Locations Array
     func testDidUpdateLocationsWithEmptyArray() {
-        // Arrange
         service.currentLocation = nil
 
-        // Act: Panggil dengan array kosong
         service.locationManager(CLLocationManager(), didUpdateLocations: [])
 
-        // Assert
         XCTAssertNil(
             service.currentLocation,
             "Lokasi tidak boleh berubah jika array kosong"
         )
     }
 
+    // MARK: - Test InitializationT
     func testInitialization() {
         XCTAssertNotNil(service)
     }
 
+    // MARK: - Test Error Handling
     func testDidFailWithError() {
-        // Act & Assert
-        // Kita cukup memanggil fungsinya untuk memastikan tidak ada crash/error
         let error = NSError(domain: "GPS", code: 1, userInfo: nil)
         service.locationManager(CLLocationManager(), didFailWithError: error)
 
-        // Tidak ada assert spesifik karena fungsi hanya nge-print,
-        // tapi jika test ini lewat, berarti kodenya aman.
         XCTAssertTrue(true)
     }
 }
