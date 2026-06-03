@@ -66,23 +66,30 @@ class TripViewModel: ObservableObject {
     private var activeUserID: String {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
+    
+    // Tambahkan di dalam class TripViewModel
+    private func calculateTripStatus(startDate: Date, endDate: Date) -> TripStatus {
+        let now = Date()
+        if now < startDate { return .upcoming }
+        if now >= startDate && now <= endDate { return .ongoing }
+        return .past
+    }
 
     // MARK: - LOGIKA LIST TRIP (BUG FIX BLANK SHEET)
     func loadUserTrips() {
-        self.isLoading = true  // WAJIB DI ATAS AGAR SHEET TIDAK BLANK!
-
-        guard let userID = authService.getCurrentUserID(),
-            userID != "dummy_user_123"
-        else {
-            self.isLoading = false
-            return
-        }
-
+        guard authService.isLoggedIn else { return }
+        let userID = activeUserID
+        isLoading = true
         Task {
             do {
-                self.trips = try await firestoreRepo.fetchTrips(
-                    forUserID: userID
-                )
+                let fetchedTrips = try await firestoreRepo.fetchTrips(forUserID: userID)
+                
+                // UPDATE STATUS OTOMATIS BERDASARKAN TANGGAL HARI INI
+                self.trips = fetchedTrips.map { trip in
+                    var t = trip
+                    t.status = calculateTripStatus(startDate: trip.startDate, endDate: trip.endDate)
+                    return t
+                }
                 self.isLoading = false
             } catch {
                 self.errorMessage = error.localizedDescription
