@@ -375,4 +375,11 @@ class TripViewModel: ObservableObject {
         autocompleteResults = []
         isShowingDropdown = false
     }
+    
+    // Menghapus semua trip dari memori saat logout
+    func clearData() {
+        self.trips = []
+        self.isLoading = false
+        self.errorMessage = nil
+    }
 }

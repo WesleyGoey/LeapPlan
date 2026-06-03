@@ -92,7 +92,20 @@ struct TripsView: View {
                 case .tripDetail(let trip): TripDetailView(trip: trip)
                 }
             }
-            .onAppear { viewModel.loadUserTrips() }
+            .onAppear {
+                if viewModel.isLoggedIn {
+                    viewModel.loadUserTrips()
+                } else {
+                    viewModel.clearData()
+                }
+            }
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: NSNotification.Name("UserLoggedOut")
+                )
+            ) { _ in
+                viewModel.clearData()
+            }
             .sheet(isPresented: $isShowingGenerateSheet) {
                 GenerateItineraryView(viewModel: viewModel)
             }
