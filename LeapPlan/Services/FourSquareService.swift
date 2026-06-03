@@ -5,6 +5,7 @@
 //  Created by Wesley Goey on 28/05/26.
 //
 
+
 import Foundation
 
 class FourSquareService: FourSquareServiceProtocol {
@@ -14,7 +15,7 @@ class FourSquareService: FourSquareServiceProtocol {
         self.repo = repo
     }
     
-    // FUNGSI HELPER UNTUK MENGAMBIL FOTO SECARA PARALEL
+    // MARK: - ASYNC TASKGROUP UNTUK MENGUNDUH URL GAMBAR SERENTAK
     private func attachPhotos(to places: [FSQPlace]) async -> [FSQPlace] {
         return await withTaskGroup(of: (Int, String?).self) { group in
             for (index, place) in places.enumerated() {
@@ -33,21 +34,20 @@ class FourSquareService: FourSquareServiceProtocol {
     
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
         let places = try await repo.fetchPlaces(near: city, categoryID: "16000", limit: 10)
-        return await attachPhotos(to: places) // Tempelkan foto
+        return await attachPhotos(to: places) // Tempel foto
     }
     
     func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
         let places = try await repo.searchPlaces(query: query, latitude: latitude, longitude: longitude)
-        return await attachPhotos(to: places) // Tempelkan foto
+        return await attachPhotos(to: places) // Tempel foto
     }
     
     func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
         let places = try await repo.fetchPlaces(near: city, categoryID: categoryID, limit: limit)
-        return await attachPhotos(to: places) // Tempelkan foto
+        return await attachPhotos(to: places) // Tempel foto
     }
     
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
-        // Autocomplete tidak perlu foto agar pengetikan user super cepat (real-time)
         return try await repo.autocompleteLocation(query: query)
     }
 }

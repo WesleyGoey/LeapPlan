@@ -55,8 +55,13 @@ class TripViewModel: ObservableObject {
     
     // MARK: - LOGIKA LIST TRIP
     func loadUserTrips() {
-        guard authService.isLoggedIn else { return } // Tamu tidak punya trip
-        let userID = activeUserID
+        // REVISI: Jangan gunakan `authService.isLoggedIn` karena itu asynchronous (butuh waktu).
+        // Gunakan `getCurrentUserID()` yang mengecek langsung ke memori lokal secara instan.
+        guard let userID = authService.getCurrentUserID(), userID != "dummy_user_123" else {
+            self.isLoading = false
+            return
+        }
+        
         isLoading = true
         Task {
             do {
