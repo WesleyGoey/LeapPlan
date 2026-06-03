@@ -9,20 +9,13 @@
 import Foundation
 
 protocol AuthServiceProtocol {
-    // 1. CREATE
-    func register(email: String, password: String) async throws -> String
+    var isLoggedIn: Bool { get }
     
-    // 2. READ / AUTHENTICATE
+    func register(email: String, password: String) async throws -> String
     func login(email: String, password: String) async throws -> String
     func getCurrentUserID() -> String?
-    
-    // 3. UPDATE
+    func logout() throws
     func updateEmail(currentPassword: String, newEmail: String) async throws
     func updatePassword(currentPassword: String, newPassword: String) async throws
-    
-    // 4. DELETE
     func deleteUser(password: String) async throws
-    
-    // 5. MISC
-    func logout() throws
 }

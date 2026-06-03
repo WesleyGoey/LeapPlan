@@ -5,27 +5,24 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
+
 import SwiftUI
 
 struct CreateManualTripView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var location: String = ""
-    @State private var startDate = Date()
-    @State private var endDate = Calendar.current.date(byAdding: .day, value: 2, to: Date())!
+    @ObservedObject var viewModel: TripViewModel // TERHUBUNG LANGSUNG KE TRIPVIEWMODEL
     @State private var isSaving = false
-    
-    var onSave: ((String, Date, Date) async -> Void)?
     
     var body: some View {
         NavigationStack {
             Form {
                 Section(header: Text("Trip Destination")) {
-                    TextField("Enter City (e.g., Surabaya)", text: $location)
+                    TextField("Enter City (e.g., Surabaya)", text: $viewModel.destinationForm)
                 }
                 
                 Section(header: Text("Travel Dates")) {
-                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                    DatePicker("Start Date", selection: $viewModel.startDateForm, displayedComponents: .date)
+                    DatePicker("End Date", selection: $viewModel.endDateForm, displayedComponents: .date)
                 }
             }
             .navigationTitle("Create Manual Trip")
@@ -41,11 +38,15 @@ struct CreateManualTripView: View {
                         Button("Create") {
                             Task {
                                 isSaving = true
-                                await onSave?(location, startDate, endDate)
+                                do {
+                                    _ = try await viewModel.createManualTrip()
+                                    dismiss()
+                                } catch { print("Gagal: \(error)") }
+                                isSaving = false
                             }
                         }
                         .bold()
-                        .disabled(location.isEmpty)
+                        .disabled(viewModel.destinationForm.isEmpty)
                     }
                 }
             }

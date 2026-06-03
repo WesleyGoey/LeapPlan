@@ -10,18 +10,17 @@
 //  AddToItinerarySheetView.swift
 //  LeapPlan
 //
-//  Created by Sean tandjaja on 02/06/26.
-//
 
 import SwiftUI
 
 struct AddToItinerarySheetView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var tripsViewModel = TripsViewModel()
+    
+    // GANTI menjadi TripViewModel
+    @StateObject private var tripViewModel = TripViewModel()
     
     let place: FSQPlace
     
-    // State Manajemen Navigasi Internal Sheet
     @State private var selectedTrip: Trip? = nil
     @State private var selectedDays: Set<Int> = []
     @State private var isSaving: Bool = false
@@ -29,12 +28,12 @@ struct AddToItinerarySheetView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                if tripsViewModel.isLoading {
+                if tripViewModel.isLoading {
                     ProgressView("Loading Itineraries...").padding(.top, 40)
                     Spacer()
                 } else if selectedTrip == nil {
                     // LAYER 1: TAMPILKAN LIST ITINERARY YANG ADA
-                    List(tripsViewModel.trips) { trip in
+                    List(tripViewModel.trips) { trip in
                         Button(action: {
                             withAnimation { selectedTrip = trip }
                         }) {
@@ -51,7 +50,7 @@ struct AddToItinerarySheetView: View {
                     }
                     .listStyle(.plain)
                 } else if let trip = selectedTrip {
-                    // LAYER 2: TAMPILKAN CHECKLIST PILIHAN HARI (MULTI-DAY CHECK)
+                    // LAYER 2: TAMPILKAN CHECKLIST PILIHAN HARI
                     VStack(alignment: .leading) {
                         Text("Select Days for \(trip.title)")
                             .font(.subheadline.bold())
@@ -78,13 +77,12 @@ struct AddToItinerarySheetView: View {
                         }
                         .listStyle(.plain)
                         
-                        // Tombol Aksi Penyimpanan ke Firebase
                         Button(action: {
                             Task {
                                 isSaving = true
-                                await tripsViewModel.addPlaceToTrip(place: place, targetTrip: trip, selectedDays: selectedDays)
+                                // Panggil fungsi yang baru kita tambahkan di TripViewModel
+                                await tripViewModel.addPlaceToTrip(place: place, targetTrip: trip, selectedDays: selectedDays)
                                 isSaving = false
-                                // Alur kembali ke menu list itinerary awal setelah sukses menyimpan
                                 withAnimation {
                                     selectedTrip = nil
                                     selectedDays.removeAll()
@@ -117,7 +115,7 @@ struct AddToItinerarySheetView: View {
                 }
             }
             .onAppear {
-                tripsViewModel.loadUserTrips()
+                tripViewModel.loadUserTrips()
             }
         }
     }

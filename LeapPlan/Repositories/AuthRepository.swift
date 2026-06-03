@@ -1,15 +1,15 @@
 //
-//  UserRepository.swift
+//  AuthRepository.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by Wesley Goey on 03/06/26.
 //
 
 
 import Foundation
 import FirebaseFirestore
 
-class UserRepository: UserRepositoryProtocol {
+class AuthRepository: AuthRepositoryProtocol {
     private let db = Firestore.firestore()
     
     // MARK: - 1. CREATE
@@ -22,7 +22,7 @@ class UserRepository: UserRepositoryProtocol {
     func fetchUser(userID: String) async throws -> User {
         let doc = try await db.collection("Users").document(userID).getDocument()
         guard let user = try? doc.data(as: User.self) else {
-            throw NSError(domain: "UserRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Data profil tidak ditemukan"])
+            throw NSError(domain: "AuthRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Data profil tidak ditemukan"])
         }
         return user
     }

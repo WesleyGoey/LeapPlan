@@ -23,9 +23,8 @@ struct LeapPlanApp: App {
 
   var body: some Scene {
     WindowGroup {
-      NavigationView {
-        TripsView()
-      }
+        // Cukup panggil ContentView, jangan bungkus dengan NavigationView lagi
+        ContentView()
     }
   }
 }

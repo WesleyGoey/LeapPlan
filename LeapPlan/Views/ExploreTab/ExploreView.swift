@@ -5,6 +5,7 @@
 //  Created by Wesley Goey on 01/06/26.
 //
 
+
 import SwiftUI
 import MapKit
 
@@ -14,8 +15,6 @@ struct ExploreView: View {
     @State private var isSearching = false
     @FocusState private var isSearchFocused: Bool
     @State private var selectedMapFeature: MapFeature?
-    
-    // State tambahan untuk mengontrol alur sub-sheet Add To Itinerary
     @State private var isShowingAddToItinerarySheet = false
     
     var body: some View {
@@ -36,21 +35,13 @@ struct ExploreView: View {
             }
             .ignoresSafeArea(edges: .top)
             .onTapGesture {
-                withAnimation {
-                    isSearching = false
-                    isSearchFocused = false
-                }
+                withAnimation { isSearching = false; isSearchFocused = false }
             }
             .onChange(of: selectedMapFeature) { feature in
-                if let feature = feature {
-                    viewModel.handleAppleMapFeatureClick(feature)
-                }
+                if let feature = feature { viewModel.handleAppleMapFeatureClick(feature) }
             }
             .onChange(of: viewModel.selectedPlace) { place in
-                if place == nil {
-                    selectedMapFeature = nil
-                    viewModel.displayedPins = []
-                }
+                if place == nil { selectedMapFeature = nil; viewModel.displayedPins = [] }
             }
             
             // LAYER 2: Search Bar UI
@@ -64,23 +55,13 @@ struct ExploreView: View {
                                 .submitLabel(.search)
                                 .onSubmit {
                                     if let first = viewModel.searchResults.first {
-                                        withAnimation {
-                                            viewModel.selectPlace(first)
-                                            isSearching = false
-                                            isSearchFocused = false
-                                        }
+                                        withAnimation { viewModel.selectPlace(first); isSearching = false; isSearchFocused = false }
                                     }
                                 }
                             
                             Button(action: {
-                                withAnimation {
-                                    viewModel.searchQuery = ""
-                                    isSearching = false
-                                    isSearchFocused = false
-                                }
-                            }) {
-                                Image(systemName: "xmark.circle.fill").foregroundColor(.gray).font(.system(size: 20)).padding(.leading, 8)
-                            }
+                                withAnimation { viewModel.searchQuery = ""; isSearching = false; isSearchFocused = false }
+                            }) { Image(systemName: "xmark.circle.fill").foregroundColor(.gray).font(.system(size: 20)).padding(.leading, 8) }
                         }
                         .padding().background(Color(.systemBackground)).cornerRadius(30).shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5).padding(.horizontal)
                         
@@ -91,11 +72,7 @@ struct ExploreView: View {
                                 VStack(alignment: .leading, spacing: 0) {
                                     ForEach(viewModel.searchResults) { place in
                                         Button(action: {
-                                            withAnimation {
-                                                viewModel.selectPlace(place)
-                                                isSearching = false
-                                                isSearchFocused = false
-                                            }
+                                            withAnimation { viewModel.selectPlace(place); isSearching = false; isSearchFocused = false }
                                         }) {
                                             HStack(spacing: 15) {
                                                 Image(systemName: "mappin.circle.fill").font(.title2).foregroundColor(Color(red: 0/255, green: 173/255, blue: 133/255))
@@ -146,11 +123,11 @@ struct ExploreView: View {
             }
         }
         .sheet(item: $viewModel.selectedPlace) { place in
-            PlaceDetailSheet(place: place, isTriggeringAddSheet: $isShowingAddToItinerarySheet)
+            // LEMPAR STATUS LOGIN KE SHEET
+            PlaceDetailSheet(place: place, isLoggedIn: viewModel.isLoggedIn, isTriggeringAddSheet: $isShowingAddToItinerarySheet)
                 .presentationDetents([.fraction(0.35)])
                 .presentationDragIndicator(.visible)
         }
-        // PEMANGGILAN HALAMAN SHEET UTAMA SELEKSI ITINERARY
         .sheet(isPresented: $isShowingAddToItinerarySheet) {
             if let placeToSave = viewModel.selectedPlace {
                 AddToItinerarySheetView(place: placeToSave)
@@ -162,6 +139,7 @@ struct ExploreView: View {
 // MARK: - 2. DETAIL PLACE SHEET
 struct PlaceDetailSheet: View {
     let place: FSQPlace
+    let isLoggedIn: Bool // BARU: Status Login
     @Environment(\.dismiss) var dismiss
     @Binding var isTriggeringAddSheet: Bool
     
@@ -193,19 +171,33 @@ struct PlaceDetailSheet: View {
             }
             Spacer()
             
-            Button(action: {
-                dismiss() // Tutup Detail Sheet
-                // Picu kemunculan pemilihan Itinerary Sheet di halaman utama ExploreView
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    isTriggeringAddSheet = true
+            // TOMBOL ADD TO ITINERARY (DENGAN GUEST MODE)
+            VStack(spacing: 8) {
+                Button(action: {
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        isTriggeringAddSheet = true
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Add to Itinerary")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isLoggedIn ? Color(red: 0/255, green: 173/255, blue: 133/255) : Color.gray) // Warna berubah abu-abu jika belum login
+                    .cornerRadius(12)
                 }
-            }) {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("Add to Itinerary")
+                .disabled(!isLoggedIn) // Tombol mati jika guest
+                
+                // Pesan Peringatan jika belum login
+                if !isLoggedIn {
+                    Text("Please login or register to add places to your itinerary.")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
                 }
-                .font(.headline).foregroundColor(.white).frame(maxWidth: .infinity).padding()
-                .background(Color(red: 0/255, green: 173/255, blue: 133/255)).cornerRadius(12)
             }
             .padding(.bottom, 20)
         }

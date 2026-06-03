@@ -5,18 +5,15 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
+
 import MapKit
 import PhotosUI
 import SwiftUI
 
-enum PlaceMode {
-    case add
-    case edit
-}
 
 struct TripDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel: TripDetailViewModel
+    @StateObject private var viewModel: TripDestinationViewModel // NAMA BARU
 
     @State private var position: MapCameraPosition = .automatic
     @State private var isShowingEditSheet = false
@@ -25,7 +22,7 @@ struct TripDetailView: View {
     @State private var selectedDestinationToEdit: TripDestination? = nil
 
     init(trip: Trip) {
-        _viewModel = StateObject(wrappedValue: TripDetailViewModel(trip: trip))
+        _viewModel = StateObject(wrappedValue: TripDestinationViewModel(trip: trip))
     }
 
     var body: some View {
@@ -35,38 +32,16 @@ struct TripDetailView: View {
                 ZStack(alignment: .topLeading) {
                     Map(position: $position) {
                         if let dayPlan = viewModel.currentDayPlan {
-                            let validDestinations = dayPlan.destinations.filter
-                            { $0.latitude != 0.0 && $0.longitude != 0.0 }
-                            let coordinates = validDestinations.map {
-                                CLLocationCoordinate2D(
-                                    latitude: $0.latitude,
-                                    longitude: $0.longitude
-                                )
-                            }
-                            MapPolyline(coordinates: coordinates).stroke(
-                                Color.leapPrimary,
-                                style: StrokeStyle(lineWidth: 3, dash: [6, 6])
-                            )
-                            ForEach(
-                                Array(validDestinations.enumerated()),
-                                id: \.element.id
-                            ) { index, dest in
-                                Annotation(
-                                    dest.name,
-                                    coordinate: CLLocationCoordinate2D(
-                                        latitude: dest.latitude,
-                                        longitude: dest.longitude
-                                    )
-                                ) {
+                            let validDestinations = dayPlan.destinations.filter { $0.latitude != 0.0 && $0.longitude != 0.0 }
+                            let coordinates = validDestinations.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+                            
+                            MapPolyline(coordinates: coordinates).stroke(Color.leapPrimary, style: StrokeStyle(lineWidth: 3, dash: [6, 6]))
+                            
+                            ForEach(Array(validDestinations.enumerated()), id: \.element.id) { index, dest in
+                                Annotation(dest.name, coordinate: CLLocationCoordinate2D(latitude: dest.latitude, longitude: dest.longitude)) {
                                     ZStack {
-                                        Circle().fill(
-                                            dest.category == "Tempat Makan"
-                                                ? Color.pink : Color.leapPrimary
-                                        ).frame(width: 24, height: 24)
-                                        Circle().fill(Color.white).frame(
-                                            width: 10,
-                                            height: 10
-                                        )
+                                        Circle().fill(dest.category == "Tempat Makan" ? Color.pink : Color.leapPrimary).frame(width: 24, height: 24)
+                                        Circle().fill(Color.white).frame(width: 10, height: 10)
                                     }.shadow(radius: 3)
                                 }
                             }
@@ -74,30 +49,14 @@ struct TripDetailView: View {
                     }.frame(height: 280)
 
                     HStack {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "arrow.left").font(
-                                .system(size: 20, weight: .semibold)
-                            ).foregroundColor(.black).padding(12).background(
-                                Color.white
-                            ).clipShape(Circle()).shadow(radius: 5)
+                        Button { dismiss() } label: {
+                            Image(systemName: "arrow.left").font(.system(size: 20, weight: .semibold)).foregroundColor(.black).padding(12).background(Color.white).clipShape(Circle()).shadow(radius: 5)
                         }
                         Spacer()
-                        Text("\(viewModel.trip.locationName) 📍").font(
-                            .subheadline.bold()
-                        ).padding(.horizontal, 20).padding(.vertical, 10)
-                            .background(Color.white).clipShape(Capsule())
-                            .shadow(radius: 5)
+                        Text("\(viewModel.trip.locationName) 📍").font(.subheadline.bold()).padding(.horizontal, 20).padding(.vertical, 10).background(Color.white).clipShape(Capsule()).shadow(radius: 5)
                         Spacer()
-                        Button {
-                            isShowingEditSheet = true
-                        } label: {
-                            Image(systemName: "ellipsis").font(
-                                .system(size: 20, weight: .semibold)
-                            ).foregroundColor(.black).padding(12).background(
-                                Color.white
-                            ).clipShape(Circle()).shadow(radius: 5)
+                        Button { isShowingEditSheet = true } label: {
+                            Image(systemName: "ellipsis").font(.system(size: 20, weight: .semibold)).foregroundColor(.black).padding(12).background(Color.white).clipShape(Circle()).shadow(radius: 5)
                         }
                     }.padding(.horizontal, 20).padding(.top, 60)
                 }
@@ -106,28 +65,13 @@ struct TripDetailView: View {
                 if !viewModel.dayPlans.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            ForEach(
-                                Array(viewModel.dayPlans.enumerated()),
-                                id: \.element.id
-                            ) { index, plan in
+                            ForEach(Array(viewModel.dayPlans.enumerated()), id: \.element.id) { index, plan in
                                 Button {
-                                    withAnimation {
-                                        viewModel.selectedDayIndex = index
-                                    }
+                                    withAnimation { viewModel.selectedDayIndex = index }
                                 } label: {
-                                    Text("Day \(plan.dayNumber)").font(
-                                        .subheadline.bold()
-                                    ).padding(.horizontal, 20).padding(
-                                        .vertical,
-                                        10
-                                    ).background(
-                                        viewModel.selectedDayIndex == index
-                                            ? Color.leapPrimary
-                                            : Color.gray.opacity(0.1)
-                                    ).foregroundColor(
-                                        viewModel.selectedDayIndex == index
-                                            ? .white : .gray
-                                    ).clipShape(Capsule())
+                                    Text("Day \(plan.dayNumber)").font(.subheadline.bold()).padding(.horizontal, 20).padding(.vertical, 10)
+                                        .background(viewModel.selectedDayIndex == index ? Color.leapPrimary : Color.gray.opacity(0.1))
+                                        .foregroundColor(viewModel.selectedDayIndex == index ? .white : .gray).clipShape(Capsule())
                                 }
                             }
                         }.padding(.horizontal, 20).padding(.vertical, 16)
@@ -139,64 +83,34 @@ struct TripDetailView: View {
                     if viewModel.isLoading {
                         VStack {
                             Spacer()
-                            ProgressView("Generating...").scaleEffect(1.2)
+                            ProgressView("Loading...").scaleEffect(1.2)
                             Spacer()
                         }
                     } else if let currentDayPlan = viewModel.currentDayPlan {
                         if currentDayPlan.destinations.isEmpty {
                             VStack {
                                 Spacer()
-                                Image(systemName: "mappin.and.ellipse").font(
-                                    .system(size: 40)
-                                ).foregroundColor(.gray.opacity(0.5)).padding(
-                                    .bottom,
-                                    8
-                                )
-                                Text("No destinations for this day.").font(
-                                    .headline
-                                ).foregroundColor(.gray)
+                                Image(systemName: "mappin.and.ellipse").font(.system(size: 40)).foregroundColor(.gray.opacity(0.5)).padding(.bottom, 8)
+                                Text("No destinations for this day.").font(.headline).foregroundColor(.gray)
                                 Spacer()
                             }.frame(maxWidth: .infinity)
                         } else {
                             List {
                                 ForEach(currentDayPlan.destinations) { dest in
-                                    let time = viewModel.calculateTime(
-                                        for: dest,
-                                        in: currentDayPlan
-                                    )
-                                    let isLast =
-                                        dest.id
-                                        == currentDayPlan.destinations.last?.id
+                                    let time = viewModel.getFormattedTime(for: dest)
+                                    let isLast = dest.id == currentDayPlan.destinations.last?.id
 
-                                    TimelineRowView(
-                                        destination: dest,
-                                        time: time,
-                                        isLast: isLast,
-                                        onEdit: {
-                                            selectedDestinationToEdit = dest
-                                        },
-                                        onDelete: {
-                                            withAnimation {
-                                                viewModel.deleteDestination(
-                                                    destID: dest.id
-                                                )
-                                            }
-                                        }
+                                    TimelineRowView(destination: dest, time: time, isLast: isLast,
+                                        onEdit: { selectedDestinationToEdit = dest },
+                                        onDelete: { withAnimation { viewModel.deleteDestination(destID: dest.id) } }
                                     )
                                     .listRowInsets(EdgeInsets())
                                     .listRowSeparator(.hidden)
                                     .listRowBackground(Color.clear)
                                 }.onMove { source, destination in
-                                    viewModel.moveDestination(
-                                        from: source,
-                                        to: destination
-                                    )
+                                    viewModel.moveDestination(from: source, to: destination)
                                 }
-                                Color.clear.frame(height: 100).listRowInsets(
-                                    EdgeInsets()
-                                ).listRowSeparator(.hidden).listRowBackground(
-                                    Color.clear
-                                )
+                                Color.clear.frame(height: 100).listRowInsets(EdgeInsets()).listRowSeparator(.hidden).listRowBackground(Color.clear)
                             }.listStyle(.plain).scrollContentBackground(.hidden)
                         }
                     }
@@ -211,23 +125,9 @@ struct TripDetailView: View {
             detailFABMenu.zIndex(2)
         }
         .navigationBarHidden(true).onAppear { viewModel.loadDayPlans() }
-        .sheet(isPresented: $isShowingEditSheet) {
-            TripEditView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $isShowingAddPlaceSheet) {
-            AddOrEditPlaceSheetView(
-                viewModel: viewModel,
-                mode: .add,
-                destinationToEdit: nil
-            )
-        }
-        .sheet(item: $selectedDestinationToEdit) { destination in
-            AddOrEditPlaceSheetView(
-                viewModel: viewModel,
-                mode: .edit,
-                destinationToEdit: destination
-            )
-        }
+        .sheet(isPresented: $isShowingEditSheet) { TripEditView(viewModel: viewModel) }
+        .sheet(isPresented: $isShowingAddPlaceSheet) { AddOrEditPlaceSheetView(viewModel: viewModel, mode: .add, destinationToEdit: nil) }
+        .sheet(item: $selectedDestinationToEdit) { destination in AddOrEditPlaceSheetView(viewModel: viewModel, mode: .edit, destinationToEdit: destination) }
     }
 
     private var detailFABMenu: some View {
@@ -239,61 +139,25 @@ struct TripDetailView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "plus.circle").foregroundColor(.gray)
-                        Text("Add Places").fontWeight(.semibold)
-                            .foregroundColor(.leapSecondary)
-                    }.padding(.horizontal, 20).padding(.vertical, 14)
-                        .background(Color.white).clipShape(Capsule()).shadow(
-                            color: .black.opacity(0.1),
-                            radius: 5,
-                            y: 2
-                        )
-                }.transition(.move(edge: .bottom).combined(with: .opacity))
-                Button {
-                    withAnimation { isShowingFABMenu = false }
-                    viewModel.generateOneRandomPlace()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "sparkles").foregroundColor(
-                            .leapPrimary
-                        )
-                        Text("Generate Place").fontWeight(.semibold)
-                            .foregroundColor(.leapPrimary)
-                    }.padding(.horizontal, 20).padding(.vertical, 14)
-                        .background(Color.white).clipShape(Capsule()).shadow(
-                            color: .black.opacity(0.1),
-                            radius: 5,
-                            y: 2
-                        )
+                        Text("Add Places").fontWeight(.semibold).foregroundColor(.leapSecondary)
+                    }.padding(.horizontal, 20).padding(.vertical, 14).background(Color.white).clipShape(Capsule()).shadow(color: .black.opacity(0.1), radius: 5, y: 2)
                 }.transition(.move(edge: .bottom).combined(with: .opacity))
             }
             Button {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                    isShowingFABMenu.toggle()
-                }
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { isShowingFABMenu.toggle() }
             } label: {
-                Image(systemName: isShowingFABMenu ? "xmark" : "plus").font(
-                    .system(size: 24, weight: .medium)
-                ).foregroundColor(.white).frame(width: 64, height: 64)
-                    .background(
-                        isShowingFABMenu
-                            ? Color.leapSecondary : Color.leapPrimary
-                    ).clipShape(Circle()).shadow(
-                        color: (isShowingFABMenu
-                            ? Color.leapSecondary : Color.leapPrimary).opacity(
-                                0.4
-                            ),
-                        radius: 10,
-                        y: 5
-                    ).rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
+                Image(systemName: isShowingFABMenu ? "xmark" : "plus").font(.system(size: 24, weight: .medium)).foregroundColor(.white).frame(width: 64, height: 64)
+                    .background(isShowingFABMenu ? Color.leapSecondary : Color.leapPrimary).clipShape(Circle()).shadow(color: (isShowingFABMenu ? Color.leapSecondary : Color.leapPrimary).opacity(0.4), radius: 10, y: 5)
+                    .rotationEffect(.degrees(isShowingFABMenu ? 90 : 0))
             }
         }.padding(.trailing, 24).padding(.bottom, 24)
     }
 }
 
-// MARK: - SHEET TAMBAH/EDIT DESTINASI (1 SEARCH BOX SAJA)
+// Subview pendukung (Sheet Editor) menggunakan TripDestinationViewModel
 struct AddOrEditPlaceSheetView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: TripDetailViewModel
+    @ObservedObject var viewModel: TripDestinationViewModel
 
     let mode: PlaceMode
     let destinationToEdit: TripDestination?
@@ -305,11 +169,7 @@ struct AddOrEditPlaceSheetView: View {
     @State private var selectedPlace: FSQPlace?
     @FocusState private var isSearchFocused: Bool
 
-    init(
-        viewModel: TripDetailViewModel,
-        mode: PlaceMode,
-        destinationToEdit: TripDestination?
-    ) {
+    init(viewModel: TripDestinationViewModel, mode: PlaceMode, destinationToEdit: TripDestination?) {
         self.viewModel = viewModel
         self.mode = mode
         self.destinationToEdit = destinationToEdit
@@ -317,12 +177,8 @@ struct AddOrEditPlaceSheetView: View {
         if mode == .edit, let dest = destinationToEdit {
             _searchQuery = State(initialValue: dest.name)
             _selectedCategory = State(initialValue: dest.category)
-            _stayDurationHours = State(
-                initialValue: dest.stayDurationMinutes / 60
-            )
-            _stayDurationMinutes = State(
-                initialValue: dest.stayDurationMinutes % 60
-            )
+            _stayDurationHours = State(initialValue: dest.stayDurationMinutes / 60)
+            _stayDurationMinutes = State(initialValue: dest.stayDurationMinutes % 60)
         }
     }
 
@@ -330,68 +186,41 @@ struct AddOrEditPlaceSheetView: View {
         NavigationStack {
             Form {
                 Section("Search Location") {
-                    // DROPDOWN AUTOCOMPLETE
                     VStack(alignment: .leading) {
-                        TextField(
-                            "Search in \(viewModel.trip.locationName)",
-                            text: $searchQuery
-                        )
-                        .focused($isSearchFocused)
-                        .onChange(of: searchQuery) { newValue in
-                            viewModel.searchPlacesAroundCity(query: newValue)
-                        }
+                        TextField("Search in \(viewModel.trip.locationName)", text: $searchQuery)
+                            .focused($isSearchFocused)
+                            .onChange(of: searchQuery) { newValue in viewModel.searchPlacesAroundCity(query: newValue) }
 
-                        if isSearchFocused
-                            && !viewModel.addSearchResults.isEmpty
-                        {
-                            List(viewModel.addSearchResults, id: \.fsq_place_id)
-                            { place in
+                        if isSearchFocused && !viewModel.addSearchResults.isEmpty {
+                            List(viewModel.addSearchResults, id: \.fsq_place_id) { place in
                                 Button(action: {
                                     selectedPlace = place
                                     searchQuery = place.name
                                     viewModel.addSearchResults = []
-                                }) {
-                                    Text(place.name)
-                                }
-                            }
-                            .frame(height: 150)
+                                }) { Text(place.name) }
+                            }.frame(height: 150)
                         }
                     }
                 }
-
                 Section("Category") {
                     Picker("Category", selection: $selectedCategory) {
                         Text("Objek Wisata").tag("Objek Wisata")
                         Text("Tempat Makan").tag("Tempat Makan")
-                    }
-                    .pickerStyle(.segmented)
+                    }.pickerStyle(.segmented)
                 }
-
                 Section("Stay Duration") {
                     HStack {
-                        Picker("Hours", selection: $stayDurationHours) {
-                            ForEach(0..<24) { i in Text("\(i) hrs").tag(i) }
-                        }.pickerStyle(.wheel).frame(width: 100, height: 100)
-                        Picker("Minutes", selection: $stayDurationMinutes) {
-                            ForEach(0..<60) { i in Text("\(i) mins").tag(i) }
-                        }.pickerStyle(.wheel).frame(width: 100, height: 100)
+                        Picker("Hours", selection: $stayDurationHours) { ForEach(0..<24) { i in Text("\(i) hrs").tag(i) } }.pickerStyle(.wheel).frame(width: 100, height: 100)
+                        Picker("Minutes", selection: $stayDurationMinutes) { ForEach(0..<60) { i in Text("\(i) mins").tag(i) } }.pickerStyle(.wheel).frame(width: 100, height: 100)
                     }
                 }
             }
-            .navigationTitle(
-                mode == .add ? "Add Destination" : "Edit Destination"
-            )
+            .navigationTitle(mode == .add ? "Add Destination" : "Edit Destination")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let totalMinutes =
-                            (stayDurationHours * 60) + stayDurationMinutes
-                        viewModel.addManualDestination(
-                            name: searchQuery,
-                            category: selectedCategory,
-                            durationMinutes: totalMinutes,
-                            place: selectedPlace
-                        )
+                        let totalMinutes = (stayDurationHours * 60) + stayDurationMinutes
+                        viewModel.addManualDestination(name: searchQuery, category: selectedCategory, durationMinutes: totalMinutes, place: selectedPlace)
                         dismiss()
                     }
                 }
@@ -400,100 +229,63 @@ struct AddOrEditPlaceSheetView: View {
     }
 }
 
-// MARK: - KELENGKAPAN LAINNYA
 struct TripEditView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: TripDetailViewModel
+    @ObservedObject var viewModel: TripDestinationViewModel
+    
     @State private var title: String
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var coverImageUrl: String
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedUIImage: UIImage?
-    init(viewModel: TripDetailViewModel) {
+    
+    init(viewModel: TripDestinationViewModel) {
         self.viewModel = viewModel
         _title = State(initialValue: viewModel.trip.title)
         _startDate = State(initialValue: viewModel.trip.startDate)
         _endDate = State(initialValue: viewModel.trip.endDate)
         _coverImageUrl = State(initialValue: viewModel.trip.coverImageUrl ?? "")
     }
+    
     var body: some View {
         NavigationStack {
             Form {
                 Section("Trip Cover Image") {
-                    PhotosPicker(
-                        selection: $selectedPhotoItem,
-                        matching: .images,
-                        photoLibrary: .shared()
-                    ) {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
                         if let selectedUIImage {
-                            Image(uiImage: selectedUIImage).resizable()
-                                .scaledToFill().frame(height: 150).clipShape(
-                                    RoundedRectangle(cornerRadius: 12)
-                                )
+                            Image(uiImage: selectedUIImage).resizable().scaledToFill().frame(height: 150).clipShape(RoundedRectangle(cornerRadius: 12))
                         } else {
                             HStack {
-                                Image(systemName: "photo.badge.plus").font(
-                                    .title2
-                                )
+                                Image(systemName: "photo.badge.plus").font(.title2)
                                 Text("Upload image from phone")
-                            }.foregroundColor(.leapPrimary).padding(
-                                .vertical,
-                                8
-                            )
+                            }.foregroundColor(.leapPrimary).padding(.vertical, 8)
                         }
                     }.onChange(of: selectedPhotoItem) { newItem in
                         Task {
-                            if let data = try? await newItem?.loadTransferable(
-                                type: Data.self
-                            ), let img = UIImage(data: data) {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) {
                                 selectedUIImage = img
                             }
                         }
                     }
                 }
-                Section("Trip Information") {
-                    TextField("Trip Name", text: $title)
+                Section("Trip Information") { TextField("Trip Name", text: $title) }
+                Section(footer: Text("If you reduce the travel dates, the extra days from your itinerary will be permanently deleted.")) {
+                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                    DatePicker("End Date", selection: $endDate, displayedComponents: .date)
                 }
-                Section(
-                    footer: Text(
-                        "If you reduce the travel dates, the extra days from your itinerary will be permanently deleted."
-                    )
-                ) {
-                    DatePicker(
-                        "Start Date",
-                        selection: $startDate,
-                        displayedComponents: .date
-                    )
-                    DatePicker(
-                        "End Date",
-                        selection: $endDate,
-                        displayedComponents: .date
-                    )
-                }
-            }.navigationTitle("Edit Trip").navigationBarTitleDisplayMode(
-                .inline
-            ).toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
+            }
+            .navigationTitle("Edit Trip").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         Task {
                             var finalImageUrl = coverImageUrl
-                            if let selectedUIImage,
-                                let localPath = viewModel.saveImageLocally(
-                                    image: selectedUIImage
-                                )
-                            {
-                                finalImageUrl = localPath
+                            if let selectedUIImage, let base64 = viewModel.convertImageToBase64String(image: selectedUIImage) {
+                                finalImageUrl = base64
                             }
-                            await viewModel.updateTripDetails(
-                                title: title,
-                                startDate: startDate,
-                                endDate: endDate,
-                                coverImageUrl: finalImageUrl
-                            )
+                            await viewModel.updateTripDetails(title: title, startDate: startDate, endDate: endDate, coverImageUrl: finalImageUrl)
                             dismiss()
                         }
                     }.bold()
@@ -502,6 +294,8 @@ struct TripEditView: View {
         }
     }
 }
+
+// TimelineRowView sama seperti sebelumnya, biarkan tanpa diubah
 
 struct TimelineRowView: View {
     let destination: TripDestination

@@ -10,13 +10,11 @@ import SwiftUI
 struct HomeView: View {
     @StateObject var viewModel = HomeViewModel()
     
-    // GANTI DENGAN USER ID SEMENTARA SAMPAI ADA AUTH
-    let currentUserID = "USER_ID_DUMMY"
-    
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
+                    
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
@@ -36,16 +34,14 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Recent Trip Section (Navigasi ke TripDetailView)
+                    // Recent Trip Section
                     if let trip = viewModel.recentTrip {
                         NavigationLink(destination: TripDetailView(trip: trip)) {
                             RecentTripCard(trip: trip)
                                 .padding(.horizontal)
                         }
-                        .buttonStyle(PlainButtonStyle()) // Biar warnanya ga jadi biru standar tombol
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    
-                    // BAGIAN SCROLL KATEGORI SUDAH DIHAPUS
                     
                     // Trending Section
                     VStack(alignment: .leading) {
@@ -92,8 +88,9 @@ struct HomeView: View {
                 .padding(.top)
             }
             .onAppear {
-                // Memuat Foursquare dan Cek Trip Firebase
-                viewModel.loadDashboardData(userID: currentUserID)
+                // TIDAK PERLU PARAMETER USER ID LAGI.
+                // ViewModel akan otomatis membedakan Guest dan User Login lewat AuthService
+                viewModel.loadDashboardData()
             }
         }
     }

@@ -5,16 +5,15 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
+
 import SwiftUI
 
 struct GenerateItineraryView: View {
-    @StateObject private var viewModel = GenerateItineraryViewModel()
-    
-    // PERUBAHAN: Menjadikan aksi onGenerate Async
-    var onGenerate: ((RandomTripPreferences) async -> Void)?
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: TripViewModel // MENGGUNAKAN VM TERPUSAT
     
     @FocusState private var isDestinationFocused: Bool
-    @State private var isGenerating: Bool = false // Loading state
+    @State private var isGenerating: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -28,17 +27,18 @@ struct GenerateItineraryView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 12) {
                             Image(systemName: "mappin.and.ellipse").foregroundColor(Color(hex: "#50B498"))
-                            TextField("Where do you want to go?", text: $viewModel.destination)
+                            TextField("Where do you want to go?", text: $viewModel.destinationForm)
                                 .autocorrectionDisabled()
                                 .focused($isDestinationFocused)
                         }
                         .padding().background(Color.white).cornerRadius(16).shadow(color: .black.opacity(0.05), radius: 5, y: 2)
                         
-                        if isDestinationFocused && !viewModel.searchResults.isEmpty {
+                        // Menyesuaikan dengan array autocompleteResults yang baru
+                        if isDestinationFocused && !viewModel.autocompleteResults.isEmpty {
                             VStack(spacing: 0) {
-                                ForEach(viewModel.searchResults, id: \.self) { placeName in
+                                ForEach(viewModel.autocompleteResults, id: \.self) { placeName in
                                     Button {
-                                        viewModel.destination = placeName
+                                        viewModel.destinationForm = placeName
                                         isDestinationFocused = false
                                     } label: {
                                         HStack(spacing: 16) {
@@ -49,7 +49,7 @@ struct GenerateItineraryView: View {
                                         }
                                         .padding(.horizontal, 16).padding(.vertical, 14).background(Color.white)
                                     }
-                                    if placeName != viewModel.searchResults.last { Divider().padding(.leading, 50) }
+                                    if placeName != viewModel.autocompleteResults.last { Divider().padding(.leading, 50) }
                                 }
                             }
                             .background(Color.white).cornerRadius(16).shadow(color: .black.opacity(0.15), radius: 10, y: 5).padding(.top, 8)
@@ -59,9 +59,9 @@ struct GenerateItineraryView: View {
 
                     sectionHeader(title: "TRAVEL DATES")
                     VStack(spacing: 0) {
-                        DatePicker("Start Date", selection: $viewModel.startDate, displayedComponents: .date).padding()
+                        DatePicker("Start Date", selection: $viewModel.startDateForm, displayedComponents: .date).padding()
                         Divider().padding(.horizontal)
-                        DatePicker("End Date", selection: $viewModel.endDate, displayedComponents: .date).padding()
+                        DatePicker("End Date", selection: $viewModel.endDateForm, displayedComponents: .date).padding()
                     }
                     .background(Color.white).cornerRadius(16).shadow(color: .black.opacity(0.05), radius: 5, y: 2)
                     .zIndex(1)
@@ -76,7 +76,6 @@ struct GenerateItineraryView: View {
 
                     if let selectedIndex = viewModel.dailyPreferences.firstIndex(where: { $0.dayNumber == viewModel.selectedDayNumber }) {
                         VStack(spacing: 16) {
-                            // Cuma menyisakan Stepper untuk Places to visit (Objek Wisata)
                             stepperCard(icon: "camera", title: "Places to visit", subtitle: "Attractions per day", value: $viewModel.dailyPreferences[selectedIndex].places)
                         }
                     }
@@ -85,19 +84,15 @@ struct GenerateItineraryView: View {
             }
             .simultaneousGesture(DragGesture().onChanged({ _ in isDestinationFocused = false }))
 
-            // 4. Generate Button
             Button {
-                let preferences = RandomTripPreferences(
-                    locationName: viewModel.destination, startDate: viewModel.startDate, endDate: viewModel.endDate, dailyPreferences: viewModel.dailyPreferences
-                )
-                
-                // MUNCULKAN LOADING DAN JALANKAN PROSES
                 Task {
                     isGenerating = true
-                    await onGenerate?(preferences)
-                    // Tidak perlu isGenerating = false karena layarnya akan ditutup otomatis oleh Navigasi
+                    do {
+                        _ = try await viewModel.generateRandomTrip()
+                        dismiss()
+                    } catch { print("Gagal: \(error)") }
+                    isGenerating = false
                 }
-                
             } label: {
                 HStack {
                     Image(systemName: "bolt.fill").foregroundColor(.orange)
@@ -106,8 +101,8 @@ struct GenerateItineraryView: View {
                 .foregroundColor(.white).frame(maxWidth: .infinity).padding(.vertical, 18).background(Color.leapPrimary).cornerRadius(16).shadow(color: Color.leapPrimary.opacity(0.3), radius: 10, y: 5)
             }
             .padding(.horizontal, 20).padding(.bottom, 24)
+            .disabled(viewModel.destinationForm.isEmpty || isGenerating)
             
-            // LOADING OVERLAY (Saat Foursquare mencari tempat)
             if isGenerating {
                 Color.black.opacity(0.4).ignoresSafeArea()
                 VStack(spacing: 16) {
@@ -120,7 +115,6 @@ struct GenerateItineraryView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - Subviews
     private func sectionHeader(title: String) -> some View { Text(title).font(.caption).fontWeight(.bold).foregroundColor(.gray).padding(.top, 8) }
     private func dayTabButton(dayNumber: Int) -> some View {
         let isSelected = viewModel.selectedDayNumber == dayNumber

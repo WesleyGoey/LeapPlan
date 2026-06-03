@@ -18,7 +18,6 @@ class LocationService: NSObject, ObservableObject, LocationServiceProtocol, CLLo
     override init() {
         super.init()
         locationManager.delegate = self
-        // Akurasi terbaik untuk pencarian tempat
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         requestLocationPermission()
     }
@@ -28,7 +27,6 @@ class LocationService: NSObject, ObservableObject, LocationServiceProtocol, CLLo
         locationManager.startUpdatingLocation()
     }
     
-    // Fungsi ini dipanggil otomatis oleh iOS tiap kali HP bergerak
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         DispatchQueue.main.async {
