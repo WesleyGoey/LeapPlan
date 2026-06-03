@@ -9,6 +9,7 @@
 import SwiftUI
 import PhotosUI
 
+// MARK: - EDIT PROFILE SHEET
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: ProfileViewModel

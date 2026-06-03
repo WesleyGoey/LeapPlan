@@ -5,13 +5,12 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
-
 import PhotosUI
 import SwiftUI
 
 
 struct TripsView: View {
-    @StateObject var viewModel: TripViewModel // MENGGUNAKAN TRIPVIEWMODEL BARU
+    @StateObject var viewModel: TripViewModel
     @State private var selectedTab: TripStatus = .upcoming
 
     @State private var isShowingFABMenu: Bool = false
@@ -75,7 +74,6 @@ struct TripsView: View {
                     }
                 }
                 
-                // TAMPILKAN FAB HANYA JIKA LOGGED IN
                 if viewModel.isLoggedIn {
                     createTripFAB.zIndex(2)
                 }
@@ -91,6 +89,9 @@ struct TripsView: View {
             }
             .sheet(isPresented: $isShowingManualSheet) {
                 CreateManualTripView(viewModel: viewModel)
+            }
+            .sheet(item: $tripToEdit) { trip in
+                TripsEditSheetView(viewModel: viewModel, trip: trip) // SHEET UNTUK EDIT
             }
         }
     }
@@ -157,7 +158,6 @@ struct TripsView: View {
         VStack(spacing: 16) {
             Image(systemName: "folder.badge.questionmark").font(.system(size: 50)).foregroundColor(.gray.opacity(0.5))
             
-            // PESAN KHUSUS UNTUK GUEST
             if viewModel.isLoggedIn {
                 Text("No \(selectedTab.rawValue) trips found.").font(.headline).foregroundColor(.gray)
                 Text("Tap the + button to create a new itinerary.").font(.subheadline).foregroundColor(.gray.opacity(0.8)).multilineTextAlignment(.center)
@@ -166,5 +166,89 @@ struct TripsView: View {
                 Text("Please login or register to create and view your trips.").font(.subheadline).foregroundColor(.gray.opacity(0.8)).multilineTextAlignment(.center)
             }
         }.padding(.top, 60)
+    }
+}
+
+// MARK: - EDITOR DARI HALAMAN UTAMA (TripsView)
+struct TripsEditSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: TripViewModel
+    let trip: Trip
+    
+    @State private var title: String
+    @State private var startDate: Date
+    @State private var endDate: Date
+    @State private var coverImageUrl: String
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedUIImage: UIImage?
+    
+    init(viewModel: TripViewModel, trip: Trip) {
+        self.viewModel = viewModel
+        self.trip = trip
+        _title = State(initialValue: trip.title)
+        _startDate = State(initialValue: trip.startDate)
+        _endDate = State(initialValue: trip.endDate)
+        _coverImageUrl = State(initialValue: trip.coverImageUrl ?? "")
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Trip Cover Image") {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            if let selectedUIImage {
+                                Image(uiImage: selectedUIImage).resizable().scaledToFill().frame(width: 150, height: 120).clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else if !coverImageUrl.isEmpty, let uiImage = Base64Helper.decode(coverImageUrl) {
+                                Image(uiImage: uiImage).resizable().scaledToFill().frame(width: 150, height: 120).clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.2)).frame(width: 150, height: 120).overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                            }
+                            
+                            HStack(spacing: 20) {
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                                    Text("Change Photo").font(.subheadline).foregroundColor(.leapPrimary)
+                                }
+                                
+                                if !coverImageUrl.isEmpty || selectedUIImage != nil {
+                                    Button(role: .destructive, action: {
+                                        withAnimation { selectedUIImage = nil; coverImageUrl = ""; selectedPhotoItem = nil }
+                                    }) { Image(systemName: "trash").font(.subheadline).foregroundColor(.leapHighlight) }
+                                }
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+                
+                Section("Trip Information") { TextField("Trip Name", text: $title) }
+                Section(footer: Text("If you reduce the travel dates, the extra days from your itinerary will be permanently deleted.")) {
+                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                    DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                }
+            }
+            .navigationTitle("Edit Trip").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        Task {
+                            var finalImageUrl = coverImageUrl
+                            if let selectedUIImage, let base64 = Base64Helper.encode(selectedUIImage) {
+                                finalImageUrl = base64
+                            }
+                            // Menyambung ke updateTripDetails
+                            await viewModel.updateTripDetails(trip: trip, title: title, startDate: startDate, endDate: endDate, coverImageUrl: finalImageUrl)
+                            dismiss()
+                        }
+                    }.bold().foregroundColor(.leapPrimary)
+                }
+            }
+            .onChange(of: selectedPhotoItem) { newItem in
+                Task { if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) { selectedUIImage = img } }
+            }
+        }
     }
 }

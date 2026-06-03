@@ -10,104 +10,63 @@ import SwiftUI
 
 struct TripCardView: View {
     let trip: Trip
-    
-    // Karena jumlah tempat (Places) berada di dalam sub-collection (DayPlan),
-    // kita bisa me-pass nilainya dari ViewModel. Defaultnya kita set 0 untuk UI.
-    var placesCount: Int = 0 
+    var placesCount: Int = 0
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // 1. Background Image
-            AsyncImage(url: URL(string: trip.coverImageUrl ?? "")) { phase in
-                switch phase {
-                case .empty:
-                    // Placeholder saat loading
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(ProgressView())
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure:
-                    // Fallback jika tidak ada gambar/gagal load
-                    Rectangle()
-                        .fill(Color.leapSecondary.opacity(0.8))
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.white.opacity(0.5))
-                                .font(.largeTitle)
-                        )
-                @unknown default:
-                    EmptyView()
+            // 1. Background Image (MENGGUNAKAN BASE64 HELPER)
+            if let base64String = trip.coverImageUrl, let uiImage = Base64Helper.decode(base64String) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 220)
+                    .clipped()
+            } else {
+                // FALLBACK JIKA TIDAK ADA GAMBAR
+                ZStack {
+                    Color.leapSecondary.opacity(0.8)
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 50))
+                        .foregroundColor(.white.opacity(0.3))
                 }
+                .frame(height: 220)
+                .clipped()
             }
-            .frame(height: 220)
-            .clipped()
             
-            // 2. Gradient Overlay (Agar teks putih tetap terbaca di gambar terang)
+            // 2. Gradient Overlay
             LinearGradient(
                 colors: [.black.opacity(0.8), .black.opacity(0.3), .clear],
-                startPoint: .bottom,
-                endPoint: .top
+                startPoint: .bottom, endPoint: .top
             )
             
             // 3. Card Content
             VStack(alignment: .leading, spacing: 0) {
-                // Top Row: Places Badge & Status Badge
                 HStack {
-                    // Places Badge (Glassmorphism effect)
                     if placesCount > 0 {
                         HStack(spacing: 4) {
-                            Image(systemName: "mappin.circle.fill")
-                                .foregroundColor(.leapHighlight)
-                            Text("\(placesCount) Places")
-                                .font(.caption.bold())
-                                .foregroundColor(.white)
+                            Image(systemName: "mappin.circle.fill").foregroundColor(.leapHighlight)
+                            Text("\(placesCount) Places").font(.caption.bold()).foregroundColor(.white)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
                         .background(.ultraThinMaterial, in: Capsule())
                     }
-                    
                     Spacer()
-                    
-                    // Status Badge
-                    Text(trip.status.rawValue)
-                        .font(.caption.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.leapPrimary)
-                        .clipShape(Capsule())
+                    Text(trip.status.rawValue).font(.caption.bold()).foregroundColor(.white)
+                        .padding(.horizontal, 14).padding(.vertical, 8).background(Color.leapPrimary).clipShape(Capsule())
                 }
-                
                 Spacer()
-                
-                // Bottom Row: Location, Title, Dates
                 VStack(alignment: .leading, spacing: 6) {
-                    // Location
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.and.ellipse")
                         Text(trip.locationName)
-                    }
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.9))
+                    }.font(.subheadline).foregroundColor(.white.opacity(0.9))
                     
-                    // Title
-                    Text(trip.title)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
+                    Text(trip.title).font(.title2).fontWeight(.bold).foregroundColor(.white).lineLimit(1)
                     
-                    // Dates
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                         Text(formattedDateRange)
-                    }
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.9))
+                    }.font(.subheadline).foregroundColor(.white.opacity(0.9))
                 }
             }
             .padding(16)
@@ -117,24 +76,15 @@ struct TripCardView: View {
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
     }
     
-    // MARK: - Helper Methods
-    
-    // Helper untuk memformat tanggal (Contoh: "Nov 10 – 18, 2026")
     private var formattedDateRange: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
+        let formatter = DateFormatter(); formatter.dateFormat = "MMM d"
         let startString = formatter.string(from: trip.startDate)
-        
         let endFormatter = DateFormatter()
-        // Cek apakah tahunnya sama
         let startYear = Calendar.current.component(.year, from: trip.startDate)
         let endYear = Calendar.current.component(.year, from: trip.endDate)
         
-        if startYear == endYear {
-            endFormatter.dateFormat = "d, yyyy"
-        } else {
-            endFormatter.dateFormat = "MMM d, yyyy"
-        }
+        if startYear == endYear { endFormatter.dateFormat = "d, yyyy" }
+        else { endFormatter.dateFormat = "MMM d, yyyy" }
         
         let endString = endFormatter.string(from: trip.endDate)
         return "\(startString) – \(endString)"

@@ -5,7 +5,6 @@
 //  Created by Sean tandjaja on 02/06/26.
 //
 
-
 import MapKit
 import PhotosUI
 import SwiftUI
@@ -14,40 +13,44 @@ import SwiftUI
 struct TripDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDestinationViewModel // NAMA BARU
-
+    
     @State private var position: MapCameraPosition = .automatic
     @State private var isShowingEditSheet = false
     @State private var isShowingFABMenu = false
     @State private var isShowingAddPlaceSheet = false
     @State private var selectedDestinationToEdit: TripDestination? = nil
-
+    
     init(trip: Trip) {
         _viewModel = StateObject(wrappedValue: TripDestinationViewModel(trip: trip))
     }
-
+    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 // HEADER PETA
                 ZStack(alignment: .topLeading) {
                     Map(position: $position) {
+                        // 1. Gambar Jalur Jalan Raya Asli (Actual Route)
+                        ForEach(Array(viewModel.actualRoutes.enumerated()), id: \.offset) { index, route in
+                            MapPolyline(route.polyline)
+                                .stroke(Color.leapPrimary, lineWidth: 4)
+                        }
+                        
+                        // 2. Gambar Pin Angka
                         if let dayPlan = viewModel.currentDayPlan {
                             let validDestinations = dayPlan.destinations.filter { $0.latitude != 0.0 && $0.longitude != 0.0 }
-                            let coordinates = validDestinations.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
-                            
-                            MapPolyline(coordinates: coordinates).stroke(Color.leapPrimary, style: StrokeStyle(lineWidth: 3, dash: [6, 6]))
                             
                             ForEach(Array(validDestinations.enumerated()), id: \.element.id) { index, dest in
                                 Annotation(dest.name, coordinate: CLLocationCoordinate2D(latitude: dest.latitude, longitude: dest.longitude)) {
                                     ZStack {
-                                        Circle().fill(dest.category == "Tempat Makan" ? Color.pink : Color.leapPrimary).frame(width: 24, height: 24)
-                                        Circle().fill(Color.white).frame(width: 10, height: 10)
-                                    }.shadow(radius: 3)
+                                        Circle().fill(Color.leapPrimary).frame(width: 28, height: 28).shadow(radius: 3)
+                                        Text("\(index + 1)").font(.caption.bold()).foregroundColor(.white)
+                                    }
                                 }
                             }
                         }
                     }.frame(height: 280)
-
+                    
                     HStack {
                         Button { dismiss() } label: {
                             Image(systemName: "arrow.left").font(.system(size: 20, weight: .semibold)).foregroundColor(.black).padding(12).background(Color.white).clipShape(Circle()).shadow(radius: 5)
@@ -60,7 +63,7 @@ struct TripDetailView: View {
                         }
                     }.padding(.horizontal, 20).padding(.top, 60)
                 }
-
+                
                 // DAY SELECTOR
                 if !viewModel.dayPlans.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -77,7 +80,7 @@ struct TripDetailView: View {
                         }.padding(.horizontal, 20).padding(.vertical, 16)
                     }.background(Color.white)
                 }
-
+                
                 // DAFTAR DESTINASI
                 Group {
                     if viewModel.isLoading {
@@ -96,11 +99,13 @@ struct TripDetailView: View {
                             }.frame(maxWidth: .infinity)
                         } else {
                             List {
-                                ForEach(currentDayPlan.destinations) { dest in
-                                    let time = viewModel.getFormattedTime(for: dest)
+                                ForEach(Array(currentDayPlan.destinations.enumerated()), id: \.element.id) { index, dest in
                                     let isLast = dest.id == currentDayPlan.destinations.last?.id
-
-                                    TimelineRowView(destination: dest, time: time, isLast: isLast,
+                                    
+                                    TimelineRowView(
+                                        destination: dest,
+                                        indexNumber: index + 1, // PIN ANGKA
+                                        isLast: isLast,
                                         onEdit: { selectedDestinationToEdit = dest },
                                         onDelete: { withAnimation { viewModel.deleteDestination(destID: dest.id) } }
                                     )
@@ -116,7 +121,7 @@ struct TripDetailView: View {
                     }
                 }.background(Color(hex: "#F9F9F9"))
             }.edgesIgnoringSafeArea(.top)
-
+            
             if isShowingFABMenu {
                 Color.black.opacity(0.2).ignoresSafeArea().onTapGesture {
                     withAnimation(.spring()) { isShowingFABMenu = false }
@@ -129,7 +134,7 @@ struct TripDetailView: View {
         .sheet(isPresented: $isShowingAddPlaceSheet) { AddOrEditPlaceSheetView(viewModel: viewModel, mode: .add, destinationToEdit: nil) }
         .sheet(item: $selectedDestinationToEdit) { destination in AddOrEditPlaceSheetView(viewModel: viewModel, mode: .edit, destinationToEdit: destination) }
     }
-
+    
     private var detailFABMenu: some View {
         VStack(alignment: .trailing, spacing: 16) {
             if isShowingFABMenu {
@@ -158,22 +163,22 @@ struct TripDetailView: View {
 struct AddOrEditPlaceSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDestinationViewModel
-
+    
     let mode: PlaceMode
     let destinationToEdit: TripDestination?
-
+    
     @State private var searchQuery: String = ""
     @State private var selectedCategory = "Objek Wisata"
     @State private var stayDurationHours: Int = 2
     @State private var stayDurationMinutes: Int = 0
     @State private var selectedPlace: FSQPlace?
     @FocusState private var isSearchFocused: Bool
-
+    
     init(viewModel: TripDestinationViewModel, mode: PlaceMode, destinationToEdit: TripDestination?) {
         self.viewModel = viewModel
         self.mode = mode
         self.destinationToEdit = destinationToEdit
-
+        
         if mode == .edit, let dest = destinationToEdit {
             _searchQuery = State(initialValue: dest.name)
             _selectedCategory = State(initialValue: dest.category)
@@ -181,7 +186,7 @@ struct AddOrEditPlaceSheetView: View {
             _stayDurationMinutes = State(initialValue: dest.stayDurationMinutes % 60)
         }
     }
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -190,7 +195,7 @@ struct AddOrEditPlaceSheetView: View {
                         TextField("Search in \(viewModel.trip.locationName)", text: $searchQuery)
                             .focused($isSearchFocused)
                             .onChange(of: searchQuery) { newValue in viewModel.searchPlacesAroundCity(query: newValue) }
-
+                        
                         if isSearchFocused && !viewModel.addSearchResults.isEmpty {
                             List(viewModel.addSearchResults, id: \.fsq_place_id) { place in
                                 Button(action: {
@@ -252,22 +257,39 @@ struct TripEditView: View {
         NavigationStack {
             Form {
                 Section("Trip Cover Image") {
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
-                        if let selectedUIImage {
-                            Image(uiImage: selectedUIImage).resizable().scaledToFill().frame(height: 150).clipShape(RoundedRectangle(cornerRadius: 12))
-                        } else {
-                            HStack {
-                                Image(systemName: "photo.badge.plus").font(.title2)
-                                Text("Upload image from phone")
-                            }.foregroundColor(.leapPrimary).padding(.vertical, 8)
-                        }
-                    }.onChange(of: selectedPhotoItem) { newItem in
-                        Task {
-                            if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) {
-                                selectedUIImage = img
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            // MENGGUNAKAN BASE64 HELPER
+                            if let selectedUIImage {
+                                Image(uiImage: selectedUIImage).resizable().scaledToFill().frame(width: 150, height: 120).clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else if !coverImageUrl.isEmpty, let uiImage = Base64Helper.decode(coverImageUrl) {
+                                Image(uiImage: uiImage).resizable().scaledToFill().frame(width: 150, height: 120).clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                RoundedRectangle(cornerRadius: 12).fill(Color.gray.opacity(0.2)).frame(width: 150, height: 120).overlay(Image(systemName: "photo").font(.largeTitle).foregroundColor(.gray))
+                            }
+                            
+                            HStack(spacing: 20) {
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                                    Text("Change Photo").font(.subheadline).foregroundColor(.leapPrimary)
+                                }
+                                
+                                if !coverImageUrl.isEmpty || selectedUIImage != nil {
+                                    Button(role: .destructive, action: {
+                                        withAnimation {
+                                            selectedUIImage = nil
+                                            coverImageUrl = "" // Mengosongkan gambar
+                                            selectedPhotoItem = nil
+                                        }
+                                    }) {
+                                        Image(systemName: "trash").font(.subheadline).foregroundColor(.leapHighlight)
+                                    }
+                                }
                             }
                         }
+                        Spacer()
                     }
+                    .padding(.vertical, 8)
                 }
                 Section("Trip Information") { TextField("Trip Name", text: $title) }
                 Section(footer: Text("If you reduce the travel dates, the extra days from your itinerary will be permanently deleted.")) {
@@ -282,116 +304,101 @@ struct TripEditView: View {
                     Button("Save") {
                         Task {
                             var finalImageUrl = coverImageUrl
-                            if let selectedUIImage, let base64 = viewModel.convertImageToBase64String(image: selectedUIImage) {
+                            if let selectedUIImage, let base64 = Base64Helper.encode(selectedUIImage) {
                                 finalImageUrl = base64
                             }
                             await viewModel.updateTripDetails(title: title, startDate: startDate, endDate: endDate, coverImageUrl: finalImageUrl)
                             dismiss()
                         }
-                    }.bold()
+                    }.bold().foregroundColor(.leapPrimary)
+                }
+            }.onChange(of: selectedPhotoItem) { newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) {
+                        selectedUIImage = img
+                    }
                 }
             }
         }
     }
 }
 
-// TimelineRowView sama seperti sebelumnya, biarkan tanpa diubah
-
 struct TimelineRowView: View {
     let destination: TripDestination
-    let time: String
+    let indexNumber: Int
     let isLast: Bool
     var onEdit: () -> Void
     var onDelete: () -> Void
+    
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 12) {
+            // DRAG ICON (6 Titik)
+            Image(systemName: "circle.grid.2x3.fill")
+                .foregroundColor(.gray.opacity(0.4))
+                .padding(.top, 16)
+                .padding(.leading, 16)
+            
+            // PIN ANGKA DAN GARIS TIMELINE
             VStack(spacing: 0) {
                 ZStack {
-                    Circle().fill(
-                        destination.category == "Tempat Makan"
-                            ? Color.pink : Color.leapPrimary
-                    ).frame(width: 44, height: 44).shadow(
-                        color: (destination.category == "Tempat Makan"
-                            ? Color.pink : Color.leapPrimary).opacity(0.4),
-                        radius: 5,
-                        y: 2
-                    )
-                    Image(
-                        systemName: destination.category == "Tempat Makan"
-                            ? "fork.knife" : "mappin"
-                    ).foregroundColor(.white).font(
-                        .system(size: 16, weight: .bold)
-                    )
+                    Circle().fill(Color.leapPrimary).frame(width: 32, height: 32)
+                        .shadow(color: Color.leapPrimary.opacity(0.3), radius: 5, y: 2)
+                    Text("\(indexNumber)")
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
                 }
+                
                 if !isLast {
                     Line().stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                        .frame(width: 2, height: 100).foregroundColor(
-                            Color.gray.opacity(0.3)
-                        ).padding(.top, 8)
+                        .frame(width: 2)
+                        .foregroundColor(Color.gray.opacity(0.3))
+                        .padding(.top, 4)
                 }
-            }.padding(.leading, 20)
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
+            }
+            
+            // BOX KONTEN DESTINASI
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(destination.name).font(.headline)
-                                .foregroundColor(.leapSecondary)
-                            Text(destination.category).font(.subheadline)
-                                .foregroundColor(.gray)
+                            Text(destination.name).font(.headline).foregroundColor(.leapSecondary)
+                            Text(destination.category).font(.subheadline).foregroundColor(.gray)
                         }
                         Spacer()
-                        Text(time).font(.caption.bold()).foregroundColor(
-                            destination.category == "Tempat Makan"
-                                ? .pink : .leapPrimary
-                        ).padding(.horizontal, 10).padding(.vertical, 6)
-                            .background(
-                                (destination.category == "Tempat Makan"
-                                    ? Color.pink : Color.leapPrimary).opacity(
-                                        0.1
-                                    )
-                            ).clipShape(Capsule())
                         Menu {
-                            Button(action: onEdit) {
-                                Label("Edit Place", systemImage: "pencil")
-                            }
-                            Button(role: .destructive, action: onDelete) {
-                                Label("Delete Place", systemImage: "trash")
-                            }
+                            Button(action: onEdit) { Label("Edit Place", systemImage: "pencil") }
+                            Button(role: .destructive, action: onDelete) { Label("Delete Place", systemImage: "trash") }
                         } label: {
-                            Image(systemName: "ellipsis").font(
-                                .system(size: 18, weight: .bold)
-                            ).padding(8).background(Color.gray.opacity(0.1))
-                                .clipShape(Circle())
+                            Image(systemName: "ellipsis").font(.system(size: 18, weight: .bold))
+                                .padding(8).background(Color.gray.opacity(0.1)).clipShape(Circle()).foregroundColor(.gray)
                         }
                     }
+                    
                     HStack(spacing: 6) {
                         Image(systemName: "clock")
-                        Text(
-                            "Stay Duration: \(destination.stayDurationMinutes / 60)h \(destination.stayDurationMinutes % 60)m"
-                        )
-                    }.font(.caption.bold()).foregroundColor(
-                        destination.category == "Tempat Makan"
-                            ? .pink : .leapPrimary
-                    )
-                }.padding(16).background(Color.white).cornerRadius(16).shadow(
-                    color: .black.opacity(0.05),
-                    radius: 5,
-                    y: 2
-                )
+                        Text("Stay Duration: \(destination.stayDurationMinutes / 60)h \(destination.stayDurationMinutes % 60)m")
+                    }.font(.caption.bold()).foregroundColor(.leapPrimary)
+                }
+                .padding(16).background(Color.white).cornerRadius(16).shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                
+                // MUNCULKAN WAKTU TEMPUH (ETA) DI BAWAH BOX
                 if !isLast {
                     HStack(spacing: 6) {
                         Image(systemName: "car.fill")
-                        Text(
-                            "\(destination.transitTimeToNextMinutes ?? 0) mins drive"
-                        )
-                    }.font(.caption.bold()).foregroundColor(.leapPrimary)
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(Color.leapPrimary.opacity(0.1)).clipShape(
-                            Capsule()
-                        ).padding(.bottom, 8)
+                        Text("\(destination.transitTimeToNextMinutes ?? 0) mins drive")
+                    }
+                    .font(.caption.bold()).foregroundColor(.gray)
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Color.gray.opacity(0.15))
+                    .clipShape(Capsule())
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                } else {
+                    Spacer().frame(height: 16)
                 }
-            }.padding(.trailing, 20)
-        }.padding(.vertical, 8)
+            }
+            .padding(.trailing, 20)
+        }
     }
 }
 

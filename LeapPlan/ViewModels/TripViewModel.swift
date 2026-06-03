@@ -29,7 +29,7 @@ class TripViewModel: ObservableObject {
     private let authService: AuthServiceProtocol
     private let tripService: TripServiceProtocol
     private let fourSquareService: FourSquareServiceProtocol
-    private let tripDestinationService: TripDestinationServiceProtocol // REVISI DI
+    private let tripDestinationService: TripDestinationServiceProtocol
     
     private var cancellables = Set<AnyCancellable>()
 
@@ -37,7 +37,7 @@ class TripViewModel: ObservableObject {
          authService: AuthServiceProtocol? = nil,
          tripService: TripServiceProtocol? = nil,
          fourSquareService: FourSquareServiceProtocol? = nil,
-         tripDestinationService: TripDestinationServiceProtocol? = nil) { // REVISI DI
+         tripDestinationService: TripDestinationServiceProtocol? = nil) {
         
         let safeRepo = firestoreRepo ?? FirestoreRepository()
         self.firestoreRepo = safeRepo
@@ -80,6 +80,48 @@ class TripViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
+        }
+    }
+
+    // MARK: - EDIT META TRIP DARI DEPAN (TripsView)
+    // INI ADALAH FUNGSI YANG MENGHILANGKAN ERROR MU!
+    func updateTripDetails(trip: Trip, title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
+        isLoading = true
+        var updatedTrip = trip
+        updatedTrip.title = title
+        updatedTrip.startDate = startDate
+        updatedTrip.endDate = endDate
+        updatedTrip.coverImageUrl = coverImageUrl.isEmpty ? nil : coverImageUrl
+        
+        guard let tripID = updatedTrip.id else { return }
+        let userID = activeUserID
+        
+        do {
+            try await firestoreRepo.updateTrip(updatedTrip, forUserID: userID)
+            
+            // Adjust day plans jika user memendekkan/memperpanjang hari di halaman depan
+            let calendar = Calendar.current
+            let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate), to: calendar.startOfDay(for: endDate))
+            let totalDays = max(1, (components.day ?? 0) + 1)
+            let existingDayPlans = try await firestoreRepo.fetchDayPlans(forTripID: tripID, userID: userID)
+            
+            if existingDayPlans.count > totalDays {
+                let plansToDelete = Array(existingDayPlans[totalDays...])
+                for plan in plansToDelete {
+                    if let planID = plan.id { try await firestoreRepo.deleteDayPlan(planID: planID, tripID: tripID, userID: userID) }
+                }
+            } else if existingDayPlans.count < totalDays {
+                for i in (existingDayPlans.count + 1)...totalDays {
+                    guard let newDate = Calendar.current.date(byAdding: .day, value: i - 1, to: Calendar.current.startOfDay(for: startDate)) else { continue }
+                    let newPlan = DayPlan(id: UUID().uuidString, dayNumber: i, date: newDate, destinations: [])
+                    try await firestoreRepo.saveDayPlan(newPlan, forTripID: tripID, userID: userID)
+                }
+            }
+            
+            await MainActor.run { self.loadUserTrips() }
+        } catch {
+            self.errorMessage = error.localizedDescription
+            self.isLoading = false
         }
     }
 
@@ -131,7 +173,7 @@ class TripViewModel: ObservableObject {
     func createManualTrip() async throws -> Trip {
         let userID = activeUserID
         var newTrip = Trip(title: "\(destinationForm) Trip", locationName: destinationForm, startDate: startDateForm, endDate: endDateForm, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
-        newTrip.coverImageUrl = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop"
+        newTrip.coverImageUrl = nil
         
         let totalDays = dailyPreferences.count
         var emptyDays: [DayPlan] = []
@@ -151,7 +193,7 @@ class TripViewModel: ObservableObject {
         let prefs = RandomTripPreferences(locationName: destinationForm, startDate: startDateForm, endDate: endDateForm, dailyPreferences: dailyPreferences)
         
         var newTrip = Trip(title: "\(destinationForm) Trip", locationName: prefs.locationName, startDate: prefs.startDate, endDate: prefs.endDate, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
-        newTrip.coverImageUrl = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop"
+        newTrip.coverImageUrl = nil
 
         let generatedDayPlans = try await tripService.generateRandomItinerary(preferences: prefs)
         try await firestoreRepo.saveGeneratedTripWithDayPlans(trip: newTrip, dayPlans: generatedDayPlans, userID: userID)
@@ -166,7 +208,7 @@ class TripViewModel: ObservableObject {
         
         do {
             try await tripDestinationService.addPlaceToTrip(place: place, targetTrip: targetTrip, selectedDays: selectedDays, userID: userID)
-            await MainActor.run { self.loadUserTrips() } // Refresh UI
+            await MainActor.run { self.loadUserTrips() }
         } catch {
             self.errorMessage = error.localizedDescription
         }
