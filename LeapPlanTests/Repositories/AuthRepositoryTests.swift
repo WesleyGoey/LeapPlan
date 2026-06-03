@@ -11,26 +11,30 @@ import XCTest
 import FirebaseFirestore
 @testable import LeapPlan
 
-final class AuthRepositoryTests: XCTestCase {
-    
-    var repository: AuthRepository!
-    let testUserID = "test_user_sean_123"
-    
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        repository = AuthRepository()
-        
-        // REVISI: Mengarahkan koneksi ke Local Firebase Emulator Suite (Port 8080)
-        let settings = Firestore.firestore().settings
-        settings.host = "localhost:8080"
-        settings.isSSLEnabled = false
-        Firestore.firestore().settings = settings
-    }
-    
-    override func tearDownWithError() throws {
-        repository = nil
-        try super.tearDownWithError()
-    }
+private let configureAuthFirestoreEmulatorOnce: Void = {
+     let settings = Firestore.firestore().settings
+     settings.host = "localhost:8080"
+     settings.isSSLEnabled = false
+     Firestore.firestore().settings = settings
+ }()
+
+ final class AuthRepositoryTests: XCTestCase {
+     
+     var repository: AuthRepository!
+     let testUserID = "test_user_sean_123"
+     
+     override func setUpWithError() throws {
+         try super.setUpWithError()
+         repository = AuthRepository()
+         
+         // Panggil token eksekusi sekali
+         _ = configureAuthFirestoreEmulatorOnce
+     }
+     
+     override func tearDownWithError() throws {
+         repository = nil
+         try super.tearDownWithError()
+     }
     
     func testSaveAndFetchUser_Success() async throws {
         // Arrange

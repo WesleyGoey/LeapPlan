@@ -11,26 +11,30 @@ import XCTest
 import FirebaseFirestore
 @testable import LeapPlan
 
-final class FirestoreRepositoryTests: XCTestCase {
-    
-    var repository: FirestoreRepository!
-    let mockUserID = "testing_uid_123"
-    
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        repository = FirestoreRepository()
-        
-        // Setup Local Host Emulator
-        let settings = Firestore.firestore().settings
-        settings.host = "localhost:8080"
-        settings.isSSLEnabled = false
-        Firestore.firestore().settings = settings
-    }
-    
-    override func tearDownWithError() throws {
-        repository = nil
-        try super.tearDownWithError()
-    }
+private let configureFirestoreEmulatorOnce: Void = {
+     let settings = Firestore.firestore().settings
+     settings.host = "localhost:8080"
+     settings.isSSLEnabled = false
+     Firestore.firestore().settings = settings
+ }()
+
+ final class FirestoreRepositoryTests: XCTestCase {
+     
+     var repository: FirestoreRepository!
+     let mockUserID = "testing_uid_123"
+     
+     override func setUpWithError() throws {
+         try super.setUpWithError()
+         repository = FirestoreRepository()
+         
+         // Panggil token eksekusi sekali
+         _ = configureFirestoreEmulatorOnce
+     }
+     
+     override func tearDownWithError() throws {
+         repository = nil
+         try super.tearDownWithError()
+     }
     
     func testCreateAndFetchTrip_Success() async throws {
         // Arrange

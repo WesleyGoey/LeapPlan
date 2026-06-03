@@ -47,10 +47,13 @@ final class TripViewModelTests: XCTestCase {
         viewModel.destinationForm = "Yogyakarta"
         viewModel.tripNameForm = "Gudeg Hunting"
         viewModel.startDateForm = Date()
-        viewModel.endDateForm = Calendar.current.date(byAdding: .day, value: 1, to: Date())! // 2 Hari rencana perjalanan
+        viewModel.endDateForm = Calendar.current.date(byAdding: .day, value: 1, to: Date())!
         
         // Act
         let createdTrip = try await viewModel.createManualTrip()
+        
+        // REVISI KRUSIAL: Berikan waktu jeda asinkronus agar Task internal loadUserTrips() sempat selesai
+        try? await Task.sleep(nanoseconds: 100_000_000) // Jeda 0.1 detik
         
         // Assert
         XCTAssertEqual(createdTrip.title, "Gudeg Hunting")

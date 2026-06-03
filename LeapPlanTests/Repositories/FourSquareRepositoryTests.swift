@@ -5,7 +5,7 @@
 //  Created by Wesley Goey on 03/06/26.
 //
 
-\
+
 
 import XCTest
 @testable import LeapPlan
@@ -95,7 +95,7 @@ class MockURLProtocol: URLProtocol {
     static var stubError: Error?
     
     override class func canInit(with request: URLRequest) -> Bool { return true }
-    override class class func canonicalRequest(for request: URLRequest) -> URLRequest { return request }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { return request }
     
     override func startLoading() {
         if let error = MockURLProtocol.stubError {
