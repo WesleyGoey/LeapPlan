@@ -15,6 +15,10 @@ class ProfileViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
+    // MARK: - TRAVEL STATS (Konek Backend Firestore)
+    @Published var totalTripsCount: Int = 0
+    @Published var upcomingTripsCount: Int = 0
+    
     @Published var authEmail = ""
     @Published var authPassword = ""
     @Published var authFullName = ""
@@ -27,10 +31,14 @@ class ProfileViewModel: ObservableObject {
     
     private let authRepo: AuthRepositoryProtocol
     private let authService: AuthServiceProtocol
+    private let firestoreRepo: FirestoreRepositoryProtocol // Tambahan buat narik data trip
     
-    init(authRepo: AuthRepositoryProtocol? = nil, authService: AuthServiceProtocol? = nil) {
+    init(authRepo: AuthRepositoryProtocol? = nil,
+         authService: AuthServiceProtocol? = nil,
+         firestoreRepo: FirestoreRepositoryProtocol? = nil) {
         self.authRepo = authRepo ?? AuthRepository()
         self.authService = authService ?? AuthService()
+        self.firestoreRepo = firestoreRepo ?? FirestoreRepository()
     }
     
     var isLoggedIn: Bool { return authService.isLoggedIn }
@@ -41,6 +49,12 @@ class ProfileViewModel: ObservableObject {
         Task {
             do {
                 self.currentUser = try await authRepo.fetchUser(userID: userID)
+                
+                // MENGHITUNG STATISTIK TRIP DARI FIREBASE
+                let userTrips = try await firestoreRepo.fetchTrips(forUserID: userID)
+                self.totalTripsCount = userTrips.count
+                self.upcomingTripsCount = userTrips.filter { $0.status == .upcoming || $0.status == .ongoing }.count
+                
                 self.isLoading = false
             } catch {
                 self.errorMessage = "Failed to load profile."
@@ -80,7 +94,6 @@ class ProfileViewModel: ObservableObject {
         do {
             let uid = try await authService.register(email: authEmail, password: authPassword)
             
-            // Perbaikan: tambahkan argumen joinedDate: Date()
             let newUser = User(
                 id: uid,
                 email: authEmail,
@@ -102,7 +115,9 @@ class ProfileViewModel: ObservableObject {
     func logout() {
         do {
             try authService.logout()
-            self.currentUser = nil
+            self.currentUser = nil // Paksa bersihkan state profile saat logout
+            self.totalTripsCount = 0
+            self.upcomingTripsCount = 0
             clearAuthForm()
         } catch {
             self.errorMessage = error.localizedDescription
@@ -114,7 +129,6 @@ class ProfileViewModel: ObservableObject {
         isLoading = true; errorMessage = nil
         
         do {
-            // MENGGUNAKAN BASE64 HELPER EKSKLUSIF
             if let img = selectedImage {
                 updatedUser.profileImageUrl = Base64Helper.encode(img)
             } else {

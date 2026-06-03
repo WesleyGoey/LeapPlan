@@ -8,7 +8,6 @@
 import SwiftUI
 import PhotosUI
 
-// MARK: - 1. MAIN PROFILE VIEW (REDESIGN MOCKUP)
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var isShowingAuthSheet = false
@@ -18,115 +17,114 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(hex: "#F9F9F9").ignoresSafeArea() // Background abu-abu muda ala mockup
+                Color(hex: "#F9F9F9").ignoresSafeArea()
                 
                 VStack {
                     if viewModel.isLoading {
                         ProgressView().scaleEffect(1.5)
-                    } else if viewModel.isLoggedIn {
-                        if let user = viewModel.currentUser {
-                            ScrollView(.vertical, showsIndicators: false) {
-                                VStack(spacing: 24) {
-                                    
-                                    // --- HEADER PROFIL ---
-                                    VStack(spacing: 16) {
-                                        // Foto Profil + Online Indicator
-                                        ZStack(alignment: .bottomTrailing) {
-                                            if let base64String = user.profileImageUrl, let uiImage = Base64Helper.decode(base64String) {
-                                                Image(uiImage: uiImage).resizable().scaledToFill()
-                                                    .frame(width: 110, height: 110).clipShape(Circle())
-                                                    .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
-                                            } else {
-                                                Circle().fill(Color.leapPrimary.opacity(0.2))
-                                                    .frame(width: 110, height: 110)
-                                                    .overlay(Image(systemName: "person").font(.system(size: 45)).foregroundColor(.leapPrimary))
-                                            }
-                                            
-                                            // Green Dot Indicator
-                                            Circle().fill(Color(hex: "#50B498")).frame(width: 22, height: 22)
-                                                .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                                                .offset(x: -4, y: -4)
+                    } else if let user = viewModel.currentUser {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(spacing: 24) {
+                                VStack(spacing: 16) {
+                                    ZStack(alignment: .bottomTrailing) {
+                                        if let base64String = user.profileImageUrl, let uiImage = Base64Helper.decode(base64String) {
+                                            Image(uiImage: uiImage).resizable().scaledToFill()
+                                                .frame(width: 110, height: 110).clipShape(Circle())
+                                                .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
+                                        } else {
+                                            Circle().fill(Color.leapPrimary.opacity(0.2))
+                                                .frame(width: 110, height: 110)
+                                                .overlay(Text(String(user.fullName.prefix(1)).uppercased()).font(.system(size: 45, weight: .bold)).foregroundColor(.leapPrimary))
                                         }
                                         
-                                        // Nama & Email
-                                        VStack(spacing: 4) {
-                                            Text(user.fullName).font(.title2).fontWeight(.bold).foregroundColor(.leapSecondary)
-                                            Text(user.email).font(.subheadline).foregroundColor(.gray)
-                                        }
-                                        
-                                        // Tombol Edit Outlined
-                                        Button(action: {
-                                            viewModel.populateEditForm()
-                                            isShowingEditSheet = true
-                                        }) {
-                                            Text("Edit Profile")
-                                                .font(.subheadline.bold())
-                                                .foregroundColor(.leapPrimary)
-                                                .padding(.horizontal, 32)
-                                                .padding(.vertical, 10)
-                                                .overlay(Capsule().stroke(Color.leapPrimary, lineWidth: 1.5))
-                                        }
+                                        Circle().fill(Color(hex: "#50B498")).frame(width: 22, height: 22)
+                                            .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                            .offset(x: -4, y: -4)
                                     }
-                                    .padding(.top, 30)
                                     
-                                    // --- SETTINGS LIST ---
-                                    VStack(alignment: .leading, spacing: 0) {
-                                        Text("SETTINGS")
-                                            .font(.caption.bold())
-                                            .foregroundColor(.gray)
-                                            .padding(.horizontal, 20)
-                                            .padding(.bottom, 10)
-                                        
-                                        VStack(spacing: 0) {
-                                            SettingRowView(icon: "gearshape", iconColor: .leapPrimary, title: "Account Settings", subtitle: "Password, security, data") {
-                                                viewModel.populateEditForm()
-                                                isShowingEditSheet = true
-                                            }
-                                            Divider().padding(.leading, 64)
-                                            
-                                            SettingRowView(icon: "person.2", iconColor: .leapPrimary, title: "Collaborators", subtitle: "Manage trip members", badge: 3) {
-                                                showingComingSoonAlert = true
-                                            }
-                                            Divider().padding(.leading, 64)
-                                            
-                                            SettingRowView(icon: "questionmark.circle", iconColor: .leapPrimary, title: "Help & Support", subtitle: "FAQs, contact us") {
-                                                showingComingSoonAlert = true
-                                            }
-                                        }
-                                        .background(Color.white)
+                                    VStack(spacing: 4) {
+                                        Text(user.fullName).font(.title2).fontWeight(.bold).foregroundColor(.leapSecondary)
+                                        Text(user.email).font(.subheadline).foregroundColor(.gray)
                                     }
-                                    .padding(.top, 10)
                                     
-                                    // --- LOG OUT BUTTON ---
-                                    VStack(spacing: 0) {
-                                        Button(action: { viewModel.logout() }) {
-                                            HStack(spacing: 16) {
-                                                ZStack {
-                                                    RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.1)).frame(width: 40, height: 40)
-                                                    Image(systemName: "rectangle.portrait.and.arrow.right").foregroundColor(.red)
-                                                }
-                                                Text("Log Out").font(.headline).fontWeight(.bold).foregroundColor(.red)
-                                                Spacer()
-                                            }
-                                            .padding(.horizontal, 20)
-                                            .padding(.vertical, 12)
-                                        }
+                                    Button(action: {
+                                        viewModel.populateEditForm()
+                                        isShowingEditSheet = true
+                                    }) {
+                                        Text("Edit Profile")
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.leapPrimary)
+                                            .padding(.horizontal, 32)
+                                            .padding(.vertical, 10)
+                                            .overlay(Capsule().stroke(Color.leapPrimary, lineWidth: 1.5))
                                     }
-                                    .background(Color.white)
-                                    .padding(.top, 10)
-                                    
-                                    Spacer(minLength: 30)
-                                    
-                                    // --- FOOTER ---
-                                    Text("LeapPlan v1.0.0 · Made with ❤️")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                        .padding(.bottom, 40)
                                 }
+                                .padding(.top, 30)
+                                
+                                HStack(spacing: 20) {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "airplane")
+                                            .font(.title2)
+                                            .foregroundColor(.leapPrimary)
+                                        Text("\(viewModel.totalTripsCount)")
+                                            .font(.title).fontWeight(.bold).foregroundColor(.leapSecondary)
+                                        Text("Total Trips")
+                                            .font(.caption).foregroundColor(.gray)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.white)
+                                    .cornerRadius(16)
+                                    .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
+                                    
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "calendar.badge.clock")
+                                            .font(.title2)
+                                            .foregroundColor(.leapHighlight)
+                                        Text("\(viewModel.upcomingTripsCount)")
+                                            .font(.title).fontWeight(.bold).foregroundColor(.leapSecondary)
+                                        Text("Upcoming")
+                                            .font(.caption).foregroundColor(.gray)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.white)
+                                    .cornerRadius(16)
+                                    .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
+                                }
+                                .padding(.horizontal, 24)
+                                .padding(.top, 10)
+                                
+                                VStack(spacing: 0) {
+                                    Button(action: {
+                                        viewModel.logout()
+                                    }) {
+                                        HStack(spacing: 16) {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.1)).frame(width: 40, height: 40)
+                                                Image(systemName: "rectangle.portrait.and.arrow.right").foregroundColor(.red)
+                                            }
+                                            Text("Log Out").font(.headline).fontWeight(.bold).foregroundColor(.red)
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 12)
+                                    }
+                                }
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .padding(.horizontal, 24)
+                                .padding(.top, 10)
+                                
+                                Spacer(minLength: 30)
+                                
+                                Text("LeapPlan v1.0.0 · Made with ❤️")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.bottom, 40)
                             }
                         }
                     } else {
-                        // --- GUEST VIEW (BELUM LOGIN) ---
                         VStack(spacing: 20) {
                             Spacer()
                             Image(systemName: "person.crop.circle.badge.questionmark").font(.system(size: 80)).foregroundColor(.gray.opacity(0.5))
@@ -145,9 +143,9 @@ struct ProfileView: View {
                     }
                 }
             }
-            .navigationTitle(viewModel.isLoggedIn ? "" : "Profile")
+            .navigationTitle(viewModel.currentUser != nil ? "" : "Profile")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarHidden(viewModel.isLoggedIn) // Sembunyikan NavBar bawaan agar header bersih seperti mockup
+            .navigationBarHidden(viewModel.currentUser != nil)
             .onAppear { viewModel.loadProfile() }
             .sheet(isPresented: $isShowingAuthSheet) {
                 LoginRegisterSheetView(viewModel: viewModel)
@@ -164,55 +162,6 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - KUMPONEN ROW SETTINGS (MOCKUP)
-struct SettingRowView: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let subtitle: String
-    var badge: Int? = nil
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(iconColor.opacity(0.1))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: icon)
-                        .foregroundColor(iconColor)
-                        .font(.system(size: 18, weight: .medium))
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.headline).foregroundColor(.primary)
-                    Text(subtitle).font(.caption).foregroundColor(.gray)
-                }
-                
-                Spacer()
-                
-                if let badge = badge {
-                    Text("\(badge)")
-                        .font(.caption2.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red)
-                        .clipShape(Circle())
-                }
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.gray.opacity(0.5))
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-        }
-    }
-}
-
-// MARK: - LOGIN / REGISTER SHEET
 struct LoginRegisterSheetView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: ProfileViewModel
@@ -271,7 +220,6 @@ struct LoginRegisterSheetView: View {
         }
     }
 }
-
 
 #Preview {
     ProfileView()
