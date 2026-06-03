@@ -59,6 +59,15 @@ struct HomeView: View {
                                 .font(.title3)
                                 .bold()
                             Spacer()
+                            
+                            // REVISI: Mengembalikan tombol See All untuk loncat ke Tab Explore
+                            Button(action: {
+                                selectedTab = 1
+                            }) {
+                                Text("See All >")
+                                    .font(.caption)
+                                    .foregroundColor(.leapPrimary)
+                            }
                         }
                         .padding(.horizontal)
                         
@@ -83,6 +92,15 @@ struct HomeView: View {
                                 .font(.title3)
                                 .bold()
                             Spacer()
+                            
+                            // REVISI: Mengembalikan tombol See All untuk loncat ke Tab Explore
+                            Button(action: {
+                                selectedTab = 1
+                            }) {
+                                Text("See All >")
+                                    .font(.caption)
+                                    .foregroundColor(.leapPrimary)
+                            }
                         }
                         .padding(.horizontal)
                         
@@ -100,6 +118,9 @@ struct HomeView: View {
                 // TIDAK PERLU PARAMETER USER ID LAGI.
                 // ViewModel akan otomatis membedakan Guest dan User Login lewat AuthService
                 viewModel.loadDashboardData()
+                
+                // REVISI: Panggil fungsi ini agar foto profil dari Firebase berhasil di-load
+                profileVM.loadProfile()
             }
         }
     }
