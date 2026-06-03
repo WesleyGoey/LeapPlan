@@ -9,7 +9,6 @@ import MapKit
 import PhotosUI
 import SwiftUI
 
-
 struct TripDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDestinationViewModel
@@ -62,7 +61,7 @@ struct TripDetailView: View {
                             Button { isShowingEditSheet = true } label: { Label("Edit Trip Info", systemImage: "pencil") }
                             Button(role: .destructive) {
                                 Task {
-                                    // PANGGILAN MVVM YANG BENAR
+                                    // PANGGILAN MVVM YANG BENAR DARI TEMAN ANDA
                                     let success = await viewModel.deleteThisTrip()
                                     if success { dismiss() }
                                 }
@@ -147,9 +146,11 @@ struct TripDetailView: View {
         .sheet(item: $selectedDestinationToEdit) { destination in AddOrEditPlaceSheetView(viewModel: viewModel, mode: .edit, destinationToEdit: destination) }
     }
     
+    // MARK: - FAB MENU YANG SUDAH DITAMBAHKAN FITUR GENERATE
     private var detailFABMenu: some View {
         VStack(alignment: .trailing, spacing: 16) {
             if isShowingFABMenu {
+                // TOMBOL 1: ADD PLACES (Bawaan Teman Anda)
                 Button {
                     withAnimation { isShowingFABMenu = false }
                     isShowingAddPlaceSheet = true
@@ -159,7 +160,20 @@ struct TripDetailView: View {
                         Text("Add Places").fontWeight(.semibold).foregroundColor(.leapSecondary)
                     }.padding(.horizontal, 20).padding(.vertical, 14).background(Color.white).clipShape(Capsule()).shadow(color: .black.opacity(0.1), radius: 5, y: 2)
                 }.transition(.move(edge: .bottom).combined(with: .opacity))
+                
+                // TOMBOL 2: GENERATE PLACE (Fitur Baru Anda)
+                Button {
+                    withAnimation { isShowingFABMenu = false }
+                    viewModel.generateOneRandomPlace() // Memanggil fungsi generate 1 tempat
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles").foregroundColor(.leapPrimary)
+                        Text("Generate Place").fontWeight(.semibold).foregroundColor(.leapPrimary)
+                    }.padding(.horizontal, 20).padding(.vertical, 14).background(Color.white).clipShape(Capsule()).shadow(color: .black.opacity(0.1), radius: 5, y: 2)
+                }.transition(.move(edge: .bottom).combined(with: .opacity))
             }
+            
+            // TOMBOL UTAMA (+)
             Button {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { isShowingFABMenu.toggle() }
             } label: {
@@ -171,6 +185,7 @@ struct TripDetailView: View {
     }
 }
 
+// MARK: - COMPONENT TIMELINE ROW (Sesuai Desain Teman Anda)
 struct TimelineRowView: View {
     let destination: TripDestination
     let indexNumber: Int
@@ -237,6 +252,7 @@ struct TimelineRowView: View {
     }
 }
 
+// MARK: - SHEET TAMBAH/EDIT DESTINASI
 struct AddOrEditPlaceSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDestinationViewModel
@@ -279,6 +295,8 @@ struct AddOrEditPlaceSheetView: View {
                                     selectedPlace = place
                                     searchQuery = place.name
                                     viewModel.addSearchResults = []
+                                    // Menutup keyboard
+                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                 }) { Text(place.name) }
                             }.frame(height: 150)
                         }
@@ -305,21 +323,14 @@ struct AddOrEditPlaceSheetView: View {
                                 dismiss()
                             }
                         } label: {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "trash")
-                                Text("Delete Destination")
-                                Spacer()
-                            }
+                            HStack { Spacer(); Image(systemName: "trash"); Text("Delete Destination"); Spacer() }
                         }
                     }
                 }
             }
             .navigationTitle(mode == .add ? "Add Destination" : "Edit Destination")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let totalMinutes = (stayDurationHours * 60) + stayDurationMinutes
@@ -329,14 +340,14 @@ struct AddOrEditPlaceSheetView: View {
                             viewModel.addManualDestination(name: searchQuery, category: selectedCategory, durationMinutes: totalMinutes, place: selectedPlace)
                         }
                         dismiss()
-                    }
-                    .disabled(searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }.disabled(searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
     }
 }
 
+// MARK: - EDITOR TRIP DENGAN UPLOAD FOTO
 struct TripEditView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDestinationViewModel
@@ -379,19 +390,14 @@ struct TripEditView: View {
                                 if !coverImageUrl.isEmpty || selectedUIImage != nil {
                                     Button(role: .destructive, action: {
                                         withAnimation {
-                                            selectedUIImage = nil
-                                            coverImageUrl = ""
-                                            selectedPhotoItem = nil
+                                            selectedUIImage = nil; coverImageUrl = ""; selectedPhotoItem = nil
                                         }
-                                    }) {
-                                        Image(systemName: "trash").font(.subheadline).foregroundColor(.leapHighlight)
-                                    }
+                                    }) { Image(systemName: "trash").font(.subheadline).foregroundColor(.leapHighlight) }
                                 }
                             }
                         }
                         Spacer()
-                    }
-                    .padding(.vertical, 8)
+                    }.padding(.vertical, 8)
                 }
                 Section("Trip Information") { TextField("Trip Name", text: $title) }
                 Section(footer: Text("If you reduce the travel dates, the extra days from your itinerary will be permanently deleted.")) {
@@ -406,24 +412,19 @@ struct TripEditView: View {
                     Button("Save") {
                         Task {
                             var finalImageUrl = coverImageUrl
-                            if let selectedUIImage, let base64 = Base64Helper.encode(selectedUIImage) {
-                                finalImageUrl = base64
-                            }
+                            if let selectedUIImage, let base64 = Base64Helper.encode(selectedUIImage) { finalImageUrl = base64 }
                             await viewModel.updateTripDetails(title: title, startDate: startDate, endDate: endDate, coverImageUrl: finalImageUrl)
                             dismiss()
                         }
                     }.bold().foregroundColor(.leapPrimary)
                 }
             }.onChange(of: selectedPhotoItem) { newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) {
-                        selectedUIImage = img
-                    }
-                }
+                Task { if let data = try? await newItem?.loadTransferable(type: Data.self), let img = UIImage(data: data) { selectedUIImage = img } }
             }
         }
     }
 }
+
 
 struct Line: Shape {
     func path(in rect: CGRect) -> Path {

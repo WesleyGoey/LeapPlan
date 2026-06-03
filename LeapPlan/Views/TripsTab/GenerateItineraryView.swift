@@ -95,7 +95,6 @@ struct GenerateItineraryView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "bolt.fill").foregroundColor(.orange)
                     Text("Generate Trip").font(.headline)
                 }
                 .foregroundColor(.white).frame(maxWidth: .infinity).padding(.vertical, 18).background(Color.leapPrimary).cornerRadius(16).shadow(color: Color.leapPrimary.opacity(0.3), radius: 10, y: 5)
