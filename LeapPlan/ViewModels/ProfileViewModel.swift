@@ -31,7 +31,7 @@ class ProfileViewModel: ObservableObject {
 
     private let authRepo: AuthRepositoryProtocol
     private let authService: AuthServiceProtocol
-    private let firestoreRepo: FirestoreRepositoryProtocol  // Tambahan buat narik data trip
+    private let firestoreRepo: FirestoreRepositoryProtocol
 
     init(
         authRepo: AuthRepositoryProtocol? = nil,
@@ -52,7 +52,6 @@ class ProfileViewModel: ObservableObject {
             do {
                 self.currentUser = try await authRepo.fetchUser(userID: userID)
 
-                // MENGHITUNG STATISTIK TRIP DARI FIREBASE
                 let userTrips = try await firestoreRepo.fetchTrips(
                     forUserID: userID
                 )

@@ -58,7 +58,6 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         return try JSONDecoder().decode(FSQResponse.self, from: data).results
     }
 
-    // Fungsi baru untuk mencari tempat spesifik di kota tertentu
     func searchPlacesByCity(near city: String, query: String, limit: Int)
         async throws -> [FSQPlace]
     {
@@ -79,7 +78,6 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         let (data, response) = try await URLSession.shared.data(for: request)
         try handleResponse(data: data, response: response)
 
-        // Menggunakan struct yang sudah ada di file Anda
         struct FSQSearchResponse: Codable { let results: [FSQPlace] }
         return try JSONDecoder().decode(FSQSearchResponse.self, from: data)
             .results
@@ -164,7 +162,6 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 from: data
             )
 
-            // Foursquare menyajikan prefix & suffix. Kita satukan menjadi ukuran 500x500
             if let first = photos.first {
                 return "\(first.prefix)500x500\(first.suffix)"
             }

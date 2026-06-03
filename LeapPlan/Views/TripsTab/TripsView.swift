@@ -50,14 +50,11 @@ struct TripsView: View {
 
                     statusTabBar.padding(.top, 20).padding(.bottom, 10)
 
-                    // Di dalam body, bagian ScrollView:
                     ScrollView(.vertical, showsIndicators: false) {
                         LazyVStack(spacing: 24) {
-                            // FILTER BERDASARKAN STATUS
                             let filteredTrips = viewModel.trips.filter { trip in
-                                // Tambahkan logika status (pastikan Enum TripStatus cocok dengan string di database)
                                 trip.status == selectedTab
-                            }.sorted(by: { $0.startDate > $1.startDate })  // Urutkan berdasarkan tanggal terbaru
+                            }.sorted(by: { $0.startDate > $1.startDate })
 
                             if filteredTrips.isEmpty {
                                 emptyStateView
@@ -72,7 +69,6 @@ struct TripsView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
-                                    // ... context menu dll ...
                                 }
                             }
                         }
@@ -113,7 +109,7 @@ struct TripsView: View {
                 CreateManualTripView(viewModel: viewModel)
             }
             .sheet(item: $tripToEdit) { trip in
-                TripsEditSheetView(viewModel: viewModel, trip: trip)  // SHEET UNTUK EDIT
+                TripsEditSheetView(viewModel: viewModel, trip: trip)
             }
         }
     }
@@ -374,7 +370,6 @@ struct TripsEditSheetView: View {
                             {
                                 finalImageUrl = base64
                             }
-                            // Menyambung ke updateTripDetails
                             await viewModel.updateTripDetails(
                                 trip: trip,
                                 title: title,

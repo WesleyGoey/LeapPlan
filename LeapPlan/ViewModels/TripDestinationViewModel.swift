@@ -180,27 +180,37 @@ class TripDestinationViewModel: ObservableObject {
         )
     }
 
-    // MARK: - PENCARIAN & PENAMBAHAN LOKAL
     // MARK: - SEARCH INTERNAL DENGAN ATURAN SE-KOTA SAJA
-        func searchPlacesAroundCity(query: String) {
-            guard query.count > 2, !trip.locationName.isEmpty else { self.addSearchResults = []; return }
-            Task {
-                do {
-                    let results = try await fourSquareService.fetchPlaces(near: trip.locationName, categoryID: "", limit: 10)
-                    
-                    // REVISI: Saring agar hasil nama yang dicari wajib berada di kota Trip tersebut
-                    self.addSearchResults = results.filter { place in
-                        let nameMatches = place.name.localizedCaseInsensitiveContains(query)
-                        
-                        if let locality = place.location?.locality {
-                            // Hasil pencarian dicocokkan dengan lokasi kota trip saat ini
-                            return nameMatches && (trip.locationName.localizedCaseInsensitiveContains(locality) || locality.localizedCaseInsensitiveContains(trip.locationName))
-                        }
-                        return nameMatches
-                    }
-                } catch { print("Search error: \(error.localizedDescription)") }
-            }
+    func searchPlacesAroundCity(query: String) {
+        guard query.count > 2, !trip.locationName.isEmpty else {
+            self.addSearchResults = []
+            return
         }
+        Task {
+            do {
+                let results = try await fourSquareService.fetchPlaces(
+                    near: trip.locationName,
+                    categoryID: "",
+                    limit: 10
+                )
+
+                self.addSearchResults = results.filter { place in
+                    let nameMatches = place.name
+                        .localizedCaseInsensitiveContains(query)
+
+                    if let locality = place.location?.locality {
+                        return nameMatches
+                            && (trip.locationName
+                                .localizedCaseInsensitiveContains(locality)
+                                || locality.localizedCaseInsensitiveContains(
+                                    trip.locationName
+                                ))
+                    }
+                    return nameMatches
+                }
+            } catch { print("Search error: \(error.localizedDescription)") }
+        }
+    }
 
     func addManualDestination(
         name: String,
@@ -276,7 +286,6 @@ class TripDestinationViewModel: ObservableObject {
     }
 
     // MARK: - GENERATE 1 RANDOM PLACE
-    // FUNGSI YANG SEBELUMNYA ERROR KARENA BELUM ADA
     func generateOneRandomPlace() {
         guard dayPlans.indices.contains(selectedDayIndex) else { return }
         isLoading = true
@@ -324,7 +333,7 @@ class TripDestinationViewModel: ObservableObject {
                         longitude: randomPlace.longitude ?? 0.0,
                         orderIndex: dayPlans[selectedDayIndex].destinations
                             .count,
-                        stayDurationMinutes: 120,  // Default 2 jam
+                        stayDurationMinutes: 120,
                         transitTimeToNextMinutes: 30
                     )
                     dayPlans[selectedDayIndex].destinations.append(newDest)
@@ -402,7 +411,6 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
-    // MURNI MVVM: DELETE THIS ENTIRE TRIP
     func deleteThisTrip() async -> Bool {
         guard let tripID = trip.id else { return false }
         do {

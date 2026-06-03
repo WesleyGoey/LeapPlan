@@ -5,8 +5,8 @@
 //  Created by Wesley Goey on 02/06/26.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
 // MARK: - API Response Wrapper
 struct FSQResponse: Codable {
@@ -20,14 +20,13 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     let distance: Int?
     let latitude: Double?
     let longitude: Double?
-    
+
     let location: FSQLocation?
     let rating: Double?
     let stats: FSQStats?
-    
-    // REVISI: Tambahkan penampung URL Gambar
+
     var imageURL: String?
-    
+
     var id: String { fsq_place_id }
 
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {

@@ -7,7 +7,6 @@
 
 import Foundation
 
-// MARK: - Daily Preference Model
 struct DailyPreference: Identifiable, Equatable, Hashable {
     let id = UUID()
     var dayNumber: Int

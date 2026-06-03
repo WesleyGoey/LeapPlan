@@ -9,61 +9,70 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var viewModel = HomeViewModel()
-    @StateObject var profileVM = ProfileViewModel() // Untuk meload foto profil
-    @Binding var selectedTab: Int // Kontrol navigasi tab
-    
+    @StateObject var profileVM = ProfileViewModel()
+    @Binding var selectedTab: Int
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
-                    
-                    // Header
+
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("LeapPlan").font(.largeTitle).fontWeight(.bold).foregroundColor(Color.leapPrimary)
-                            Text("Plan your next adventure").font(.subheadline).foregroundColor(.gray)
+                            Text("LeapPlan").font(.largeTitle).fontWeight(.bold)
+                                .foregroundColor(Color.leapPrimary)
+                            Text("Plan your next adventure").font(.subheadline)
+                                .foregroundColor(.gray)
                         }
                         Spacer()
-                        
-                        // TOMBOL AVATAR (Bisa di-klik menuju Tab Profile)
+
                         Button(action: {
-                            selectedTab = 3 // Index tab Profile
+                            selectedTab = 3
                         }) {
-                            if let base64 = profileVM.currentUser?.profileImageUrl,
-                               let uiImage = Base64Helper.decode(base64) {
-                                Image(uiImage: uiImage).resizable().scaledToFill()
-                                    .frame(width: 45, height: 45).clipShape(Circle())
+                            if let base64 = profileVM.currentUser?
+                                .profileImageUrl,
+                                let uiImage = Base64Helper.decode(base64)
+                            {
+                                Image(uiImage: uiImage).resizable()
+                                    .scaledToFill()
+                                    .frame(width: 45, height: 45).clipShape(
+                                        Circle()
+                                    )
                                     .shadow(radius: 3)
                             } else {
                                 Circle().fill(Color.leapPrimary)
                                     .frame(width: 45, height: 45)
-                                    .overlay(Image(systemName: "person.fill").foregroundColor(.white))
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .foregroundColor(.white)
+                                    )
                             }
                         }
                     }
                     .padding(.horizontal)
                     
-                    // Recent Trip Section
                     if let trip = viewModel.recentTrip {
-                        NavigationLink(destination: TripDetailView(trip: trip)) {
-                            HomeRecentTripCard(trip: trip, placesCount: viewModel.recentTripPlacesCount)
-                                .padding(.horizontal)
+                        NavigationLink(destination: TripDetailView(trip: trip))
+                        {
+                            HomeRecentTripCard(
+                                trip: trip,
+                                placesCount: viewModel.recentTripPlacesCount
+                            )
+                            .padding(.horizontal)
                         }
                         .buttonStyle(PlainButtonStyle())
                     } else {
                         HomeEmptyRecentTripCard()
                             .padding(.horizontal)
                     }
-                    
-                    // Trending Section
+
                     VStack(alignment: .leading) {
                         HStack {
                             Text("🔥 Trending")
                                 .font(.title3)
                                 .bold()
                             Spacer()
-                            
-                            // REVISI: Mengembalikan tombol See All untuk loncat ke Tab Explore
+
                             Button(action: {
                                 selectedTab = 1
                             }) {
@@ -73,13 +82,16 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
-                        
+
                         if viewModel.isLoading {
                             ProgressView().padding()
                         } else {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
-                                    ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
+                                    ForEach(
+                                        viewModel.trendingPlaces,
+                                        id: \.fsq_place_id
+                                    ) { place in
                                         HomeTrendingCard(place: place)
                                     }
                                 }
@@ -87,16 +99,14 @@ struct HomeView: View {
                             }
                         }
                     }
-                    
-                    // Immersive Explore Feed (TikTok Style)
+
                     VStack(alignment: .leading) {
                         HStack {
                             Text("🌍 Explore Destinations")
                                 .font(.title3)
                                 .bold()
                             Spacer()
-                            
-                            // REVISI: Mengembalikan tombol See All untuk loncat ke Tab Explore
+
                             Button(action: {
                                 selectedTab = 1
                             }) {
@@ -106,17 +116,20 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
-                        
+
                         if !viewModel.trendingPlaces.isEmpty {
                             VStack(spacing: 14) {
-                                ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
+                                ForEach(
+                                    viewModel.trendingPlaces,
+                                    id: \.fsq_place_id
+                                ) { place in
                                     HomeExploreRow(place: place)
                                 }
                             }
                             .padding(.horizontal)
                         }
                     }
-                    
+
                     Spacer(minLength: 100)
                 }
                 .padding(.top)
@@ -132,7 +145,7 @@ struct HomeView: View {
 struct HomeRecentTripCard: View {
     let trip: Trip
     let placesCount: Int
-    
+
     private func dateRangeString(start: Date, end: Date) -> String {
         let fmt = DateFormatter()
         fmt.dateFormat = "MMM d"
@@ -142,18 +155,21 @@ struct HomeRecentTripCard: View {
         let endStr = fmt.string(from: end) + yearFmt.string(from: end)
         return "\(startStr) – \(endStr)"
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Background image: try Base64 first, then URL, else gradient
-            if let cover = trip.coverImageUrl, let img = Base64Helper.decode(cover) {
+            if let cover = trip.coverImageUrl,
+                let img = Base64Helper.decode(cover)
+            {
                 Image(uiImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 200)
                     .clipped()
                     .overlay(Color.black.opacity(0.25))
-            } else if let cover = trip.coverImageUrl, let url = URL(string: cover) {
+            } else if let cover = trip.coverImageUrl,
+                let url = URL(string: cover)
+            {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {
                         image.resizable().aspectRatio(contentMode: .fill)
@@ -165,14 +181,22 @@ struct HomeRecentTripCard: View {
                 .clipped()
                 .overlay(Color.black.opacity(0.25))
             } else {
-                LinearGradient(colors: [Color.leapPrimary.opacity(0.9), Color.teal.opacity(0.9)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    .frame(height: 200)
+                LinearGradient(
+                    colors: [
+                        Color.leapPrimary.opacity(0.9), Color.teal.opacity(0.9),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .frame(height: 200)
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Image(systemName: "airplane.departure")
-                    Text("\(trip.status == .upcoming ? "UPCOMING" : trip.status == .ongoing ? "ONGOING" : "COMPLETED") TRIP")
+                    Text(
+                        "\(trip.status == .upcoming ? "UPCOMING" : trip.status == .ongoing ? "ONGOING" : "COMPLETED") TRIP"
+                    )
                 }
                 .font(.caption2.weight(.bold))
                 .foregroundColor(.white.opacity(0.9))
@@ -180,27 +204,35 @@ struct HomeRecentTripCard: View {
                 .padding(.vertical, 6)
                 .background(Color.white.opacity(0.12))
                 .clipShape(Capsule())
-                
+
                 Text(trip.title)
                     .font(.title2).bold()
                     .foregroundColor(.white)
-                
+
                 HStack(spacing: 6) {
                     Image(systemName: "calendar")
-                    Text(dateRangeString(start: trip.startDate, end: trip.endDate))
+                    Text(
+                        dateRangeString(
+                            start: trip.startDate,
+                            end: trip.endDate
+                        )
+                    )
                 }
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.9))
-                
+
                 HStack(spacing: 8) {
-                    Label("Countdown: \(trip.daysUntilTrip) Days Left", systemImage: "clock.fill")
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "#00ADB5"))
-                        .clipShape(Capsule())
-                        .foregroundColor(.white)
-                    
+                    Label(
+                        "Countdown: \(trip.daysUntilTrip) Days Left",
+                        systemImage: "clock.fill"
+                    )
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(hex: "#00ADB5"))
+                    .clipShape(Capsule())
+                    .foregroundColor(.white)
+
                     if placesCount > 0 {
                         Text("\(placesCount) Places")
                             .font(.caption.weight(.semibold))
@@ -223,10 +255,14 @@ struct HomeRecentTripCard: View {
 struct HomeEmptyRecentTripCard: View {
     var body: some View {
         ZStack(alignment: .leading) {
-            LinearGradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                .frame(height: 160)
-                .cornerRadius(24)
-            
+            LinearGradient(
+                colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.05)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: 160)
+            .cornerRadius(24)
+
             VStack(alignment: .leading, spacing: 6) {
                 Text("Belum ada trip")
                     .font(.headline)
@@ -243,12 +279,14 @@ struct HomeEmptyRecentTripCard: View {
 
 struct HomeTrendingCard: View {
     let place: FSQPlace
-    
+
     private func tagText() -> String {
-        if let locality = place.location?.locality, !locality.isEmpty { return locality }
+        if let locality = place.location?.locality, !locality.isEmpty {
+            return locality
+        }
         return "Place"
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topLeading) {
@@ -257,7 +295,9 @@ struct HomeTrendingCard: View {
                         if let image = phase.image {
                             image.resizable().scaledToFill()
                         } else {
-                            RoundedRectangle(cornerRadius: 16).fill(Color.gray.opacity(0.2))
+                            RoundedRectangle(cornerRadius: 16).fill(
+                                Color.gray.opacity(0.2)
+                            )
                         }
                     }
                     .frame(width: 180, height: 120)
@@ -267,9 +307,11 @@ struct HomeTrendingCard: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color.gray.opacity(0.15))
                         .frame(width: 180, height: 120)
-                        .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                        .overlay(
+                            Image(systemName: "photo").foregroundColor(.gray)
+                        )
                 }
-                
+
                 Text(tagText())
                     .font(.caption2.weight(.bold))
                     .padding(.horizontal, 10)
@@ -278,11 +320,11 @@ struct HomeTrendingCard: View {
                     .clipShape(Capsule())
                     .padding(8)
             }
-            
+
             Text(place.name)
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
-            
+
             HStack(spacing: 4) {
                 Image(systemName: "star.fill").foregroundColor(.yellow)
                 Text(String(format: "%.1f", place.rating ?? 4.9))
@@ -299,12 +341,14 @@ struct HomeTrendingCard: View {
 
 struct HomeExploreRow: View {
     let place: FSQPlace
-    
+
     private func tagText() -> String {
-        if let locality = place.location?.locality, !locality.isEmpty { return locality }
+        if let locality = place.location?.locality, !locality.isEmpty {
+            return locality
+        }
         return "Nature"
     }
-    
+
     var body: some View {
         HStack(spacing: 12) {
             if let urlStr = place.imageURL, let url = URL(string: urlStr) {
@@ -323,18 +367,21 @@ struct HomeExploreRow: View {
                     .frame(width: 56, height: 56)
                     .overlay(Image(systemName: "photo").foregroundColor(.gray))
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(place.name)
                     .font(.headline)
                     .lineLimit(1)
                 HStack(spacing: 6) {
                     Image(systemName: "mappin.and.ellipse")
-                    Text(place.location?.country ?? place.location?.locality ?? "Unknown")
+                    Text(
+                        place.location?.country ?? place.location?.locality
+                            ?? "Unknown"
+                    )
                 }
                 .font(.caption)
                 .foregroundColor(.gray)
-                
+
                 HStack(spacing: 6) {
                     Image(systemName: "star.fill").foregroundColor(.yellow)
                     Text(String(format: "%.1f", place.rating ?? 4.8))

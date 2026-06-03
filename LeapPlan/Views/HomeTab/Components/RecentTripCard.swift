@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct RecentTripCard: View {
-    let trip: Trip // Menerima data asli
-    
+    let trip: Trip  // Menerima data asli
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Cek apakah ada coverImageUrl, kalau tidak ada pakai warna default
-            if let coverUrlString = trip.coverImageUrl, let url = URL(string: coverUrlString) {
+            if let coverUrlString = trip.coverImageUrl,
+                let url = URL(string: coverUrlString)
+            {
                 AsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
@@ -27,33 +28,36 @@ struct RecentTripCard: View {
                     .frame(height: 200)
                     .overlay(Color.black.opacity(0.2))
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("✈️ \(trip.status.rawValue.uppercased()) TRIP")
                     .font(.caption2)
                     .fontWeight(.bold)
                     .foregroundColor(.white.opacity(0.8))
-                
+
                 Text(trip.title)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                
+
                 HStack {
                     Image(systemName: "location.fill")
                     Text(trip.locationName)
                 }
                 .font(.caption)
                 .foregroundColor(.white)
-                
+
                 HStack {
                     // Ngambil dari computed property daysUntilTrip milik modelmu
-                    Label("Countdown: \(trip.daysUntilTrip) Days Left", systemImage: "clock.fill")
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "#00ADB5"))
-                        .cornerRadius(20)
-                    
+                    Label(
+                        "Countdown: \(trip.daysUntilTrip) Days Left",
+                        systemImage: "clock.fill"
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(hex: "#00ADB5"))
+                    .cornerRadius(20)
+
                     if trip.totalPlaces > 0 {
                         Text("\(trip.totalPlaces) Places")
                             .font(.caption)

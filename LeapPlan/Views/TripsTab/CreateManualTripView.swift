@@ -22,16 +22,23 @@ struct CreateManualTripView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // MARK: - Masukkan ini ke dalam VStack ScrollView Anda
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("TRIP NAME (OPTIONAL)").font(.caption).fontWeight(.bold).foregroundColor(.gray)
-                            TextField("e.g., Summer Holiday", text: $viewModel.tripNameForm)
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(16)
-                                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                            Text("TRIP NAME (OPTIONAL)").font(.caption)
+                                .fontWeight(.bold).foregroundColor(.gray)
+                            TextField(
+                                "e.g., Summer Holiday",
+                                text: $viewModel.tripNameForm
+                            )
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .shadow(
+                                color: .black.opacity(0.05),
+                                radius: 5,
+                                y: 2
+                            )
                         }
                         .padding(.horizontal, 20)
-                        
-                        // SECTION DESTINATION
+
                         VStack(alignment: .leading, spacing: 8) {
                             Text("DESTINATION").font(.caption).fontWeight(.bold)
                                 .foregroundColor(.gray)
@@ -54,7 +61,6 @@ struct CreateManualTripView: View {
                                     y: 2
                                 )
 
-                                // DROPDOWN AUTOCOMPLETE (Sama seperti Generate)
                                 if isDestinationFocused
                                     && !viewModel.autocompleteResults.isEmpty
                                 {
@@ -115,7 +121,6 @@ struct CreateManualTripView: View {
                         }
                         .padding(.horizontal, 20).padding(.top, 20)
 
-                        // SECTION DATES
                         VStack(alignment: .leading, spacing: 8) {
                             Text("TRAVEL DATES").font(.caption).fontWeight(
                                 .bold
@@ -143,7 +148,6 @@ struct CreateManualTripView: View {
                     }
                 }
 
-                // Tombol Create
                 Button {
                     Task {
                         isSaving = true

@@ -14,7 +14,7 @@ struct TripDetailView: View {
     @StateObject private var viewModel: TripDestinationViewModel
 
     @State private var position: MapCameraPosition = .automatic
-    @State private var cityCoordinate: CLLocationCoordinate2D?  // State untuk menyimpan koordinat kota
+    @State private var cityCoordinate: CLLocationCoordinate2D?
 
     @State private var isShowingEditSheet = false
     @State private var isShowingFABMenu = false
@@ -30,7 +30,6 @@ struct TripDetailView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
-                // HEADER PETA
                 ZStack(alignment: .topLeading) {
                     Map(position: $position) {
                         ForEach(
@@ -47,7 +46,6 @@ struct TripDetailView: View {
                             let validDestinations = dayPlan.destinations.filter
                             { $0.latitude != 0.0 && $0.longitude != 0.0 }
 
-                            // JIKA CANVAS KOSONG (MANUAL TRIP), TAMPILKAN PIN DEFAULT KOTA
                             if validDestinations.isEmpty,
                                 let cityCoord = cityCoordinate
                             {
@@ -57,7 +55,6 @@ struct TripDetailView: View {
                                 )
                                 .tint(Color.leapPrimary)
                             } else {
-                                // JIKA ADA DESTINASI, TAMPILKAN PIN DESTINASI
                                 ForEach(
                                     Array(validDestinations.enumerated()),
                                     id: \.element.id
@@ -81,7 +78,6 @@ struct TripDetailView: View {
                                 }
                             }
                         } else if let cityCoord = cityCoordinate {
-                            // Fallback jika DayPlan belum ter-load
                             Marker(
                                 viewModel.trip.locationName,
                                 coordinate: cityCoord
@@ -140,7 +136,6 @@ struct TripDetailView: View {
                     }.padding(.horizontal, 20).padding(.top, 60)
                 }
 
-                // DAY SELECTOR
                 if !viewModel.dayPlans.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
@@ -174,7 +169,6 @@ struct TripDetailView: View {
                     }.background(Color.white)
                 }
 
-                // DAFTAR DESTINASI
                 Group {
                     if viewModel.isLoading {
                         VStack {
@@ -253,7 +247,7 @@ struct TripDetailView: View {
         .navigationBarHidden(true)
         .onAppear {
             viewModel.loadDayPlans()
-            centerMapOnCity()  // Memanggil fungsi auto-zoom ke kota
+            centerMapOnCity()
         }
         .sheet(isPresented: $isShowingEditSheet) {
             TripEditView(viewModel: viewModel)
@@ -277,7 +271,6 @@ struct TripDetailView: View {
     // MARK: - FUNGSI AUTO-ZOOM PETA
     private func centerMapOnCity() {
         let geocoder = CLGeocoder()
-        // Menggunakan nama kota dari trip untuk mencari koordinatnya
         geocoder.geocodeAddressString(viewModel.trip.locationName) {
             placemarks,
             error in
@@ -290,7 +283,7 @@ struct TripDetailView: View {
                             span: MKCoordinateSpan(
                                 latitudeDelta: 0.1,
                                 longitudeDelta: 0.1
-                            )  // Tingkat zoom
+                            )
                         )
                     )
                 }
@@ -490,7 +483,6 @@ struct AddOrEditPlaceSheetView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                // Background abu-abu muda identik dengan Generate View
                 Color(hex: "#F9F9F9").ignoresSafeArea()
                     .onTapGesture { isSearchFocused = false }
 
@@ -507,7 +499,6 @@ struct AddOrEditPlaceSheetView: View {
                             )
                             VStack(spacing: 0) {
                                 HStack(spacing: 12) {
-                                    // Ikon berubah abu-abu jika edit
                                     Image(
                                         systemName: mode == .edit
                                             ? "mappin.and.ellipse"
@@ -523,12 +514,11 @@ struct AddOrEditPlaceSheetView: View {
                                     )
                                     .focused($isSearchFocused)
                                     .autocorrectionDisabled()
-                                    .disabled(mode == .edit)  // KUNCI TEXTFIELD JIKA EDIT
+                                    .disabled(mode == .edit)
                                     .foregroundColor(
                                         mode == .edit ? .gray : .primary
-                                    )  // Teks jadi abu-abu jika edit
+                                    )
                                     .onChange(of: searchQuery) { newValue in
-                                        // Jangan lakukan pencarian Foursquare jika sedang Edit!
                                         if mode == .add {
                                             viewModel.searchPlacesAroundCity(
                                                 query: newValue
@@ -544,7 +534,6 @@ struct AddOrEditPlaceSheetView: View {
                                     y: 2
                                 )
 
-                                // DROPDOWN AUTOCOMPLETE (HANYA MUNCUL SAAT ADD)
                                 if mode == .add && isSearchFocused
                                     && !viewModel.addSearchResults.isEmpty
                                 {
@@ -683,7 +672,7 @@ struct AddOrEditPlaceSheetView: View {
                             .padding(.horizontal, 20).padding(.top, 8)
                         }
 
-                        Spacer().frame(height: 120)  // Memberi jarak agar tidak tertutup tombol Save
+                        Spacer().frame(height: 120)
                     }
                 }
                 .simultaneousGesture(

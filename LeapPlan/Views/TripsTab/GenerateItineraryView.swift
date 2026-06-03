@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GenerateItineraryView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: TripViewModel  // MENGGUNAKAN VM TERPUSAT
+    @ObservedObject var viewModel: TripViewModel
 
     @FocusState private var isDestinationFocused: Bool
     @State private var isGenerating: Bool = false
@@ -52,7 +52,6 @@ struct GenerateItineraryView: View {
                         .padding().background(Color.white).cornerRadius(16)
                         .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
 
-                        // Menyesuaikan dengan array autocompleteResults yang baru
                         if isDestinationFocused
                             && !viewModel.autocompleteResults.isEmpty
                         {

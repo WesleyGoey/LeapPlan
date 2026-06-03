@@ -15,9 +15,10 @@ struct Base64Helper {
         let resizedImage = renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
-        return resizedImage.jpegData(compressionQuality: quality)?.base64EncodedString()
+        return resizedImage.jpegData(compressionQuality: quality)?
+            .base64EncodedString()
     }
-    
+
     // MARK: - Decode Image
     static func decode(_ base64String: String) -> UIImage? {
         guard let data = Data(base64Encoded: base64String) else { return nil }

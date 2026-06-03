@@ -9,25 +9,24 @@ import SwiftUI
 
 struct TrendingCard: View {
     let place: FSQPlace
-    
+
     var body: some View {
         VStack(alignment: .leading) {
-            // Gambar Placeholder
             Rectangle()
                 .fill(Color.gray.opacity(0.2))
                 .frame(width: 140, height: 140)
                 .cornerRadius(15)
                 .overlay(
-                    Text(String(place.name.prefix(1))) // Nampilin huruf pertama
+                    Text(String(place.name.prefix(1)))
                         .font(.largeTitle)
                         .foregroundColor(.gray)
                 )
-            
+
             Text(place.name)
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .lineLimit(1)
-            
+
             HStack {
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)

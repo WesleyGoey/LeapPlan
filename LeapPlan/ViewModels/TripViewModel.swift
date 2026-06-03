@@ -66,9 +66,10 @@ class TripViewModel: ObservableObject {
     private var activeUserID: String {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
-    
-    // Tambahkan di dalam class TripViewModel
-    private func calculateTripStatus(startDate: Date, endDate: Date) -> TripStatus {
+
+    private func calculateTripStatus(startDate: Date, endDate: Date)
+        -> TripStatus
+    {
         let now = Date()
         if now < startDate { return .upcoming }
         if now >= startDate && now <= endDate { return .ongoing }
@@ -82,12 +83,16 @@ class TripViewModel: ObservableObject {
         isLoading = true
         Task {
             do {
-                let fetchedTrips = try await firestoreRepo.fetchTrips(forUserID: userID)
-                
-                // UPDATE STATUS OTOMATIS BERDASARKAN TANGGAL HARI INI
+                let fetchedTrips = try await firestoreRepo.fetchTrips(
+                    forUserID: userID
+                )
+
                 self.trips = fetchedTrips.map { trip in
                     var t = trip
-                    t.status = calculateTripStatus(startDate: trip.startDate, endDate: trip.endDate)
+                    t.status = calculateTripStatus(
+                        startDate: trip.startDate,
+                        endDate: trip.endDate
+                    )
                     return t
                 }
                 self.isLoading = false
@@ -375,8 +380,7 @@ class TripViewModel: ObservableObject {
         autocompleteResults = []
         isShowingDropdown = false
     }
-    
-    // Menghapus semua trip dari memori saat logout
+
     func clearData() {
         self.trips = []
         self.isLoading = false

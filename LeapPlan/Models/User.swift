@@ -5,8 +5,8 @@
 //  Created by Sean tandjaja on 28/05/26.
 //
 
-import Foundation
 import FirebaseFirestore
+import Foundation
 
 struct User: Identifiable, Codable {
     @DocumentID var id: String?

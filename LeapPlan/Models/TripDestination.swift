@@ -5,25 +5,25 @@
 //  Created by Sean tandjaja on 28/05/26.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
 struct TripDestination: Identifiable, Codable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var category: String
     var foursquareID: String?
-    
+
     var latitude: Double
     var longitude: Double
-    
+
     var orderIndex: Int
     var stayDurationMinutes: Int
-    
+
     var transitTimeToNextMinutes: Int?
-    
+
     var imageURL: String?
-    
+
     static func == (lhs: TripDestination, rhs: TripDestination) -> Bool {
         return lhs.id == rhs.id
     }
