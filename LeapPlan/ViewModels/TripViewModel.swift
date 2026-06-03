@@ -319,4 +319,15 @@ class TripViewModel: ObservableObject {
             await MainActor.run { self.loadUserTrips() }
         } catch { self.errorMessage = error.localizedDescription }
     }
+
+    // MARK: - RESET FORM
+        func resetForm() {
+            destinationForm = ""
+            startDateForm = Date()
+            if let defaultEndDate = Calendar.current.date(byAdding: .day, value: 2, to: Date()) {
+                endDateForm = defaultEndDate
+            }
+            autocompleteResults = []
+            isShowingDropdown = false
+        }
 }

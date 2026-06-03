@@ -112,6 +112,9 @@ struct GenerateItineraryView: View {
         }
         .navigationTitle("Generate Itinerary")
         .navigationBarTitleDisplayMode(.inline)
+        .onDisappear {
+            viewModel.resetForm()
+        }
     }
 
     private func sectionHeader(title: String) -> some View { Text(title).font(.caption).fontWeight(.bold).foregroundColor(.gray).padding(.top, 8) }

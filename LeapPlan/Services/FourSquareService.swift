@@ -5,7 +5,6 @@
 //  Created by Wesley Goey on 28/05/26.
 //
 
-
 import Foundation
 
 class FourSquareService: FourSquareServiceProtocol {
@@ -49,5 +48,12 @@ class FourSquareService: FourSquareServiceProtocol {
     
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         return try await repo.autocompleteLocation(query: query)
+    }
+    
+    // 👇 INI FUNGSI YANG KURANG (Jembatan dari Repository ke ViewModel) 👇
+    func searchPlacesByCity(near city: String, query: String, limit: Int) async throws -> [FSQPlace] {
+        // Panggil dari repo, lalu sekalian attach foto agar UI card-nya nanti ada gambarnya!
+        let places = try await repo.searchPlacesByCity(near: city, query: query, limit: limit)
+        return await attachPhotos(to: places)
     }
 }

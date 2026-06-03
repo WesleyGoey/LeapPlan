@@ -166,6 +166,9 @@ struct CreateManualTripView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onDisappear {
+                viewModel.resetForm()
+            }
         }
     }
 }
