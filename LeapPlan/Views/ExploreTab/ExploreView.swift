@@ -16,7 +16,7 @@ struct ExploreView: View {
     @FocusState private var isSearchFocused: Bool
     @State private var selectedMapFeature: MapFeature?
     
-    // REVISI: Menggunakan obyek utuh untuk menahan data agar tidak hilang (Blank Sheet Fix)
+    // REVISI: Mengågunakan obyek utuh untuk menahan data agar tidak hilang (Blank Sheet Fix)
     @State private var placeToAdd: FSQPlace? = nil
     
     var body: some View {

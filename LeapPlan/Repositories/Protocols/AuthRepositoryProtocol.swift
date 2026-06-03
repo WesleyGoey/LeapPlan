@@ -2,9 +2,8 @@
 //  AuthRepositoryProtocol.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 03/06/26.
+//  Created by student on 03/06/26.
 //
-
 
 import Foundation
 import MapKit

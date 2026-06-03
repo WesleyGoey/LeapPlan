@@ -1,12 +1,6 @@
-//
-//  HomeViewModel.swift
-//  LeapPlan
-//
-//  Created by Wesley Goey on 28/05/26.
-//
-
 import Foundation
 import Combine
+import FirebaseAuth 
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -20,12 +14,37 @@ class HomeViewModel: ObservableObject {
     private let firestoreRepo: FirestoreRepositoryProtocol
     private let authService: AuthServiceProtocol
     
+    // Variabel untuk menyimpan listener agar tidak memory leak
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
+    
     init(fourSquareService: FourSquareServiceProtocol? = nil,
          firestoreRepo: FirestoreRepositoryProtocol? = nil,
          authService: AuthServiceProtocol? = nil) {
         self.fourSquareService = fourSquareService ?? FourSquareService()
         self.firestoreRepo = firestoreRepo ?? FirestoreRepository()
         self.authService = authService ?? AuthService()
+        
+        // PASANG LISTENER: Bekerja di background untuk memantau status login
+        self.authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if user == nil {
+                    // Jika Logout: Langsung hapus trip dari layar Home
+                    self.recentTrip = nil
+                    self.loadTrendingPlacesOnly()
+                } else {
+                    // Jika Login: Tarik data terbaru
+                    self.loadDashboardData()
+                }
+            }
+        }
+    }
+    
+    deinit {
+        // Membersihkan listener saat aplikasi ditutup
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
     }
     
     func loadDashboardData() {

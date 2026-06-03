@@ -2,9 +2,8 @@
 //  AuthServiceProtocol.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
-
 
 import Foundation
 
