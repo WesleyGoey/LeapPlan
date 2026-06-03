@@ -46,10 +46,13 @@ struct HomeView: View {
                     // Recent Trip Section
                     if let trip = viewModel.recentTrip {
                         NavigationLink(destination: TripDetailView(trip: trip)) {
-                            RecentTripCard(trip: trip)
+                            HomeRecentTripCard(trip: trip, placesCount: viewModel.recentTripPlacesCount)
                                 .padding(.horizontal)
                         }
                         .buttonStyle(PlainButtonStyle())
+                    } else {
+                        HomeEmptyRecentTripCard()
+                            .padding(.horizontal)
                     }
                     
                     // Trending Section
@@ -77,7 +80,7 @@ struct HomeView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
                                     ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
-                                        TrendingCard(place: place)
+                                        HomeTrendingCard(place: place)
                                     }
                                 }
                                 .padding(.horizontal)
@@ -105,8 +108,12 @@ struct HomeView: View {
                         .padding(.horizontal)
                         
                         if !viewModel.trendingPlaces.isEmpty {
-                            ExploreFeedView(places: viewModel.trendingPlaces)
-                                .padding(.horizontal)
+                            VStack(spacing: 14) {
+                                ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
+                                    HomeExploreRow(place: place)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
                     }
                     
@@ -115,14 +122,238 @@ struct HomeView: View {
                 .padding(.top)
             }
             .onAppear {
-                // TIDAK PERLU PARAMETER USER ID LAGI.
-                // ViewModel akan otomatis membedakan Guest dan User Login lewat AuthService
-                viewModel.loadDashboardData()
-                
-                // REVISI: Panggil fungsi ini agar foto profil dari Firebase berhasil di-load
                 profileVM.loadProfile()
+                Task { await viewModel.loadDashboardData() }
             }
         }
+    }
+}
+
+struct HomeRecentTripCard: View {
+    let trip: Trip
+    let placesCount: Int
+    
+    private func dateRangeString(start: Date, end: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MMM d"
+        let yearFmt = DateFormatter()
+        yearFmt.dateFormat = ", yyyy"
+        let startStr = fmt.string(from: start)
+        let endStr = fmt.string(from: end) + yearFmt.string(from: end)
+        return "\(startStr) – \(endStr)"
+    }
+    
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            // Background image: try Base64 first, then URL, else gradient
+            if let cover = trip.coverImageUrl, let img = Base64Helper.decode(cover) {
+                Image(uiImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 200)
+                    .clipped()
+                    .overlay(Color.black.opacity(0.25))
+            } else if let cover = trip.coverImageUrl, let url = URL(string: cover) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Color.gray.opacity(0.3)
+                    }
+                }
+                .frame(height: 200)
+                .clipped()
+                .overlay(Color.black.opacity(0.25))
+            } else {
+                LinearGradient(colors: [Color.leapPrimary.opacity(0.9), Color.teal.opacity(0.9)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .frame(height: 200)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "airplane.departure")
+                    Text("\(trip.status == .upcoming ? "UPCOMING" : trip.status == .ongoing ? "ONGOING" : "COMPLETED") TRIP")
+                }
+                .font(.caption2.weight(.bold))
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.12))
+                .clipShape(Capsule())
+                
+                Text(trip.title)
+                    .font(.title2).bold()
+                    .foregroundColor(.white)
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                    Text(dateRangeString(start: trip.startDate, end: trip.endDate))
+                }
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.9))
+                
+                HStack(spacing: 8) {
+                    Label("Countdown: \(trip.daysUntilTrip) Days Left", systemImage: "clock.fill")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: "#00ADB5"))
+                        .clipShape(Capsule())
+                        .foregroundColor(.white)
+                    
+                    if placesCount > 0 {
+                        Text("\(placesCount) Places")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(.top, 6)
+            }
+            .padding(20)
+        }
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 6)
+    }
+}
+
+struct HomeEmptyRecentTripCard: View {
+    var body: some View {
+        ZStack(alignment: .leading) {
+            LinearGradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                .frame(height: 160)
+                .cornerRadius(24)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Belum ada trip")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Text("Buat trip pertamamu dari tab Explore.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .padding(20)
+        }
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct HomeTrendingCard: View {
+    let place: FSQPlace
+    
+    private func tagText() -> String {
+        if let locality = place.location?.locality, !locality.isEmpty { return locality }
+        return "Place"
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack(alignment: .topLeading) {
+                if let urlStr = place.imageURL, let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            RoundedRectangle(cornerRadius: 16).fill(Color.gray.opacity(0.2))
+                        }
+                    }
+                    .frame(width: 180, height: 120)
+                    .clipped()
+                    .cornerRadius(16)
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(width: 180, height: 120)
+                        .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                }
+                
+                Text(tagText())
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.9))
+                    .clipShape(Capsule())
+                    .padding(8)
+            }
+            
+            Text(place.name)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+            
+            HStack(spacing: 4) {
+                Image(systemName: "star.fill").foregroundColor(.yellow)
+                Text(String(format: "%.1f", place.rating ?? 4.9))
+                    .foregroundColor(.gray)
+                    .font(.caption)
+                if let total = place.stats?.total_ratings {
+                    Text("(\(total))").foregroundColor(.gray).font(.caption)
+                }
+            }
+        }
+        .frame(width: 180)
+    }
+}
+
+struct HomeExploreRow: View {
+    let place: FSQPlace
+    
+    private func tagText() -> String {
+        if let locality = place.location?.locality, !locality.isEmpty { return locality }
+        return "Nature"
+    }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            if let urlStr = place.imageURL, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else {
+                        Color.gray.opacity(0.2)
+                    }
+                }
+                .frame(width: 56, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 56, height: 56)
+                    .overlay(Image(systemName: "photo").foregroundColor(.gray))
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(place.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.and.ellipse")
+                    Text(place.location?.country ?? place.location?.locality ?? "Unknown")
+                }
+                .font(.caption)
+                .foregroundColor(.gray)
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "star.fill").foregroundColor(.yellow)
+                    Text(String(format: "%.1f", place.rating ?? 4.8))
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            Spacer()
+            Text(tagText())
+                .font(.caption.weight(.bold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.gray.opacity(0.15))
+                .clipShape(Capsule())
+        }
+        .padding(12)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
