@@ -64,7 +64,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         }
     }
     
-    // MARK: - FUNGSI BARU UNTUK MENGAMBIL FOTO
+    // MARK: - API UNTUK FOTO FOURSQUARE
     func fetchPlacePhotos(id: String) async throws -> String? {
         guard let url = URL(string: "\(baseURL)/places/\(id)/photos?limit=1&sort=POPULAR") else { return nil }
         let request = createRequest(url: url)
@@ -75,7 +75,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             struct FSQPhotoResponse: Codable { let prefix: String; let suffix: String }
             let photos = try JSONDecoder().decode([FSQPhotoResponse].self, from: data)
             
-            // Foursquare memisahkan URL foto menjadi prefix dan suffix. Kita satukan dengan ukuran 500x500
+            // Foursquare menyajikan prefix & suffix. Kita satukan menjadi ukuran 500x500
             if let first = photos.first { return "\(first.prefix)500x500\(first.suffix)" }
             return nil
         } catch { return nil }

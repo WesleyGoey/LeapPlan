@@ -5,7 +5,6 @@
 //  Created by Wesley Goey on 03/06/26.
 //
 
-
 import SwiftUI
 
 struct AddToItinerarySheetView: View {
@@ -24,7 +23,7 @@ struct AddToItinerarySheetView: View {
                     ProgressView("Loading Itineraries...").padding(.top, 40)
                     Spacer()
                 } else if tripViewModel.trips.isEmpty {
-                    // PESAN JIKA BELUM PUNYA TRIP SAMA SEKALI
+                    // PESAN JIKA BELUM PUNYA TRIP SAMA SEKALI ATAU GAGAL LOAD
                     VStack(spacing: 12) {
                         Spacer()
                         Image(systemName: "briefcase").font(.system(size: 40)).foregroundColor(.gray)
@@ -96,7 +95,10 @@ struct AddToItinerarySheetView: View {
                     else { Button("Cancel") { dismiss() } }
                 }
             }
-            .onAppear { tripViewModel.loadUserTrips() } // Wajib dipanggil untuk load Firebase!
+            // REVISI: Ganti .onAppear menjadi .task agar lebih sinkron dan aman untuk pemuatan data
+            .task {
+                tripViewModel.loadUserTrips()
+            }
         }
     }
     
