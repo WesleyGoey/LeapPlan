@@ -15,7 +15,7 @@ class TripViewModel: ObservableObject {
     @Published var trips: [Trip] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
-
+    
     // MARK: - STATE GENERATE/CREATE TRIP
     @Published var destinationForm: String = ""
     @Published var startDateForm: Date = Date() { didSet { updateDailyPreferences() } }
@@ -24,7 +24,7 @@ class TripViewModel: ObservableObject {
     @Published var selectedDayNumber: Int = 1
     @Published var autocompleteResults: [String] = []
     @Published var isShowingDropdown: Bool = false
-
+    
     private let firestoreRepo: FirestoreRepositoryProtocol
     private let authService: AuthServiceProtocol
     private let tripService: TripServiceProtocol
@@ -32,7 +32,7 @@ class TripViewModel: ObservableObject {
     private let tripDestinationService: TripDestinationServiceProtocol
     
     private var cancellables = Set<AnyCancellable>()
-
+    
     init(firestoreRepo: FirestoreRepositoryProtocol? = nil,
          authService: AuthServiceProtocol? = nil,
          tripService: TripServiceProtocol? = nil,
@@ -52,7 +52,7 @@ class TripViewModel: ObservableObject {
     
     var isLoggedIn: Bool { return authService.isLoggedIn }
     private var activeUserID: String { return authService.getCurrentUserID() ?? "dummy_user_123" }
-
+    
     // MARK: - LOGIKA LIST TRIP
     func loadUserTrips() {
         guard authService.isLoggedIn else { return } // Tamu tidak punya trip
@@ -68,13 +68,14 @@ class TripViewModel: ObservableObject {
             }
         }
     }
-
+    
     func deleteTrip(tripID: String) {
         let userID = activeUserID
         isLoading = true
         Task {
             do {
                 try await firestoreRepo.deleteTrip(tripID: tripID, forUserID: userID)
+                // Refresh list trip di halaman depan setelah berhasil menghapus
                 self.loadUserTrips()
             } catch {
                 self.errorMessage = error.localizedDescription
@@ -82,7 +83,7 @@ class TripViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - EDIT META TRIP DARI DEPAN (TripsView)
     // INI ADALAH FUNGSI YANG MENGHILANGKAN ERROR MU!
     func updateTripDetails(trip: Trip, title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
@@ -124,7 +125,7 @@ class TripViewModel: ObservableObject {
             self.isLoading = false
         }
     }
-
+    
     // MARK: - LOGIKA CREATE / GENERATE TRIP
     private func setupGenerateFormLiveSearch() {
         $destinationForm
@@ -169,7 +170,7 @@ class TripViewModel: ObservableObject {
         }
         if selectedDayNumber > totalDays { selectedDayNumber = totalDays }
     }
-
+    
     func createManualTrip() async throws -> Trip {
         let userID = activeUserID
         var newTrip = Trip(title: "\(destinationForm) Trip", locationName: destinationForm, startDate: startDateForm, endDate: endDateForm, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
@@ -187,17 +188,17 @@ class TripViewModel: ObservableObject {
         self.loadUserTrips()
         return newTrip
     }
-
+    
     func generateRandomTrip() async throws -> Trip {
         let userID = activeUserID
         let prefs = RandomTripPreferences(locationName: destinationForm, startDate: startDateForm, endDate: endDateForm, dailyPreferences: dailyPreferences)
         
         var newTrip = Trip(title: "\(destinationForm) Trip", locationName: prefs.locationName, startDate: prefs.startDate, endDate: prefs.endDate, status: .upcoming, participantIDs: [userID], createdAt: Date(), createdBy: userID)
         newTrip.coverImageUrl = nil
-
+        
         let generatedDayPlans = try await tripService.generateRandomItinerary(preferences: prefs)
         try await firestoreRepo.saveGeneratedTripWithDayPlans(trip: newTrip, dayPlans: generatedDayPlans, userID: userID)
-
+        
         self.loadUserTrips()
         return newTrip
     }

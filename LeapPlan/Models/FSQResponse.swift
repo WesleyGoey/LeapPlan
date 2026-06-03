@@ -15,31 +15,30 @@ struct FSQResponse: Codable {
 
 // MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
-    let fsq_place_id: String  // ID Format Baru Foursquare
+    let fsq_place_id: String
     let name: String
     let distance: Int?
-    let latitude: Double?     // Koordinat Format Baru
+    let latitude: Double?
     let longitude: Double?
     
-    // 3 Variabel Tambahan untuk UI Dinamis
     let location: FSQLocation?
     let rating: Double?
     let stats: FSQStats?
+    
+    // REVISI: Tambahkan penampung URL Gambar
+    var imageURL: String?
     
     var id: String { fsq_place_id }
 
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {
         return lhs.fsq_place_id == rhs.fsq_place_id
     }
-    
-    // PENTING: Jika API JSON dari Foursquare tidak "flat" (misal: latitude ada di dalam geocodes),
-    // kamu harus menambahkan CodingKeys di sini.
 }
 
 // MARK: - Helper Structs
 struct FSQLocation: Codable {
-    let locality: String? // Nama Kota
-    let country: String?  // Nama Negara
+    let locality: String?
+    let country: String?
 }
 
 struct FSQStats: Codable {

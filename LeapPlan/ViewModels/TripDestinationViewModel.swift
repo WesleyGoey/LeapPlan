@@ -141,16 +141,49 @@ class TripDestinationViewModel: ObservableObject {
     }
     
     func addManualDestination(name: String, category: String, durationMinutes: Int, place: FSQPlace?) {
-        guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id else { return }
-        
-        let newDest = TripDestination(id: UUID().uuidString, name: name, category: category, foursquareID: place?.fsq_place_id, latitude: place?.latitude ?? 0.0, longitude: place?.longitude ?? 0.0, orderIndex: dayPlans[selectedDayIndex].destinations.count, stayDurationMinutes: durationMinutes, transitTimeToNextMinutes: 30)
-        
-        dayPlans[selectedDayIndex].destinations.append(newDest)
-        Task {
-            try? await tripDestinationService.saveReorderedDestinations(dayPlan: dayPlans[selectedDayIndex], tripID: tripID, userID: activeUserID)
-            calculateActualDrivingRoutes()
+            guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id else { return }
+            
+            let newDest = TripDestination(
+                id: UUID().uuidString,
+                name: name,
+                category: category,
+                foursquareID: place?.fsq_place_id,
+                latitude: place?.latitude ?? 0.0,
+                longitude: place?.longitude ?? 0.0,
+                orderIndex: dayPlans[selectedDayIndex].destinations.count,
+                stayDurationMinutes: durationMinutes,
+                transitTimeToNextMinutes: 30,
+                imageURL: place?.imageURL // REVISI: MASUKKAN URL GAMBAR KE SINI
+            )
+            
+            dayPlans[selectedDayIndex].destinations.append(newDest)
+            Task {
+                try? await tripDestinationService.saveReorderedDestinations(dayPlan: dayPlans[selectedDayIndex], tripID: tripID, userID: activeUserID)
+                calculateActualDrivingRoutes()
+            }
         }
-    }
+        
+        func updateDestination(id: String, newName: String, category: String, newDuration: Int, place: FSQPlace?) {
+            guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id else { return }
+            
+            if let index = dayPlans[selectedDayIndex].destinations.firstIndex(where: { $0.id == id }) {
+                dayPlans[selectedDayIndex].destinations[index].name = newName
+                dayPlans[selectedDayIndex].destinations[index].category = category
+                dayPlans[selectedDayIndex].destinations[index].stayDurationMinutes = newDuration
+                
+                if let newPlace = place {
+                    dayPlans[selectedDayIndex].destinations[index].foursquareID = newPlace.fsq_place_id
+                    dayPlans[selectedDayIndex].destinations[index].latitude = newPlace.latitude ?? 0.0
+                    dayPlans[selectedDayIndex].destinations[index].longitude = newPlace.longitude ?? 0.0
+                    dayPlans[selectedDayIndex].destinations[index].imageURL = newPlace.imageURL // REVISI: UPDATE URL
+                }
+                
+                Task {
+                    try? await tripDestinationService.saveReorderedDestinations(dayPlan: dayPlans[selectedDayIndex], tripID: tripID, userID: activeUserID)
+                    calculateActualDrivingRoutes()
+                }
+            }
+        }
     
     // MARK: - EDIT META TRIP (Dates/Image)
     func updateTripDetails(title: String, startDate: Date, endDate: Date, coverImageUrl: String) async {
@@ -159,7 +192,7 @@ class TripDestinationViewModel: ObservableObject {
         updatedTrip.title = title
         updatedTrip.startDate = startDate
         updatedTrip.endDate = endDate
-        updatedTrip.coverImageUrl = coverImageUrl.isEmpty ? nil : coverImageUrl // Kosong berarti hapus gambar
+        updatedTrip.coverImageUrl = coverImageUrl.isEmpty ? nil : coverImageUrl
         
         guard let tripID = updatedTrip.id else { return }
         let userID = activeUserID
@@ -185,11 +218,19 @@ class TripDestinationViewModel: ObservableObject {
         } catch { print("Update failed: \(error)"); isLoading = false }
     }
     
+    // MURNI MVVM: DELETE THIS ENTIRE TRIP
+    func deleteThisTrip() async -> Bool {
+        guard let tripID = trip.id else { return false }
+        do {
+            try await firestoreRepo.deleteTrip(tripID: tripID, forUserID: activeUserID)
+            return true
+        } catch {
+            print("Gagal menghapus trip: \(error)")
+            return false
+        }
+    }
+    
     func convertImageToBase64String(image: UIImage) -> String? {
         return Base64Helper.encode(image)
     }
-//    
-//    func generateOneRandomPlace() {
-//        // Biarkan kosong jika tidak digunakan, atau isi sesuai logika aslinya
-//    }
 }

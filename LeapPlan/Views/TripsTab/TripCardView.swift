@@ -14,20 +14,14 @@ struct TripCardView: View {
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // 1. Background Image (MENGGUNAKAN BASE64 HELPER)
+            // 1. Gambar Base64 / Fallback
             if let base64String = trip.coverImageUrl, let uiImage = Base64Helper.decode(base64String) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 220)
-                    .clipped()
+                Image(uiImage: uiImage).resizable().scaledToFill().frame(height: 220).clipped()
             } else {
-                // FALLBACK JIKA TIDAK ADA GAMBAR
+                // FALLBACK ICON DAN BACKGROUND GRADIENT
                 ZStack {
-                    Color.leapSecondary.opacity(0.8)
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .font(.system(size: 50))
-                        .foregroundColor(.white.opacity(0.3))
+                    LinearGradient(colors: [Color.leapPrimary.opacity(0.8), Color.teal], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Image(systemName: "suitcase.fill").font(.system(size: 60)).foregroundColor(.white.opacity(0.4))
                 }
                 .frame(height: 220)
                 .clipped()

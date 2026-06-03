@@ -22,6 +22,8 @@ struct TripDestination: Identifiable, Codable, Equatable {
     
     var transitTimeToNextMinutes: Int?
     
+    var imageURL: String?
+    
     static func == (lhs: TripDestination, rhs: TripDestination) -> Bool {
         return lhs.id == rhs.id
     }

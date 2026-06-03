@@ -25,46 +25,31 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
     private func handleResponse(data: Data, response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         if httpResponse.statusCode != 200 {
-            let errorMsg = String(data: data, encoding: .utf8) ?? "Unknown Error"
-            print("Foursquare Error [\(httpResponse.statusCode)]: \(errorMsg)")
-            throw NSError(domain: "FoursquareAPI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Error \(httpResponse.statusCode): Foursquare menolak request."])
+            throw NSError(domain: "FoursquareAPI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Error Foursquare"])
         }
     }
 
     func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15") else {
-            throw URLError(.badURL)
-        }
-        
+              let url = URL(string: "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15") else { throw URLError(.badURL) }
         let request = createRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
         try handleResponse(data: data, response: response)
-        
-        let fsqResponse = try JSONDecoder().decode(FSQResponse.self, from: data)
-        return fsqResponse.results
+        return try JSONDecoder().decode(FSQResponse.self, from: data).results
     }
     
     func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
         guard let encodedCity = city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY") else {
-            throw URLError(.badURL)
-        }
-        
+              let url = URL(string: "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY") else { throw URLError(.badURL) }
         let request = createRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
         try handleResponse(data: data, response: response)
-        
-        let fsqResponse = try JSONDecoder().decode(FSQResponse.self, from: data)
-        return fsqResponse.results
+        return try JSONDecoder().decode(FSQResponse.self, from: data).results
     }
     
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else {
-            throw URLError(.badURL)
-        }
-        
+              let url = URL(string: "\(baseURL)/autocomplete?query=\(encodedQuery)&types=geo&limit=5") else { throw URLError(.badURL) }
         let request = createRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
         try handleResponse(data: data, response: response)
@@ -75,13 +60,25 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             let cityName = result.text.primary
             let detail = result.text.secondary ?? ""
             let fullName = detail.isEmpty ? cityName : "\(cityName), \(detail)"
-            
-            return FSQPlace(
-                fsq_place_id: result.text.primary, name: fullName, distance: 0,
-                latitude: geoItem.center?.latitude ?? 0.0, longitude: geoItem.center?.longitude ?? 0.0,
-                location: nil, rating: nil, stats: nil
-            )
+            return FSQPlace(fsq_place_id: result.text.primary, name: fullName, distance: 0, latitude: geoItem.center?.latitude ?? 0.0, longitude: geoItem.center?.longitude ?? 0.0, location: nil, rating: nil, stats: nil)
         }
+    }
+    
+    // MARK: - FUNGSI BARU UNTUK MENGAMBIL FOTO
+    func fetchPlacePhotos(id: String) async throws -> String? {
+        guard let url = URL(string: "\(baseURL)/places/\(id)/photos?limit=1&sort=POPULAR") else { return nil }
+        let request = createRequest(url: url)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return nil }
+            
+            struct FSQPhotoResponse: Codable { let prefix: String; let suffix: String }
+            let photos = try JSONDecoder().decode([FSQPhotoResponse].self, from: data)
+            
+            // Foursquare memisahkan URL foto menjadi prefix dan suffix. Kita satukan dengan ukuran 500x500
+            if let first = photos.first { return "\(first.prefix)500x500\(first.suffix)" }
+            return nil
+        } catch { return nil }
     }
 }
 

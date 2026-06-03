@@ -6,21 +6,13 @@
 //
 
 
-//
-//  AddToItinerarySheetView.swift
-//  LeapPlan
-//
-
 import SwiftUI
 
 struct AddToItinerarySheetView: View {
     @Environment(\.dismiss) private var dismiss
-    
-    // GANTI menjadi TripViewModel
-    @StateObject private var tripViewModel = TripViewModel()
+    @StateObject private var tripViewModel = TripViewModel() // Inisialisasi ulang yang aman
     
     let place: FSQPlace
-    
     @State private var selectedTrip: Trip? = nil
     @State private var selectedDays: Set<Int> = []
     @State private var isSaving: Bool = false
@@ -31,12 +23,19 @@ struct AddToItinerarySheetView: View {
                 if tripViewModel.isLoading {
                     ProgressView("Loading Itineraries...").padding(.top, 40)
                     Spacer()
+                } else if tripViewModel.trips.isEmpty {
+                    // PESAN JIKA BELUM PUNYA TRIP SAMA SEKALI
+                    VStack(spacing: 12) {
+                        Spacer()
+                        Image(systemName: "briefcase").font(.system(size: 40)).foregroundColor(.gray)
+                        Text("No Trips Found").font(.headline)
+                        Text("Please create a trip first before adding an itinerary.").font(.subheadline).foregroundColor(.gray).multilineTextAlignment(.center)
+                        Spacer()
+                    }.padding()
                 } else if selectedTrip == nil {
-                    // LAYER 1: TAMPILKAN LIST ITINERARY YANG ADA
+                    // LAYER 1: PILIH TRIP
                     List(tripViewModel.trips) { trip in
-                        Button(action: {
-                            withAnimation { selectedTrip = trip }
-                        }) {
+                        Button(action: { withAnimation { selectedTrip = trip } }) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(trip.title).font(.headline).foregroundColor(.primary)
@@ -44,19 +43,13 @@ struct AddToItinerarySheetView: View {
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right").foregroundColor(.gray)
-                            }
-                            .padding(.vertical, 4)
+                            }.padding(.vertical, 4)
                         }
-                    }
-                    .listStyle(.plain)
+                    }.listStyle(.plain)
                 } else if let trip = selectedTrip {
-                    // LAYER 2: TAMPILKAN CHECKLIST PILIHAN HARI
+                    // LAYER 2: PILIH HARI (Otomatis masuk ke urutan destinasi terakhir)
                     VStack(alignment: .leading) {
-                        Text("Select Days for \(trip.title)")
-                            .font(.subheadline.bold())
-                            .foregroundColor(.gray)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 10)
+                        Text("Select Days for \(trip.title)").font(.subheadline.bold()).foregroundColor(.gray).padding(.horizontal, 20).padding(.top, 10)
                         
                         let totalDays = calculateTotalDays(start: trip.startDate, end: trip.endDate)
                         
@@ -69,24 +62,18 @@ struct AddToItinerarySheetView: View {
                                     Text("Day \(dayNum)").font(.body).foregroundColor(.primary)
                                     Spacer()
                                     Image(systemName: selectedDays.contains(dayNum) ? "checkmark.circle.fill" : "circle")
-                                        .font(.title3)
-                                        .foregroundColor(selectedDays.contains(dayNum) ? Color(red: 0/255, green: 173/255, blue: 133/255) : .gray)
+                                        .font(.title3).foregroundColor(selectedDays.contains(dayNum) ? Color.leapPrimary : .gray)
                                 }
                                 .padding(.vertical, 4)
                             }
-                        }
-                        .listStyle(.plain)
+                        }.listStyle(.plain)
                         
                         Button(action: {
                             Task {
                                 isSaving = true
-                                // Panggil fungsi yang baru kita tambahkan di TripViewModel
                                 await tripViewModel.addPlaceToTrip(place: place, targetTrip: trip, selectedDays: selectedDays)
                                 isSaving = false
-                                withAnimation {
-                                    selectedTrip = nil
-                                    selectedDays.removeAll()
-                                }
+                                dismiss() // Langsung tutup sheet setelah berhasil
                             }
                         }) {
                             HStack {
@@ -95,11 +82,9 @@ struct AddToItinerarySheetView: View {
                                 Text("Done adding to this Itinerary")
                             }
                             .font(.headline).foregroundColor(.white).frame(maxWidth: .infinity).padding()
-                            .background(selectedDays.isEmpty ? Color.gray : Color(red: 0/255, green: 173/255, blue: 133/255)).cornerRadius(12)
+                            .background(selectedDays.isEmpty ? Color.gray : Color.leapPrimary).cornerRadius(12)
                         }
-                        .disabled(selectedDays.isEmpty || isSaving)
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 20)
+                        .disabled(selectedDays.isEmpty || isSaving).padding(.horizontal, 24).padding(.bottom, 20)
                     }
                 }
             }
@@ -107,22 +92,16 @@ struct AddToItinerarySheetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    if let _ = selectedTrip {
-                        Button("Back") { withAnimation { selectedTrip = nil } }
-                    } else {
-                        Button("Close") { dismiss() }
-                    }
+                    if let _ = selectedTrip { Button("Back") { withAnimation { selectedTrip = nil } } }
+                    else { Button("Cancel") { dismiss() } }
                 }
             }
-            .onAppear {
-                tripViewModel.loadUserTrips()
-            }
+            .onAppear { tripViewModel.loadUserTrips() } // Wajib dipanggil untuk load Firebase!
         }
     }
     
     private func calculateTotalDays(start: Date, end: Date) -> Int {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: start), to: calendar.startOfDay(for: end))
+        let components = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: start), to: Calendar.current.startOfDay(for: end))
         return max(1, (components.day ?? 0) + 1)
     }
 }

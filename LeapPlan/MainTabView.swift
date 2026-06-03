@@ -13,35 +13,23 @@ struct MainTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
-                }
+            HomeView(selectedTab: $selectedTab) // Melempar binding ke Home
+                .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
             
             ExploreView()
-                .tabItem {
-                    Image(systemName: "map.fill")
-                    Text("Explore")
-                }
+                .tabItem { Label("Explore", systemImage: "map.fill") }
                 .tag(1)
             
             TripsView()
-                .tabItem {
-                    Image(systemName: "briefcase.fill")
-                    Text("Trips")
-                }
+                .tabItem { Label("Trips", systemImage: "briefcase.fill") }
                 .tag(2)
             
             ProfileView()
-                .tabItem {
-                    Image(systemName: "person.fill")
-                    Text("Profile")
-                }
+                .tabItem { Label("Profile", systemImage: "person.fill") }
                 .tag(3)
         }
-        .tint(Color.leapPrimary) // Memastikan warna tab aktif mengikuti tema LeapPlan
+        .tint(Color.leapPrimary)
     }
 }
 

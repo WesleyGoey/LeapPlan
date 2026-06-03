@@ -9,6 +9,8 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var viewModel = HomeViewModel()
+    @StateObject var profileVM = ProfileViewModel() // Untuk meload foto profil
+    @Binding var selectedTab: Int // Kontrol navigasi tab
     
     var body: some View {
         NavigationStack {
@@ -18,19 +20,26 @@ struct HomeView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("LeapPlan")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#00ADB5"))
-                            Text("Plan your next adventure")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                            Text("LeapPlan").font(.largeTitle).fontWeight(.bold).foregroundColor(Color.leapPrimary)
+                            Text("Plan your next adventure").font(.subheadline).foregroundColor(.gray)
                         }
                         Spacer()
-                        Circle()
-                            .fill(Color(hex: "#00ADB5"))
-                            .frame(width: 45, height: 45)
-                            .overlay(Text("SJ").foregroundColor(.white).bold())
+                        
+                        // TOMBOL AVATAR (Bisa di-klik menuju Tab Profile)
+                        Button(action: {
+                            selectedTab = 3 // Index tab Profile
+                        }) {
+                            if let base64 = profileVM.currentUser?.profileImageUrl,
+                               let uiImage = Base64Helper.decode(base64) {
+                                Image(uiImage: uiImage).resizable().scaledToFill()
+                                    .frame(width: 45, height: 45).clipShape(Circle())
+                                    .shadow(radius: 3)
+                            } else {
+                                Circle().fill(Color.leapPrimary)
+                                    .frame(width: 45, height: 45)
+                                    .overlay(Image(systemName: "person.fill").foregroundColor(.white))
+                            }
+                        }
                     }
                     .padding(.horizontal)
                     
@@ -96,6 +105,6 @@ struct HomeView: View {
     }
 }
 
-#Preview{
-    HomeView()
+#Preview {
+    HomeView(selectedTab: .constant(0))
 }
