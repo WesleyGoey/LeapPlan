@@ -2,30 +2,41 @@
 //  AuthServiceTests.swift
 //  LeapPlan
 //
-//  Created by student on 03/06/26.
+//  Created by Wesley Goey on 03/06/26.
 //
 
 
 import XCTest
+import FirebaseAuth
 @testable import LeapPlan
 
 final class AuthServiceTests: XCTestCase {
-    // SUT
-    var sut: AuthService! // Gunakan instance aslinya
+    
+    var service: AuthService!
+    var mockAuthRepo: MockAuthRepository!
     
     override func setUpWithError() throws {
         try super.setUpWithError()
-        // PENTING: Untuk service asli, kamu bisa menggunakan mock URLSession jika tidak memakai Firebase SDK langsung
-        sut = AuthService() 
+        mockAuthRepo = MockAuthRepository()
+        service = AuthService(authRepo: mockAuthRepo)
+        
+        // Sambungkan ke Firebase Auth Local Emulator
+        Auth.auth().useEmulator(withHost: "localhost", port: 9099)
     }
     
     override func tearDownWithError() throws {
-        sut = nil
+        service = nil
+        mockAuthRepo = nil
         try super.tearDownWithError()
     }
     
-    func test_initialAuthState_shouldBeDetermined() {
-        // Ini contoh mengecek apakah service bisa mendeteksi state awal dengan benar
-        XCTAssertNotNil(sut)
+    func testLogout_ClearsSessionState() throws {
+        // Act: Panggil sign out
+        // Jika emulator kosong, fungsi ini tetap aman membersihkan status lokal SDK
+        try? service.logout()
+        
+        // Assert
+        XCTAssertFalse(service.isLoggedIn)
+        XCTAssertNil(service.getCurrentUserID())
     }
 }
