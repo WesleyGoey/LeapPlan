@@ -5,75 +5,100 @@
 //  Created by Wesley Goey on 03/06/26.
 //
 
-
-
-import XCTest
 import FirebaseFirestore
+import XCTest
+
 @testable import LeapPlan
 
-private let configureAuthFirestoreEmulatorOnce: Void = {
-     let settings = Firestore.firestore().settings
-     settings.host = "localhost:8080"
-     settings.isSSLEnabled = false
-     Firestore.firestore().settings = settings
- }()
+final class AuthRepositoryTests: XCTestCase {
 
- final class AuthRepositoryTests: XCTestCase {
-     
-     var repository: AuthRepository!
-     let testUserID = "test_user_sean_123"
-     
-     override func setUpWithError() throws {
-         try super.setUpWithError()
-         repository = AuthRepository()
-         
-         // Panggil token eksekusi sekali
-         _ = configureAuthFirestoreEmulatorOnce
-     }
-     
-     override func tearDownWithError() throws {
-         repository = nil
-         try super.tearDownWithError()
-     }
-    
-    func testSaveAndFetchUser_Success() async throws {
-        // Arrange
-        let dummyUser = User(id: testUserID, email: "sean@uc.ac.id", fullName: "Sean Tandjaja Tandjaja", profileImageUrl: nil, joinedDate: Date())
-        
-        // Act: Simpan User
-        try await repository.saveUser(dummyUser)
-        
-        // Act: Ambil Kembali
-        let fetchedUser = try await repository.fetchUser(userID: testUserID)
-        
-        // Assert
-        XCTAssertEqual(fetchedUser.id, dummyUser.id)
-        XCTAssertEqual(fetchedUser.fullName, "Sean Tandjaja Tandjaja")
-        XCTAssertEqual(fetchedUser.email, "sean@uc.ac.id")
+    var repo: AuthRepository!
+    let testUserID = "test_user_id_999"
+
+    override func setUp() {
+        super.setUp()
+        repo = AuthRepository()
     }
-    
-    func testUpdateAndDeleteUser_Success() async throws {
+
+    override func tearDown() {
+        // Cleanup: Selalu hapus user dummy setelah setiap test selesai
+        let db = Firestore.firestore()
+        let _ = try? db.collection("Users").document(testUserID).delete()
+        repo = nil
+        super.tearDown()
+    }
+
+    // MARK: - Helper User
+    private func createDummyUser() -> User {
+        return User(
+            id: testUserID,
+            email: "test@leapplan.com",
+            fullName: "Test User",
+            profileImageUrl: nil,
+            joinedDate: Date()
+        )
+    }
+
+    // MARK: - 1. Test Save & Fetch
+    func testSaveAndFetchUser_ShouldSucceed() async throws {
         // Arrange
-        var dummyUser = User(id: testUserID, email: "sean@uc.ac.id", fullName: "Sean Tandjaja", profileImageUrl: nil, joinedDate: Date())
-        try await repository.saveUser(dummyUser)
-        
-        // Act: Update Nama Lengkap
-        dummyUser.fullName = "Sean Lawton Tandjaja"
-        try await repository.updateUser(dummyUser)
-        
-        let updatedUser = try await repository.fetchUser(userID: testUserID)
-        XCTAssertEqual(updatedUser.fullName, "Sean Lawton Tandjaja")
-        
-        // Act: Hapus User
-        try await repository.deleteUser(userID: testUserID)
-        
-        // Assert: Pastikan Data Hilang (Throws Error 404)
+        let user = createDummyUser()
+
+        // Act (Save)
+        try await repo.saveUser(user)
+
+        // Act (Fetch)
+        let fetchedUser = try await repo.fetchUser(userID: testUserID)
+
+        // Assert
+        XCTAssertEqual(fetchedUser.id, user.id)
+        XCTAssertEqual(fetchedUser.fullName, "Test User")
+    }
+
+    // MARK: - 2. Test Update
+    func testUpdateUser_ShouldUpdateFullName() async throws {
+        // Arrange
+        let user = createDummyUser()
+        try await repo.saveUser(user)
+
+        // Act
+        var updatedUser = user
+        updatedUser.fullName = "Updated Name"
+        try await repo.updateUser(updatedUser)
+
+        let fetchedUser = try await repo.fetchUser(userID: testUserID)
+
+        // Assert
+        XCTAssertEqual(fetchedUser.fullName, "Updated Name")
+    }
+
+    // MARK: - 3. Test Delete
+    func testDeleteUser_ShouldRemoveFromDatabase() async throws {
+        // Arrange
+        let user = createDummyUser()
+        try await repo.saveUser(user)
+
+        // Act
+        try await repo.deleteUser(userID: testUserID)
+
+        // Assert & Act
         do {
-            _ = try await repository.fetchUser(userID: testUserID)
-            XCTFail("Harusnya melempar error karena data sudah dihapus.")
+            _ = try await repo.fetchUser(userID: testUserID)
+            XCTFail("Seharusnya fetchUser melempar error setelah user dihapus")
+        } catch {
+            XCTAssertNotNil(error)  // Error 404 dari AuthRepository kita
+        }
+    }
+
+    // MARK: - 4. Test Fetch Non-Existent User
+    func testFetchNonExistentUser_ShouldThrowError() async {
+        // Act & Assert
+        do {
+            _ = try await repo.fetchUser(userID: "non_existent_id")
+            XCTFail("Seharusnya gagal karena user tidak ada")
         } catch {
             let nsError = error as NSError
-            XCTAssertEqual(nsError.code, 404)
+            XCTAssertEqual(nsError.code, 404, "Harus error code 404")
         }
     }
 }

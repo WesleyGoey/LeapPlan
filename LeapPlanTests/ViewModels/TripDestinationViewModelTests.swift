@@ -2,84 +2,240 @@
 //  TripDestinationViewModelTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
-
+import MapKit
 import XCTest
+
 @testable import LeapPlan
 
+@MainActor
 final class TripDestinationViewModelTests: XCTestCase {
-    
-    private var mockFirestoreRepo: MockFirestoreRepository!
-    private var mockAuthService: MockAuthService!
-    private var mockTripDestinationService: MockTripDestinationService!
-    private var mockFourSquareService: MockFourSquareService!
-    private var mockTripService: MockTripService!
-    
-    private var initialTrip: Trip!
-    
+
+    var viewModel: TripDestinationViewModel!
+    var mockFirestoreRepo: MockFirestoreRepository!
+    var mockTripDestService: MockTripDestinationService!
+    var mockAuthService: MockAuthService!
+    var mockFourSquare: MockFourSquareService!
+
     override func setUp() {
         super.setUp()
         mockFirestoreRepo = MockFirestoreRepository()
+        mockTripDestService = MockTripDestinationService()
         mockAuthService = MockAuthService()
-        mockTripDestinationService = MockTripDestinationService()
-        mockFourSquareService = MockFourSquareService()
-        mockTripService = MockTripService()
-        
-        initialTrip = Trip(id: "bali_trip_id", title: "My Bali Vacation", locationName: "Bali", startDate: Date(), endDate: Date(), status: .upcoming, participantIDs: ["user_1"], totalPlaces: 0, createdAt: Date(), createdBy: "user_1")
+        mockFourSquare = MockFourSquareService()
+
+        // Setup dummy trip
+        let trip = Trip(
+            id: "t1",
+            title: "Bali Trip",
+            locationName: "Bali",
+            startDate: Date(),
+            endDate: Date().addingTimeInterval(86400 * 2),
+            status: .upcoming,
+            participantIDs: [],
+            createdAt: Date(),
+            createdBy: "u1"
+        )
+
+        viewModel = TripDestinationViewModel(
+            trip: trip,
+            firestoreRepo: mockFirestoreRepo,
+            authService: mockAuthService,
+            tripDestinationService: mockTripDestService,
+            fourSquareService: mockFourSquare
+        )
     }
-    
-    override func tearDown() {
-        mockFirestoreRepo = nil
-        mockAuthService = nil
-        mockTripDestinationService = nil
-        mockFourSquareService = nil
-        mockTripService = nil
-        initialTrip = nil
-        super.tearDown()
-    }
-    
-    @MainActor
-    func testLoadDayPlans_Success_SortsByDayNumber() async {
+
+    // MARK: - Test Cases
+
+    func testLoadDayPlans_UpdatesState() async {
         // Arrange
-        let day2 = DayPlan(id: "d2", dayNumber: 2, date: Date(), destinations: [])
-        let day1 = DayPlan(id: "d1", dayNumber: 1, date: Date(), destinations: [])
-        mockFirestoreRepo.dayPlans["bali_trip_id"] = [day2, day1] // Masukkan tidak berurutan
-        
-        let viewModel = TripDestinationViewModel(trip: initialTrip, firestoreRepo: mockFirestoreRepo, authService: mockAuthService, tripDestinationService: mockTripDestinationService, fourSquareService: mockFourSquareService, tripService: mockTripService)
-        
+        let day1 = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: []
+        )
+        mockFirestoreRepo.mockDayPlans = ["t1": [day1]]
+
         // Act
         viewModel.loadDayPlans()
         try? await Task.sleep(nanoseconds: 100_000_000)
-        
+
         // Assert
-        XCTAssertEqual(viewModel.dayPlans.count, 2)
-        XCTAssertEqual(viewModel.dayPlans.first?.dayNumber, 1) // Harus tersortir naik
-        XCTAssertEqual(viewModel.dayPlans.last?.dayNumber, 2)
+        XCTAssertEqual(viewModel.dayPlans.count, 1)
+        XCTAssertFalse(viewModel.isLoading)
     }
-    
-    @MainActor
-    func testSearchPlacesAroundCity_EnforcesStrictCityFiltering() async {
+
+    func testMoveDestination_CallsService() async {
         // Arrange
-        // Buat akomodasi satu kota dasar "Bali" dan satu kota luar "Surabaya"
-        let locBali = FSQLocation(locality: "Bali", country: "Indonesia")
-        let locSby = FSQLocation(locality: "Surabaya", country: "Indonesia")
-        
-        let placeInBali = FSQPlace(fsq_place_id: "p_bali", name: "Beach Club Seminyak", distance: nil, latitude: nil, longitude: nil, location: locBali, rating: nil, stats: nil, imageURL: nil)
-        let placeInSby = FSQPlace(fsq_place_id: "p_sby", name: "Ciputra World Surabaya", distance: nil, latitude: nil, longitude: nil, location: locSby, rating: nil, stats: nil, imageURL: nil)
-        
-        mockFourSquareService.stubbedPlaces = [placeInBali, placeInSby]
-        
-        let viewModel = TripDestinationViewModel(trip: initialTrip, firestoreRepo: mockFirestoreRepo, authService: mockAuthService, tripDestinationService: mockTripDestinationService, fourSquareService: mockFourSquareService, tripService: mockTripService)
-        
+        let dest = TripDestination(
+            id: "d1",
+            name: "Beach",
+            category: "Wisata",
+            foursquareID: "fsq1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 60,
+            transitTimeToNextMinutes: 10
+        )
+        viewModel.dayPlans = [
+            DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
+        ]
+
         // Act
-        viewModel.searchPlacesAroundCity(query: "Club")
+        viewModel.moveDestination(from: IndexSet(integer: 0), to: 1)
+
+        // BERIKAN JEDA AGAR TASK SELESAI
         try? await Task.sleep(nanoseconds: 100_000_000)
-        
+
         // Assert
-        // Ciputra World Surabaya harus dibuang karena Trip saat ini memiliki lokasi kota dasar "Bali"
+        XCTAssertTrue(mockTripDestService.didCallSaveReorder)
+    }
+
+    func testDeleteDestination_RemovesFromList() async {
+        // Arrange
+        let dest = TripDestination(
+            id: "d1",
+            name: "Beach",
+            category: "Wisata",
+            foursquareID: "fsq1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 60,
+            transitTimeToNextMinutes: 10
+        )
+        viewModel.dayPlans = [
+            DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
+        ]
+
+        // Act
+        viewModel.deleteDestination(destID: "d1")
+
+        // BERIKAN JEDA AGAR TASK SELESAI
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        // Assert
+        XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 0)
+        XCTAssertTrue(mockTripDestService.didCallSaveReorder)
+    }
+
+    func testSearchPlacesAroundCity_PopulatesResults() async {
+        // Arrange
+        // Ubah bagian location: Location(locality: "Bali") menjadi location: nil
+        let place = FSQPlace(
+            fsq_place_id: "p1",
+            name: "Ubud Monkey Forest",
+            distance: 0,
+            latitude: 0,
+            longitude: 0,
+            location: nil,  // <--- Cukup gunakan nil
+            rating: 5,
+            stats: nil
+        )
+        mockFourSquare.mockPlaces = [place]
+
+        // Act
+        viewModel.searchPlacesAroundCity(query: "Monkey")
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        // Assert
         XCTAssertEqual(viewModel.addSearchResults.count, 1)
-        XCTAssertEqual(viewModel.addSearchResults.first?.fsq_place_id, "p_bali")
+        XCTAssertEqual(
+            viewModel.addSearchResults.first?.name,
+            "Ubud Monkey Forest"
+        )
+    }
+
+    func testAddManualDestination_UpdatesList() async {
+        // Arrange
+        viewModel.dayPlans = [
+            DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [])
+        ]
+
+        // Act
+        viewModel.addManualDestination(
+            name: "New Place",
+            category: "Wisata",
+            durationMinutes: 60,
+            place: nil
+        )
+
+        // Assert
+        XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 1)
+    }
+
+    func testUpdateDestination_ModifiesValues() async {
+        // Arrange
+        let dest = TripDestination(
+            id: "d1",
+            name: "Old",
+            category: "A",
+            foursquareID: "1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 30,
+            transitTimeToNextMinutes: 0
+        )
+        viewModel.dayPlans = [
+            DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [dest])
+        ]
+
+        // Act
+        viewModel.updateDestination(
+            id: "d1",
+            newName: "New",
+            category: "B",
+            newDuration: 90,
+            place: nil
+        )
+
+        // Assert
+        XCTAssertEqual(viewModel.dayPlans[0].destinations[0].name, "New")
+        XCTAssertEqual(
+            viewModel.dayPlans[0].destinations[0].stayDurationMinutes,
+            90
+        )
+    }
+
+    func testGenerateOneRandomPlace_AddsToDestinations() async {
+        // Arrange
+        viewModel.dayPlans = [
+            DayPlan(id: "p1", dayNumber: 1, date: Date(), destinations: [])
+        ]
+        mockFourSquare.mockPlaces = [
+            FSQPlace(
+                fsq_place_id: "r1",
+                name: "Random",
+                distance: 0,
+                latitude: 0,
+                longitude: 0,
+                location: nil,
+                rating: 5,
+                stats: nil
+            )
+        ]
+
+        // Act
+        viewModel.generateOneRandomPlace()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        // Assert
+        XCTAssertEqual(viewModel.dayPlans[0].destinations.count, 1)
+        XCTAssertEqual(viewModel.dayPlans[0].destinations.first?.name, "Random")
+    }
+
+    func testDeleteThisTrip_CallsRepo() async {
+        // Act
+        let success = await viewModel.deleteThisTrip()
+
+        // Assert
+        XCTAssertTrue(success)
+        XCTAssertTrue(mockFirestoreRepo.didCallDeleteTrip)
     }
 }

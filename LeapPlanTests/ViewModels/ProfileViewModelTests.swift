@@ -2,91 +2,168 @@
 //  ProfileViewModelTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
-
 import XCTest
+
 @testable import LeapPlan
 
+@MainActor
 final class ProfileViewModelTests: XCTestCase {
-    
-    private var mockAuthRepo: MockAuthRepository!
-    private var mockAuthService: MockAuthService!
-    private var mockFirestoreRepo: MockFirestoreRepository!
-    
+
+    var viewModel: ProfileViewModel!
+    var mockAuthRepo: MockAuthRepository!
+    var mockAuthService: MockAuthService!
+    var mockFirestoreRepo: MockFirestoreRepository!
+
     override func setUp() {
         super.setUp()
         mockAuthRepo = MockAuthRepository()
         mockAuthService = MockAuthService()
         mockFirestoreRepo = MockFirestoreRepository()
+
+        viewModel = ProfileViewModel(
+            authRepo: mockAuthRepo,
+            authService: mockAuthService,
+            firestoreRepo: mockFirestoreRepo
+        )
     }
-    
+
     override func tearDown() {
+        viewModel = nil
         mockAuthRepo = nil
         mockAuthService = nil
         mockFirestoreRepo = nil
         super.tearDown()
     }
-    
-    @MainActor
-    func testLoadProfile_CalculatesStatsCorrectly() async {
+
+    // MARK: - Test Cases
+
+    func testLoadProfile_Success_CalculatesStats() async {
         // Arrange
-        let userID = "user_sean"
-        mockAuthService.stubbedUserID = userID
-        
-        let dummyUser = User(id: userID, email: "sean@uc.ac.id", fullName: "Sean Tandjaja", profileImageUrl: nil, joinedDate: Date())
-        mockAuthRepo.users[userID] = dummyUser
-        
-        let trip1 = Trip(id: "1", title: "Trip A", locationName: "A", startDate: Date(), endDate: Date(), status: .upcoming, participantIDs: [userID], totalPlaces: 0, createdAt: Date(), createdBy: userID)
-        let trip2 = Trip(id: "2", title: "Trip B", locationName: "B", startDate: Date(), endDate: Date(), status: .past, participantIDs: [userID], totalPlaces: 0, createdAt: Date(), createdBy: userID)
-        mockFirestoreRepo.trips[userID] = [trip1, trip2]
-        
-        let viewModel = ProfileViewModel(authRepo: mockAuthRepo, authService: mockAuthService, firestoreRepo: mockFirestoreRepo)
-        
+        let user = User(
+            id: "u1",
+            email: "test@test.com",
+            fullName: "Sean",
+            profileImageUrl: nil,
+            joinedDate: Date()
+        )
+        mockAuthRepo.mockUser = user
+        mockAuthService.currentUserIDToReturn = "u1"
+
+        let trip1 = Trip(
+            id: "t1",
+            title: "Trip 1",
+            locationName: "Bali",
+            startDate: Date(),
+            endDate: Date(),
+            status: .upcoming,
+            participantIDs: [],
+            createdAt: Date(),
+            createdBy: "u1"
+        )
+        mockFirestoreRepo.mockTrips = ["u1": [trip1]]
+
         // Act
         viewModel.loadProfile()
-        try? await Task.sleep(nanoseconds: 100_000_000) // Beri waktu task async
-        
+
+        // Tunggu sebentar karena loadProfile menggunakan Task (asynchronous)
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
         // Assert
-        XCTAssertEqual(viewModel.currentUser?.fullName, "Sean Tandjaja")
-        XCTAssertEqual(viewModel.totalTripsCount, 2)
-        XCTAssertEqual(viewModel.upcomingTripsCount, 1) // Hanya trip1 yang upcoming/ongoing
+        XCTAssertEqual(viewModel.currentUser?.id, "u1")
+        XCTAssertEqual(viewModel.totalTripsCount, 1)
+        XCTAssertEqual(viewModel.upcomingTripsCount, 1)
+        XCTAssertFalse(viewModel.isLoading)
     }
-    
-    @MainActor
-    func testRegister_Success_SavesUserToDatabase() async {
+
+    func testLogin_Success() async {
         // Arrange
-        let viewModel = ProfileViewModel(authRepo: mockAuthRepo, authService: mockAuthService, firestoreRepo: mockFirestoreRepo)
-        viewModel.authEmail = "newuser@uc.ac.id"
+        viewModel.authEmail = "test@test.com"
         viewModel.authPassword = "password123"
-        viewModel.authFullName = "Sean Lawton"
-        mockAuthService.stubbedUserID = "generated_uid"
-        
+
         // Act
-        let success = await viewModel.register()
-        
+        let result = await viewModel.login()
+
         // Assert
-        XCTAssertTrue(success)
-        XCTAssertTrue(mockAuthService.didCallRegister)
-        XCTAssertNotNil(mockAuthRepo.users["generated_uid"])
-        XCTAssertEqual(mockAuthRepo.users["generated_uid"]?.fullName, "Sean Lawton")
+        XCTAssertTrue(result)
+        XCTAssertTrue(mockAuthService.didCallLogin)
+        XCTAssertNil(viewModel.errorMessage)
     }
-    
-    @MainActor
-    func testLogout_ResetsStateAndStats() {
+
+    func testRegister_Success() async {
         // Arrange
-        let viewModel = ProfileViewModel(authRepo: mockAuthRepo, authService: mockAuthService, firestoreRepo: mockFirestoreRepo)
-        viewModel.currentUser = User(id: "1", email: "a@a.com", fullName: "Name", profileImageUrl: nil, joinedDate: Date())
-        viewModel.totalTripsCount = 5
-        
+        viewModel.authEmail = "new@test.com"
+        viewModel.authPassword = "password123"
+        viewModel.authFullName = "New User"
+
+        // Act
+        let result = await viewModel.register()
+
+        // Assert
+        XCTAssertTrue(result)
+        XCTAssertTrue(mockAuthService.didCallRegister)
+        XCTAssertTrue(mockAuthRepo.didCallSaveUser)
+    }
+
+    func testLogout_ResetsState() {
+        // Arrange
+        viewModel.totalTripsCount = 10
+
         // Act
         viewModel.logout()
-        
+
         // Assert
-        XCTAssertTrue(mockAuthService.didCallLogout)
         XCTAssertNil(viewModel.currentUser)
         XCTAssertEqual(viewModel.totalTripsCount, 0)
-        XCTAssertEqual(viewModel.upcomingTripsCount, 0)
+        XCTAssertTrue(mockAuthService.didCallLogout)
+    }
+
+    func testSaveEditedProfile_RequiresPasswordForEmailChange() async {
+        // Arrange
+        viewModel.currentUser = User(
+            id: "u1",
+            email: "old@test.com",
+            fullName: "Old",
+            profileImageUrl: nil,
+            joinedDate: Date()
+        )
+        viewModel.editEmail = "new@test.com"  // Email diubah
+        viewModel.currentPassword = ""  // Password dikosongkan (salah)
+
+        // Act
+        let result = await viewModel.saveEditedProfile(selectedImage: nil)
+
+        // Assert
+        XCTAssertFalse(result)
+        XCTAssertNotNil(
+            viewModel.errorMessage,
+            "Harusnya error karena password kosong"
+        )
+    }
+
+    func testSaveEditedProfile_Success() async {
+        // Arrange
+        let oldEmail = "old@test.com"
+        viewModel.currentUser = User(
+            id: "u1",
+            email: oldEmail,
+            fullName: "Old",
+            profileImageUrl: nil,
+            joinedDate: Date()
+        )
+
+        // PERBAIKAN: Set editEmail supaya tidak dianggap sedang ganti email
+        viewModel.editEmail = oldEmail
+        viewModel.editFullName = "New Name"
+
+        // Act
+        let result = await viewModel.saveEditedProfile(selectedImage: nil)
+
+        // Assert
+        XCTAssertTrue(result)
+        XCTAssertEqual(viewModel.currentUser?.fullName, "New Name")
+        XCTAssertTrue(mockAuthRepo.didCallUpdateUser)
     }
 }

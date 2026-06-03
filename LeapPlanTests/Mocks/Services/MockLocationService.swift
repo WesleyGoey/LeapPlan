@@ -2,19 +2,26 @@
 //  MockLocationService.swift
 //  LeapPlan
 //
-//  Created by student on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
+
 
 import Foundation
 import CoreLocation
+import Combine
 @testable import LeapPlan
 
-class MockLocationService: LocationServiceProtocol {
-    // Menggunakan koordinat dummy (Surabaya secara default)
-    var currentLocation: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: -7.2504, longitude: 112.7688)
-    var didCallRequestPermission = false
-
+class MockLocationService: ObservableObject, LocationServiceProtocol {
+    // Sesuai dengan protocol, kita harus punya property ini
+    @Published var currentLocation: CLLocationCoordinate2D?
+    
+    // Fungsi untuk menyuntikkan data dummy ke ViewModel
+    func setDummyLocation(lat: Double, lon: Double) {
+        self.currentLocation = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+    
+    // Stub methods lainnya (jika ada di protocol)
     func requestLocationPermission() {
-        didCallRequestPermission = true
+        // Tidak melakukan apa-apa di mock
     }
 }

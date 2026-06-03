@@ -2,65 +2,207 @@
 //  TripDestinationServiceTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
-
 import XCTest
+
 @testable import LeapPlan
 
 final class TripDestinationServiceTests: XCTestCase {
-    
+
     var service: TripDestinationService!
-    var mockFirestore: MockFirestoreRepository!
-    
+    var mockRepo: MockFirestoreRepository!
+
     override func setUp() {
         super.setUp()
-        mockFirestore = MockFirestoreRepository()
-        service = TripDestinationService(firestoreRepo: mockFirestore)
+        mockRepo = MockFirestoreRepository()
+        service = TripDestinationService(firestoreRepo: mockRepo)
     }
-    
+
     override func tearDown() {
         service = nil
-        mockFirestore = nil
+        mockRepo = nil
         super.tearDown()
     }
-    
-    func testCalculateTimeline_CorrectFormatting() {
+
+    // MARK: - Test Functions
+
+    func testAddPlaceToTrip() async throws {
         // Arrange
-        let dest1 = TripDestination(id: "1", name: "Destinasi A", category: "Wisata", foursquareID: nil, latitude: 0, longitude: 0, orderIndex: 0, stayDurationMinutes: 60, transitTimeToNextMinutes: 15)
-        let dest2 = TripDestination(id: "2", name: "Destinasi B", category: "Wisata", foursquareID: nil, latitude: 0, longitude: 0, orderIndex: 1, stayDurationMinutes: 120, transitTimeToNextMinutes: 30)
-        
-        // Hari dimulai default jam 09:00 AM di service
-        let dayPlan = DayPlan(id: "day_1", dayNumber: 1, date: Date(), destinations: [dest1, dest2])
-        
+        let trip = Trip(
+            id: "t1",
+            title: "Bali",
+            locationName: "Bali",
+            startDate: Date(),
+            endDate: Date(),
+            status: .upcoming,
+            participantIDs: [],
+            createdAt: Date(),
+            createdBy: "u1"
+        )
+        let place = FSQPlace(
+            fsq_place_id: "fsq1",
+            name: "Beach",
+            distance: 0,
+            latitude: 0,
+            longitude: 0,
+            location: nil,
+            rating: 5.0,
+            stats: nil
+        )
+
+        let plan = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: []
+        )
+        mockRepo.mockDayPlans = ["t1": [plan]]
+
         // Act
-        // Destinasi pertama harusnya jam 09:00 AM
-        let time1 = service.calculateTimeline(for: dest1, in: dayPlan)
-        // Destinasi kedua = 09:00 + 60 mnt stay + 15 mnt transit = 10:15 AM
-        let time2 = service.calculateTimeline(for: dest2, in: dayPlan)
-        
+        try await service.addPlaceToTrip(
+            place: place,
+            targetTrip: trip,
+            selectedDays: [1],
+            userID: "u1"
+        )
+
         // Assert
-        XCTAssertEqual(time1, "09:00 AM")
-        XCTAssertEqual(time2, "10:15 AM")
+        XCTAssertTrue(mockRepo.didCallSaveDayPlan)
+        XCTAssertEqual(
+            mockRepo.mockDayPlans["t1"]?.first?.destinations.count,
+            1
+        )
+        XCTAssertEqual(
+            mockRepo.mockDayPlans["t1"]?.first?.destinations.first?
+                .foursquareID,
+            "fsq1"
+        )
     }
-    
-    func testRemovePlaceFromTrip_Success() async throws {
+
+    func testRemovePlaceFromTrip() async throws {
         // Arrange
-        let tripID = "trip_bali_123"
-        let userID = "user_sean"
-        let fsqPlaceID = "fsq_coffee_shop"
-        
-        let destination = TripDestination(id: "dest_123", name: "Expat Roasters", category: "Cafe", foursquareID: fsqPlaceID, latitude: -8.1, longitude: 115.1, orderIndex: 0, stayDurationMinutes: 60, transitTimeToNextMinutes: nil)
-        let initialPlan = DayPlan(id: "plan_1", dayNumber: 1, date: Date(), destinations: [destination])
-        
-        mockFirestore.dayPlans[tripID] = [initialPlan]
-        
-        // Act: Hapus tempat via service toggle
-        try await service.removePlaceFromTrip(placeID: fsqPlaceID, tripID: tripID, dayNum: 1, userID: userID)
-        
-        // Assert: Pastikan destinasi kosong setelah dihapus
-        let updatedPlans = try await mockFirestore.fetchDayPlans(forTripID: tripID, userID: userID)
-        XCTAssertTrue(updatedPlans.first?.destinations.isEmpty ?? false)
+        let dest = TripDestination(
+            id: "d1",
+            name: "Beach",
+            category: "Wisata",
+            foursquareID: "fsq1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 60,
+            transitTimeToNextMinutes: 10,
+            imageURL: nil
+        )
+        let plan = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: [dest]
+        )
+        mockRepo.mockDayPlans = ["t1": [plan]]
+
+        // Act
+        try await service.removePlaceFromTrip(
+            placeID: "fsq1",
+            tripID: "t1",
+            dayNum: 1,
+            userID: "u1"
+        )
+
+        // Assert
+        XCTAssertTrue(mockRepo.didCallSaveDayPlan)
+        XCTAssertEqual(
+            mockRepo.mockDayPlans["t1"]?.first?.destinations.count,
+            0,
+            "Destinasi harusnya dihapus"
+        )
+    }
+
+    func testSaveReorderedDestinations() async throws {
+        // Arrange
+        let d1 = TripDestination(
+            id: "d1",
+            name: "A",
+            category: "",
+            foursquareID: "1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 1,
+            stayDurationMinutes: 0,
+            transitTimeToNextMinutes: 0,
+            imageURL: nil
+        )
+        let d2 = TripDestination(
+            id: "d2",
+            name: "B",
+            category: "",
+            foursquareID: "2",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 0,
+            transitTimeToNextMinutes: 0,
+            imageURL: nil
+        )
+        let plan = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: [d1, d2]
+        )  // Urutan salah (1, 0)
+
+        // Act
+        try await service.saveReorderedDestinations(
+            dayPlan: plan,
+            tripID: "t1",
+            userID: "u1"
+        )
+
+        // Assert
+        let savedPlan = mockRepo.mockDayPlans["t1"]?.first
+        XCTAssertEqual(savedPlan?.destinations[0].orderIndex, 0)
+        XCTAssertEqual(savedPlan?.destinations[1].orderIndex, 1)
+    }
+
+    func testCalculateTimeline() {
+        // Arrange
+        let d1 = TripDestination(
+            id: "d1",
+            name: "A",
+            category: "",
+            foursquareID: "1",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 0,
+            stayDurationMinutes: 60,
+            transitTimeToNextMinutes: 30,
+            imageURL: nil
+        )
+        let d2 = TripDestination(
+            id: "d2",
+            name: "B",
+            category: "",
+            foursquareID: "2",
+            latitude: 0,
+            longitude: 0,
+            orderIndex: 1,
+            stayDurationMinutes: 60,
+            transitTimeToNextMinutes: 0,
+            imageURL: nil
+        )
+        let plan = DayPlan(
+            id: "p1",
+            dayNumber: 1,
+            date: Date(),
+            destinations: [d1, d2]
+        )
+
+        // Act (d2 harusnya mulai jam 9:00 + 60min(d1 stay) + 30min(d1 transit) = 10:30)
+        let timeline = service.calculateTimeline(for: d2, in: plan)
+
+        // Assert
+        XCTAssertEqual(timeline, "10:30 AM")
     }
 }

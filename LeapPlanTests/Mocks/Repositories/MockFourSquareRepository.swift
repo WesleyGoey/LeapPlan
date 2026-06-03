@@ -2,44 +2,58 @@
 //  MockFourSquareRepository.swift
 //  LeapPlan
 //
-//  Created by student on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
 import Foundation
 @testable import LeapPlan
 
 class MockFourSquareRepository: FourSquareRepositoryProtocol {
-    // 1. Data yang akan dikembalikan saat test (Stubbing)
-    var stubbedPlaces: [FSQPlace] = []
-    var stubbedPhotoUrl: String? = nil
     
-    // 2. Control untuk simulasi Error
+    // Flag
     var shouldThrowError = false
+    var mockPlaces: [FSQPlace] = []
+    var mockPhotoURL: String? = "https://test.com/photo.jpg"
     
-    // MARK: - Implementasi Protocol
+    // Spies (Mata-mata)
+    var didCallSearchPlaces = false
+    var didCallSearchPlacesByCity = false
+    var didCallFetchPlaces = false
+    var didCallAutocompleteLocation = false
+    var didCallFetchPlacePhotos = false
+    
+    // Definisi Error
+    enum MockError: Error {
+        case simulatedNetworkError
+    }
     
     func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
-        if shouldThrowError { throw URLError(.badServerResponse) }
-        return stubbedPlaces
-    }
-    
-    func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
-        if shouldThrowError { throw URLError(.badServerResponse) }
-        return stubbedPlaces
-    }
-    
-    func autocompleteLocation(query: String) async throws -> [FSQPlace] {
-        if shouldThrowError { throw URLError(.badServerResponse) }
-        return stubbedPlaces
+        didCallSearchPlaces = true
+        if shouldThrowError { throw MockError.simulatedNetworkError }
+        return mockPlaces
     }
     
     func searchPlacesByCity(near city: String, query: String, limit: Int) async throws -> [FSQPlace] {
-        if shouldThrowError { throw URLError(.badServerResponse) }
-        return stubbedPlaces
+        didCallSearchPlacesByCity = true
+        if shouldThrowError { throw MockError.simulatedNetworkError }
+        return mockPlaces
+    }
+    
+    func fetchPlaces(near city: String, categoryID: String, limit: Int) async throws -> [FSQPlace] {
+        didCallFetchPlaces = true
+        if shouldThrowError { throw MockError.simulatedNetworkError }
+        return mockPlaces
+    }
+    
+    func autocompleteLocation(query: String) async throws -> [FSQPlace] {
+        didCallAutocompleteLocation = true
+        if shouldThrowError { throw MockError.simulatedNetworkError }
+        return mockPlaces
     }
     
     func fetchPlacePhotos(id: String) async throws -> String? {
-        if shouldThrowError { throw URLError(.badServerResponse) }
-        return stubbedPhotoUrl
+        didCallFetchPlacePhotos = true
+        if shouldThrowError { throw MockError.simulatedNetworkError }
+        return mockPhotoURL
     }
 }

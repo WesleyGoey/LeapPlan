@@ -2,63 +2,69 @@
 //  MockAuthService.swift
 //  LeapPlan
 //
-//  Created by student on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
+
 import Foundation
+import Combine
 @testable import LeapPlan
 
 class MockAuthService: AuthServiceProtocol {
-    // Stubbed States
-    var isLoggedIn: Bool = false
-    var stubbedUserID: String? = "mock_user_123"
-    var shouldThrowError = false
     
-    // Spy Flags
-    var didCallRegister = false
+    // Properti bawaan Protocol
+    @Published var isLoggedIn: Bool = false
+    
+    // Variabel kontrol untuk Test
+    var shouldThrowError = false
+    var currentUserIDToReturn: String? = "user_123"
+    
+    // Spies (Mata-mata)
     var didCallLogin = false
+    var didCallRegister = false
     var didCallLogout = false
     var didCallUpdateEmail = false
-    var didCallUpdatePassword = false
-    var didCallDeleteUser = false
-
+    
+    enum MockError: Error {
+        case simulatedAuthError
+    }
+    
     func register(email: String, password: String) async throws -> String {
         didCallRegister = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Gagal Registrasi"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
         isLoggedIn = true
-        return stubbedUserID ?? UUID().uuidString
+        return "new_user_id"
     }
     
     func login(email: String, password: String) async throws -> String {
         didCallLogin = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Email atau Password Salah"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
         isLoggedIn = true
-        return stubbedUserID ?? UUID().uuidString
+        return currentUserIDToReturn ?? "default_id"
     }
     
     func getCurrentUserID() -> String? {
-        return stubbedUserID
+        return currentUserIDToReturn
     }
     
     func logout() throws {
         didCallLogout = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 500, userInfo: [NSLocalizedDescriptionKey: "Gagal Sign Out"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
         isLoggedIn = false
+        currentUserIDToReturn = nil
     }
     
     func updateEmail(currentPassword: String, newEmail: String) async throws {
         didCallUpdateEmail = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Password salah"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
     }
     
     func updatePassword(currentPassword: String, newPassword: String) async throws {
-        didCallUpdatePassword = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Password saat ini tidak valid"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
     }
     
     func deleteUser(password: String) async throws {
-        didCallDeleteUser = true
-        if shouldThrowError { throw NSError(domain: "MockAuthService", code: 500, userInfo: [NSLocalizedDescriptionKey: "Gagal menghapus akun"]) }
+        if shouldThrowError { throw MockError.simulatedAuthError }
         isLoggedIn = false
     }
 }

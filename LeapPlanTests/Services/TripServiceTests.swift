@@ -2,56 +2,149 @@
 //  TripServiceTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 03/06/26.
+//  Created by Sean tandjaja on 03/06/26.
 //
 
-
 import XCTest
+
 @testable import LeapPlan
 
 final class TripServiceTests: XCTestCase {
-    
+
     var service: TripService!
-    var mockFourSquare: MockFourSquareService!
-    var mockFirestore: MockFirestoreRepository!
-    
+    var mockFourSquareService: MockFourSquareService!
+    var mockFirestoreRepo: MockFirestoreRepository!
+
     override func setUp() {
         super.setUp()
-        mockFourSquare = MockFourSquareService()
-        mockFirestore = MockFirestoreRepository()
-        service = TripService(foursquareService: mockFourSquare, firestoreRepo: mockFirestore)
+        mockFourSquareService = MockFourSquareService()
+        mockFirestoreRepo = MockFirestoreRepository()
+
+        service = TripService(
+            foursquareService: mockFourSquareService,
+            firestoreRepo: mockFirestoreRepo
+        )
     }
-    
+
     override func tearDown() {
         service = nil
-        mockFourSquare = nil
-        mockFirestore = nil
+        mockFourSquareService = nil
+        mockFirestoreRepo = nil
         super.tearDown()
     }
-    
+
+    // MARK: - Test Cases
+
     func testGenerateRandomItinerary_FiltersInvalidPlaces() async throws {
-        // Arrange
-        let place1 = FSQPlace(fsq_place_id: "id_wisata", name: "Tanah Lot Bali", distance: nil, latitude: -8.1, longitude: 115.0, location: nil, rating: nil, stats: nil)
-        let place2 = FSQPlace(fsq_place_id: "id_atm", name: "ATM Bank BCA Seminyak", distance: nil, latitude: -8.2, longitude: 115.1, location: nil, rating: nil, stats: nil) // Harusnya terfilter keluar
-        
-        mockFourSquare.stubbedPlaces = [place1, place2]
-        
+        // Arrange: Kita buat daftar tempat yang mengandung kata terlarang (toko, cafe, dll)
+        let rawPlaces = [
+            FSQPlace(
+                fsq_place_id: "1",
+                name: "Pantai Indah",
+                distance: 0,
+                latitude: 0,
+                longitude: 0,
+                location: nil,
+                rating: 5.0,
+                stats: nil
+            ),
+            FSQPlace(
+                fsq_place_id: "2",
+                name: "Indomaret Point",
+                distance: 0,
+                latitude: 0,
+                longitude: 0,
+                location: nil,
+                rating: 5.0,
+                stats: nil
+            ),  // Harus dihapus
+            FSQPlace(
+                fsq_place_id: "3",
+                name: "Cafe Hits",
+                distance: 0,
+                latitude: 0,
+                longitude: 0,
+                location: nil,
+                rating: 5.0,
+                stats: nil
+            ),  // Harus dihapus
+        ]
+        mockFourSquareService.mockPlaces = rawPlaces
+
         let prefs = RandomTripPreferences(
-            locationName: "Bali",
+            locationName: "Surabaya",
             startDate: Date(),
-            endDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())!,
-            dailyPreferences: [DailyPreference(dayNumber: 1, meals: 3, places: 2)]
+            endDate: Date().addingTimeInterval(86400 * 3),
+            dailyPreferences: [DailyPreference(dayNumber: 1, meals: 1, places: 1)]
         )
-        
+
         // Act
-        let generatedPlans = try await service.generateRandomItinerary(preferences: prefs)
-        
+        let result = try await service.generateRandomItinerary(
+            preferences: prefs
+        )
+
         // Assert
-        XCTAssertEqual(generatedPlans.count, 1)
-        let destinations = generatedPlans.first?.destinations ?? []
-        
-        // Pastikan objek wisata masuk, dan ATM Bank BCA tereliminasi oleh keyword filtering
-        XCTAssertTrue(destinations.contains(where: { $0.name == "Tanah Lot Bali" }))
-        XCTAssertFalse(destinations.contains(where: { $0.name.contains("ATM") }))
+        // Seharusnya hanya "Pantai Indah" yang tersisa (count 1)
+        XCTAssertEqual(result.first?.destinations.count, 1)
+        XCTAssertEqual(result.first?.destinations.first?.name, "Pantai Indah")
+    }
+
+    func testGenerateRandomItinerary_CreatesCorrectStructure() async throws {
+        // Arrange
+        let place = FSQPlace(
+            fsq_place_id: "1",
+            name: "Wisata A",
+            distance: 0,
+            latitude: 0,
+            longitude: 0,
+            location: nil,
+            rating: 5.0,
+            stats: nil
+        )
+        mockFourSquareService.mockPlaces = [place]
+
+        let prefs = RandomTripPreferences(
+            locationName: "Surabaya",
+            startDate: Date(),
+            endDate: Date().addingTimeInterval(86400 * 3),
+            dailyPreferences: [
+                DailyPreference(dayNumber: 1,meals: 1, places: 1),
+                DailyPreference(dayNumber: 2,meals: 3, places: 0)
+            ]
+        )
+
+        // Act
+        let result = try await service.generateRandomItinerary(
+            preferences: prefs
+        )
+
+        // Assert
+        XCTAssertEqual(result.count, 2, "Harus menghasilkan 2 hari perjalanan")
+        XCTAssertEqual(result[0].dayNumber, 1)
+        XCTAssertEqual(result[1].dayNumber, 2)
+        XCTAssertTrue(
+            result[1].destinations.isEmpty,
+            "Hari kedua seharusnya tidak ada destinasi sesuai prefs"
+        )
+    }
+
+    func testGenerateRandomItinerary_HandlesError() async {
+        // Arrange
+        mockFourSquareService.shouldThrowError = true  // Misal API Foursquare mati
+
+        let prefs = RandomTripPreferences(
+            locationName: "Surabaya",
+            startDate: Date(),
+            endDate: Date().addingTimeInterval(86400 * 3),
+            dailyPreferences: []
+        )
+
+        // Act & Assert
+        do {
+            _ = try await service.generateRandomItinerary(preferences: prefs)
+            XCTFail("Harusnya melempar error")
+        } catch {
+            XCTAssertNotNil(error)
+        }
     }
 }
