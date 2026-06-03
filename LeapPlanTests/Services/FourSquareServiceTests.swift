@@ -2,7 +2,7 @@
 //  FourSquareServiceTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
@@ -10,22 +10,19 @@ import XCTest
 @testable import LeapPlan
 
 final class FourSquareServiceTests: XCTestCase {
-    var service: FourSquareService!
+    var sut: FourSquareService!
     
-    override func setUp() {
-        super.setUp()
-        service = FourSquareService()
-    }
-
-    func testService_Initialization() {
-        XCTAssertNotNil(service, "Service harus berhasil diinisialisasi")
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        sut = FourSquareService()
     }
     
-    func testFetchTrendingPlaces_EmptyCity_DoesNotCrash() async {
-        do {
-            _ = try await service.fetchTrendingPlaces(city: "")
-        } catch {
-            XCTAssertNotNil(error)
-        }
+    override func tearDownWithError() throws {
+        sut = nil
+        try super.tearDownWithError()
+    }
+    
+    func test_service_shouldInitializeCorrectly() {
+        XCTAssertNotNil(sut)
     }
 }

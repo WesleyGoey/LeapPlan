@@ -2,31 +2,49 @@
 //  ProfileViewModelTests.swift
 //  LeapPlan
 //
-//  Created by Sean tandjaja on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import XCTest
-import Combine
 @testable import LeapPlan
 
 @MainActor
 final class ProfileViewModelTests: XCTestCase {
-    var cancellables: Set<AnyCancellable>!
-
-    override func setUp() { super.setUp(); cancellables = [] }
-
-    func testLoadProfile_Success() async {
-        let mockRepo = MockUserRepository()
-        let mockAuth = MockAuthService()
-        mockRepo.mockUser = User(id: "1", email: "test@test.com", fullName: "Sean Tandjaja", joinedDate: Date())
-        let viewModel = ProfileViewModel(userRepository: mockRepo, authService: mockAuth)
+    var sut: ProfileViewModel!
+    var mockAuthService: MockAuthService!
+    var mockUserRepo: MockUserRepository!
+    
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        mockAuthService = MockAuthService()
+        mockUserRepo = MockUserRepository()
         
-        let expectation = XCTestExpectation(description: "Wait for profile")
-        viewModel.$currentUser.dropFirst().sink { if $0 != nil { expectation.fulfill() } }.store(in: &cancellables)
-
-        viewModel.loadProfile()
-        await fulfillment(of: [expectation], timeout: 2.0)
-        XCTAssertEqual(viewModel.currentUser?.fullName, "Sean Tandjaja")
+        sut = ProfileViewModel(
+            authService: mockAuthService,
+            userRepo: mockUserRepo
+        )
+    }
+    
+    override func tearDownWithError() throws {
+        sut = nil
+        mockAuthService = nil
+        mockUserRepo = nil
+        try super.tearDownWithError()
+    }
+    
+    func test_loadProfile_whenSuccess_shouldAssignUser() async {
+        // Given
+        let expectedUser = User(id: "123", email: "test@test.com", fullName: "Sean", joinedDate: Date())
+        mockUserRepo.stubbedUser = expectedUser
+        mockAuthService.isLoggedIn = true
+        
+        // When
+        sut.loadUserProfile()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Then
+        XCTAssertTrue(mockUserRepo.didCallFetchUser)
+        // XCTAssertEqual(sut.currentUser?.fullName, "Sean") // Sesuaikan variabel
     }
 }

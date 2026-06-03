@@ -2,27 +2,18 @@
 //  MockAuthService.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import Foundation
-@testable import LeapPlan
+@testable import LeapPlan // Ganti jika nama target utamamu berbeda
 
 class MockAuthService: AuthServiceProtocol {
-    var shouldReturnError = false
-    var mockUserID: String? = "TEST_USER_123"
-    var isLoggedOut = false
+    var isLoggedIn: Bool = true
+    var stubbedUserID: String? = "test_user_123"
     
     func getCurrentUserID() -> String? {
-        return mockUserID
-    }
-    
-    func logout() throws {
-        if shouldReturnError {
-            throw NSError(domain: "MockError", code: 500, userInfo: [NSLocalizedDescriptionKey: "Logout Gagal"])
-        }
-        isLoggedOut = true
-        mockUserID = nil
+        return stubbedUserID
     }
 }

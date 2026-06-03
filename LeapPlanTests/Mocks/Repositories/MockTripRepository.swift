@@ -2,49 +2,39 @@
 //  MockTripRepository.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import Foundation
 @testable import LeapPlan
 
-class MockTripRepository: TripRepositoryProtocol {
-    var shouldReturnError = false
-    var mockTrips: [Trip] = []
-    var mockDayPlans: [DayPlan] = []
+class MockTripRepository: FirestoreRepositoryProtocol {
+    var stubbedTrips: [Trip] = []
+    var stubbedDayPlans: [DayPlan] = []
+    var shouldThrowError: Bool = false
     
-    // MARK: - Trip Operations
+    // Variabel untuk mengecek apakah fungsi dipanggil
+    var didCallFetchTrips = false
+    var didCallDeleteTrip = false
+    var deletedTripID: String? = nil
+    
     func fetchTrips(forUserID userID: String) async throws -> [Trip] {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        return mockTrips
-    }
-    
-    func createTrip(_ trip: Trip, forUserID userID: String) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        mockTrips.append(trip)
-    }
-    
-    func updateTrip(_ trip: Trip, forUserID userID: String) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        if let index = mockTrips.firstIndex(where: { $0.id == trip.id }) {
-            mockTrips[index] = trip
-        }
+        didCallFetchTrips = true
+        if shouldThrowError { throw URLError(.cannotConnectToHost) }
+        return stubbedTrips
     }
     
     func deleteTrip(tripID: String, forUserID userID: String) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        mockTrips.removeAll(where: { $0.id == tripID })
+        didCallDeleteTrip = true
+        deletedTripID = tripID
+        if shouldThrowError { throw URLError(.cannotConnectToHost) }
     }
     
-    // MARK: - DayPlan Operations
-    func fetchDayPlans(forTripID tripID: String, userID: String) async throws -> [DayPlan] {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        return mockDayPlans
-    }
-    
-    func saveDayPlan(_ dayPlan: DayPlan, forTripID tripID: String, userID: String) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        mockDayPlans.append(dayPlan)
-    }
+    // Tambahkan dummy method lain yang diwajibkan oleh FirestoreRepositoryProtocol
+    func updateTrip(_ trip: Trip, forUserID userID: String) async throws {}
+    func fetchDayPlans(forTripID tripID: String, userID: String) async throws -> [DayPlan] { return stubbedDayPlans }
+    func saveDayPlan(_ plan: DayPlan, forTripID tripID: String, userID: String) async throws {}
+    func deleteDayPlan(planID: String, tripID: String, userID: String) async throws {}
+    func saveGeneratedTripWithDayPlans(trip: Trip, dayPlans: [DayPlan], userID: String) async throws {}
 }

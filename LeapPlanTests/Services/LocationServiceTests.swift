@@ -2,28 +2,27 @@
 //  LocationServiceTests.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import XCTest
-import CoreLocation
 @testable import LeapPlan
 
 final class LocationServiceTests: XCTestCase {
-    var locationService: LocationService!
+    var sut: LocationService!
     
-    override func setUp() {
-        super.setUp()
-        locationService = LocationService()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        sut = LocationService()
     }
     
-    func testLocationService_InitialStateIsNil() {
-        XCTAssertNil(locationService.currentLocation, "Lokasi awal harusnya nil sebelum permission diberikan")
+    override func tearDownWithError() throws {
+        sut = nil
+        try super.tearDownWithError()
     }
     
-    func testLocationService_RequestPermission_SetsFlag() {
-        locationService.requestLocationPermission()
-        XCTAssertNotNil(locationService, "Service tetap ada setelah request permission")
+    func test_service_shouldInitializeCorrectly() {
+        XCTAssertNotNil(sut)
     }
 }

@@ -2,32 +2,33 @@
 //  MockUserRepository.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import Foundation
 @testable import LeapPlan
 
-class MockUserRepository: UserRepositoryProtocol {
-    var shouldReturnError = false
-    var mockUser: User?
+class MockUserRepository: AuthRepositoryProtocol {
+    var stubbedUser: User?
+    var shouldThrowError = false
+    var didCallFetchUser = false
+    var didCallUpdateUser = false
     
-    func fetchUser(userID: String) async throws -> User {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        guard let user = mockUser else {
-            throw NSError(domain: "MockError", code: 404, userInfo: [NSLocalizedDescriptionKey: "User not found"])
-        }
+    func fetchUserProfile(userID: String) async throws -> User {
+        didCallFetchUser = true
+        if shouldThrowError { throw URLError(.badServerResponse) }
+        guard let user = stubbedUser else { throw URLError(.zeroByteResource) }
         return user
     }
     
-    func saveUser(_ user: User) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        mockUser = user
+    func updateUserProfile(_ user: User) async throws {
+        didCallUpdateUser = true
+        if shouldThrowError { throw URLError(.badServerResponse) }
     }
     
-    func updateUser(_ user: User) async throws {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        mockUser = user
-    }
+    // Sesuaikan jika ada fungsi auth lain di AuthRepositoryProtocol kamu
+    func login(email: String, pass: String) async throws -> String { return "test_user_123" }
+    func register(email: String, pass: String, name: String) async throws -> String { return "test_user_123" }
+    func logout() throws {}
 }

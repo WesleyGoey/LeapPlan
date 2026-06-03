@@ -2,7 +2,7 @@
 //  MockFourSquareService.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
@@ -10,16 +10,13 @@ import Foundation
 @testable import LeapPlan
 
 class MockFourSquareService: FourSquareServiceProtocol {
-    var shouldReturnError = false
-    var mockPlaces: [FSQPlace] = []
+    var stubbedAutocompleteResults: [FSQResponse] = []
+    var shouldThrowError: Bool = false
     
-    func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        return mockPlaces
-    }
-    
-    func searchPlaces(query: String, latitude: Double, longitude: Double) async throws -> [FSQPlace] {
-        if shouldReturnError { throw URLError(.badServerResponse) }
-        return mockPlaces
+    func autocompleteLocation(query: String) async throws -> [FSQResponse] {
+        if shouldThrowError {
+            throw URLError(.badServerResponse)
+        }
+        return stubbedAutocompleteResults
     }
 }

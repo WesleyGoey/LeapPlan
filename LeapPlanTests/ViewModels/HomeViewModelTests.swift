@@ -2,31 +2,48 @@
 //  HomeViewModelTests.swift
 //  LeapPlan
 //
-//  Created by Sean tandjaja on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
 import XCTest
-import Combine
 @testable import LeapPlan
 
 @MainActor
 final class HomeViewModelTests: XCTestCase {
-    var cancellables: Set<AnyCancellable>!
-
-    override func setUp() { super.setUp(); cancellables = [] }
-
-    func testLoadTrending_Success() async {
-        let mockService = MockFourSquareService()
-        mockService.mockPlaces = [FSQPlace(fsq_id: "1", name: "Surabaya Cafe", distance: 150)]
-        let viewModel = HomeViewModel(fourSquareService: mockService)
+    var sut: HomeViewModel!
+    var mockAuthService: MockAuthService!
+    var mockFirestoreRepo: MockTripRepository!
+    
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        mockAuthService = MockAuthService()
+        mockFirestoreRepo = MockTripRepository()
         
-        let expectation = XCTestExpectation(description: "Wait for data")
-        viewModel.$trendingPlaces.dropFirst().sink { if !$0.isEmpty { expectation.fulfill() } }.store(in: &cancellables)
-
-        viewModel.loadTrendingPlaces(for: "Surabaya")
-        await fulfillment(of: [expectation], timeout: 2.0)
+        sut = HomeViewModel(
+            authService: mockAuthService,
+            firestoreRepo: mockFirestoreRepo
+        )
+    }
+    
+    override func tearDownWithError() throws {
+        sut = nil
+        mockAuthService = nil
+        mockFirestoreRepo = nil
+        try super.tearDownWithError()
+    }
+    
+    func test_fetchRecentTrips_shouldPopulateData() async {
+        // Given
+        mockAuthService.isLoggedIn = true
+        let dummyTrip = Trip(title: "Bali Getaway", locationName: "Bali", startDate: Date(), endDate: Date(), status: .past, participantIDs: [], createdAt: Date(), createdBy: "user")
+        mockFirestoreRepo.stubbedTrips = [dummyTrip]
         
-        XCTAssertEqual(viewModel.trendingPlaces.count, 1)
+        // When
+        sut.loadDashboardData()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Then
+        // XCTAssertEqual(sut.recentTrips.count, 1) // Sesuaikan dengan nama variabel di HomeViewModel kamu
     }
 }

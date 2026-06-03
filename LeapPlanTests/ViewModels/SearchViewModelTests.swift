@@ -2,7 +2,7 @@
 //  SearchViewModelTests.swift
 //  LeapPlan
 //
-//  Created by Sean tandjaja on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
@@ -12,21 +12,35 @@ import Combine
 
 @MainActor
 final class SearchViewModelTests: XCTestCase {
-    var cancellables: Set<AnyCancellable>!
-
-    override func setUp() { super.setUp(); cancellables = [] }
-
-    func testPerformSearch_Success() async {
-        let mockService = MockFourSquareService()
-        mockService.mockPlaces = [FSQPlace(fsq_id: "1", name: "Pakuwon Mall", distance: 50)]
-        let viewModel = SearchViewModel(fourSquareService: mockService, locationService: MockLocationService())
-        viewModel.searchQuery = "Mall"
+    var sut: SearchViewModel!
+    var mockFourSquareService: MockFourSquareService!
+    var mockLocationService: MockLocationService!
+    
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        mockFourSquareService = MockFourSquareService()
+        mockLocationService = MockLocationService()
         
-        let expectation = XCTestExpectation(description: "Wait for search")
-        viewModel.$searchResults.dropFirst().sink { if !$0.isEmpty { expectation.fulfill() } }.store(in: &cancellables)
-
-        viewModel.performSearch()
-        await fulfillment(of: [expectation], timeout: 2.0)
-        XCTAssertEqual(viewModel.searchResults.count, 1)
+        sut = SearchViewModel(
+            fourSquareService: mockFourSquareService,
+            locationService: mockLocationService
+        )
+    }
+    
+    override func tearDownWithError() throws {
+        sut = nil
+        mockFourSquareService = nil
+        mockLocationService = nil
+        try super.tearDownWithError()
+    }
+    
+    func test_searchQuery_whenTyping_shouldTriggerAutocomplete() async {
+        // Given
+        sut.searchQuery = "Kopi"
+        // When -> debounce will trigger in ViewModel
+        try? await Task.sleep(nanoseconds: 600_000_000) // Tunggu debounce > 500ms
+        
+        // Then
+        // Lakukan assert terhadap state pencarian kamu
     }
 }

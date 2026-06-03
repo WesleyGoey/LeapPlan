@@ -2,7 +2,7 @@
 //  MockLocationService.swift
 //  LeapPlan
 //
-//  Created by Wesley Goey on 28/05/26.
+//  Created by student on 03/06/26.
 //
 
 
@@ -11,10 +11,14 @@ import CoreLocation
 @testable import LeapPlan
 
 class MockLocationService: LocationServiceProtocol {
-    var currentLocation: CLLocation? = CLLocation(latitude: -7.2504, longitude: 112.7688)
-    var permissionRequested = false
+    var stubbedLocation: CLLocation? = CLLocation(latitude: -7.250445, longitude: 112.768845) // Surabaya
+    var requestLocationCalled = false
     
     func requestLocationPermission() {
-        permissionRequested = true
+        requestLocationCalled = true
+    }
+    
+    func getCurrentLocation() -> CLLocation? {
+        return stubbedLocation
     }
 }
