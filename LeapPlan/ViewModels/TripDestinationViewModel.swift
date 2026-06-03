@@ -181,30 +181,26 @@ class TripDestinationViewModel: ObservableObject {
     }
 
     // MARK: - PENCARIAN & PENAMBAHAN LOKAL
-    func searchPlacesAroundCity(query: String) {
-        guard query.count > 2, !trip.locationName.isEmpty else {
-            self.addSearchResults = []
-            return
-        }
-
-        let city = trip.locationName
-        Task {
-            do {
-                // MURNI MVVM: Panggil service buatan Anda, jangan pakai URLSession di sini lagi!
-                let results = try await fourSquareService.searchPlacesByCity(
-                    near: city,
-                    query: query,
-                    limit: 15
-                )
-
-                await MainActor.run {
-                    self.addSearchResults = results
-                }
-            } catch {
-                print("Search error: \(error.localizedDescription)")
+    // MARK: - SEARCH INTERNAL DENGAN ATURAN SE-KOTA SAJA
+        func searchPlacesAroundCity(query: String) {
+            guard query.count > 2, !trip.locationName.isEmpty else { self.addSearchResults = []; return }
+            Task {
+                do {
+                    let results = try await fourSquareService.fetchPlaces(near: trip.locationName, categoryID: "", limit: 10)
+                    
+                    // REVISI: Saring agar hasil nama yang dicari wajib berada di kota Trip tersebut
+                    self.addSearchResults = results.filter { place in
+                        let nameMatches = place.name.localizedCaseInsensitiveContains(query)
+                        
+                        if let locality = place.location?.locality {
+                            // Hasil pencarian dicocokkan dengan lokasi kota trip saat ini
+                            return nameMatches && (trip.locationName.localizedCaseInsensitiveContains(locality) || locality.localizedCaseInsensitiveContains(trip.locationName))
+                        }
+                        return nameMatches
+                    }
+                } catch { print("Search error: \(error.localizedDescription)") }
             }
         }
-    }
 
     func addManualDestination(
         name: String,
@@ -279,17 +275,15 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
-    // MARK: - GENERATE 1 RANDOM PLACE (Murni Menggunakan Service)
+    // MARK: - GENERATE 1 RANDOM PLACE
+    // FUNGSI YANG SEBELUMNYA ERROR KARENA BELUM ADA
     func generateOneRandomPlace() {
-        guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id
-        else { return }
+        guard dayPlans.indices.contains(selectedDayIndex) else { return }
         isLoading = true
 
         Task {
             do {
                 let placeCategories = "16000,10027,10055,16032,10044"
-
-                // MENGGUNAKAN SERVICE FOURSQUARE ANDA
                 var availablePlaces = try await fourSquareService.fetchPlaces(
                     near: trip.locationName,
                     categoryID: placeCategories,
@@ -331,50 +325,14 @@ class TripDestinationViewModel: ObservableObject {
                         orderIndex: dayPlans[selectedDayIndex].destinations
                             .count,
                         stayDurationMinutes: 120,  // Default 2 jam
-                        transitTimeToNextMinutes: 30,
-                        imageURL: randomPlace.imageURL
+                        transitTimeToNextMinutes: 30
                     )
-
                     dayPlans[selectedDayIndex].destinations.append(newDest)
-
-                    // Simpan menggunakan service Anda
-                    try? await tripDestinationService.saveReorderedDestinations(
-                        dayPlan: dayPlans[selectedDayIndex],
-                        tripID: tripID,
-                        userID: activeUserID
-                    )
-                    calculateActualDrivingRoutes()
                 }
             } catch {
                 print("Generate error: \(error.localizedDescription)")
             }
             isLoading = false
-        }
-    }
-
-    // MARK: - LIVE SEARCH UNTUK ADD / EDIT PLACE (Murni Menggunakan Service)
-    func searchPlaceForAdding(query: String) {
-        guard query.count > 2 else {
-            addSearchResults = []
-            return
-        }
-
-        let city = trip.locationName
-        Task {
-            do {
-                // Memanggil fungsi baru yang ada di Repository Anda
-                let results = try await fourSquareService.searchPlacesByCity(
-                    near: city,
-                    query: query,
-                    limit: 15
-                )
-
-                await MainActor.run {
-                    self.addSearchResults = results
-                }
-            } catch {
-                print("Error searching places: \(error.localizedDescription)")
-            }
         }
     }
 

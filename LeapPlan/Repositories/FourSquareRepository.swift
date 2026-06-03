@@ -8,7 +8,7 @@
 import Foundation
 
 class FourSquareRepository: FourSquareRepositoryProtocol {
-    private let apiKey = "RAD1ODGEX4S2UKH55GHDYYEMLWQMVBWPMLEEADELCIKAINWY"
+    private let apiKey = "F3LDLBMQJH3NDUYRX0C4OBWANAYOVXGZ334AJXHB0SWHKGJV"
     private let baseURL = "https://places-api.foursquare.com"
 
     private func createRequest(url: URL) -> URLRequest {

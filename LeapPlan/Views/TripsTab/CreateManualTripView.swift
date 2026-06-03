@@ -20,6 +20,17 @@ struct CreateManualTripView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // MARK: - Masukkan ini ke dalam VStack ScrollView Anda
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("TRIP NAME (OPTIONAL)").font(.caption).fontWeight(.bold).foregroundColor(.gray)
+                            TextField("e.g., Summer Holiday", text: $viewModel.tripNameForm)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(16)
+                                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                        }
+                        .padding(.horizontal, 20)
+                        
                         // SECTION DESTINATION
                         VStack(alignment: .leading, spacing: 8) {
                             Text("DESTINATION").font(.caption).fontWeight(.bold)

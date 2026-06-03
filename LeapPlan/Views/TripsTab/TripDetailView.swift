@@ -497,25 +497,43 @@ struct AddOrEditPlaceSheetView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
 
-                        // MARK: SECTION - SEARCH LOCATION
+                        // MARK: SECTION - SEARCH LOCATION ATAU DESTINATION
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("SEARCH LOCATION").font(.caption).fontWeight(
-                                .bold
-                            ).foregroundColor(.gray)
+                            Text(
+                                mode == .add
+                                    ? "SEARCH LOCATION" : "DESTINATION NAME"
+                            ).font(.caption).fontWeight(.bold).foregroundColor(
+                                .gray
+                            )
                             VStack(spacing: 0) {
                                 HStack(spacing: 12) {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(Color.leapPrimary)
+                                    // Ikon berubah abu-abu jika edit
+                                    Image(
+                                        systemName: mode == .edit
+                                            ? "mappin.and.ellipse"
+                                            : "magnifyingglass"
+                                    ).foregroundColor(
+                                        mode == .edit
+                                            ? .gray : Color.leapPrimary
+                                    )
+
                                     TextField(
                                         "Search in \(viewModel.trip.locationName)",
                                         text: $searchQuery
                                     )
                                     .focused($isSearchFocused)
                                     .autocorrectionDisabled()
+                                    .disabled(mode == .edit)  // KUNCI TEXTFIELD JIKA EDIT
+                                    .foregroundColor(
+                                        mode == .edit ? .gray : .primary
+                                    )  // Teks jadi abu-abu jika edit
                                     .onChange(of: searchQuery) { newValue in
-                                        viewModel.searchPlacesAroundCity(
-                                            query: newValue
-                                        )
+                                        // Jangan lakukan pencarian Foursquare jika sedang Edit!
+                                        if mode == .add {
+                                            viewModel.searchPlacesAroundCity(
+                                                query: newValue
+                                            )
+                                        }
                                     }
                                 }
                                 .padding().background(Color.white).cornerRadius(
@@ -526,8 +544,8 @@ struct AddOrEditPlaceSheetView: View {
                                     y: 2
                                 )
 
-                                // DROPDOWN AUTOCOMPLETE (Sama persis dengan Create Manual View)
-                                if isSearchFocused
+                                // DROPDOWN AUTOCOMPLETE (HANYA MUNCUL SAAT ADD)
+                                if mode == .add && isSearchFocused
                                     && !viewModel.addSearchResults.isEmpty
                                 {
                                     VStack(spacing: 0) {
@@ -587,7 +605,7 @@ struct AddOrEditPlaceSheetView: View {
                                     ).padding(.top, 8)
                                 }
                             }
-                            .zIndex(10)  // PENTING: Membuat dropdown mengambang di atas elemen di bawahnya
+                            .zIndex(10)
                         }
                         .padding(.horizontal, 20).padding(.top, 20)
 
@@ -817,9 +835,15 @@ struct TripEditView: View {
                         Spacer()
                     }.padding(.vertical, 8)
                 }
-                Section("Trip Information") {
-                    TextField("Trip Name", text: $title)
+                Section("Trip Name") {
+                    TextField("Enter Trip Name", text: $title)
                 }
+
+                Section("Location") {
+                    Text(viewModel.trip.locationName)
+                        .foregroundColor(.gray)
+                }
+
                 Section(
                     footer: Text(
                         "If you reduce the travel dates, the extra days from your itinerary will be permanently deleted."
