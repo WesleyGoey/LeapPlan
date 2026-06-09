@@ -41,6 +41,8 @@ struct WatchDetailTripView: View {
                                     Text(viewModel.trip.title)
                                         .font(.system(size: 16, weight: .bold))
                                         .foregroundStyle(.black)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
                                         .background(Capsule().fill(.white.opacity(0.8)))
@@ -72,18 +74,52 @@ struct WatchDetailTripView: View {
                             .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
                         }
                         
-                        // MARK: - Itinerary Header
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(viewModel.trip.title)
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.black)
+                        // MARK: - Itinerary Header & Day Picker
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Trip Info
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(viewModel.trip.title)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(.black)
+                                    .lineLimit(2)
+                                
+                                Text("\(viewModel.totalStopsForSelectedDay) stops • \(String(format: "%.1f", viewModel.totalDurationHoursForSelectedDay))h total")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Color(hex: "#00AD85"))
+                            }
+                            .padding(.horizontal, 16)
                             
-                            Text("\(viewModel.totalStops) stops • \(String(format: "%.1f", viewModel.totalDurationHours))h total")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(Color(hex: "#00AD85"))
+                            // Day Picker
+                            if !viewModel.availableDays.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(0..<viewModel.availableDays.count, id: \.self) { index in
+                                            let isSelected = (index == viewModel.selectedDayIndex)
+                                            let dayLabel = "Day \(viewModel.availableDays[index])"
+                                            
+                                            Button(action: {
+                                                withAnimation {
+                                                    viewModel.selectedDayIndex = index
+                                                    viewModel.calculateRoutes()
+                                                }
+                                            }) {
+                                                Text(dayLabel)
+                                                    .font(.system(size: 12, weight: .bold))
+                                                    .foregroundStyle(isSelected ? .white : Color.gray)
+                                                    .padding(.horizontal, 12)
+                                                    .padding(.vertical, 6)
+                                                    .background(
+                                                        Capsule().fill(isSelected ? Color(hex: "#00AD85") : Color(hex: "#F2F2F7"))
+                                                    )
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    .padding(.horizontal, 16)
+                                }
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
                         .padding(.top, 24)
                         .padding(.bottom, 12)
                         .background(Color.white)
@@ -92,11 +128,11 @@ struct WatchDetailTripView: View {
                         
                         // MARK: - Itinerary List
                         VStack(spacing: 0) {
-                            ForEach(Array(viewModel.allDestinations.enumerated()), id: \.element.id) { index, dest in
+                            ForEach(Array(viewModel.selectedDayDestinations.enumerated()), id: \.element.id) { index, dest in
                                 WatchItineraryRow(
                                     destination: dest,
                                     index: index + 1,
-                                    isLast: index == viewModel.allDestinations.count - 1
+                                    isLast: index == viewModel.selectedDayDestinations.count - 1
                                 )
                             }
                         }
@@ -120,7 +156,7 @@ struct WatchMapView: View {
 
     var body: some View {
         Map(position: $position) {
-            ForEach(Array(viewModel.allDestinations.enumerated()), id: \.element.id) { index, dest in
+            ForEach(Array(viewModel.selectedDayDestinations.enumerated()), id: \.element.id) { index, dest in
                 Annotation("", coordinate: dest.coordinate) {
                     ZStack {
                         Circle()
@@ -134,14 +170,26 @@ struct WatchMapView: View {
                 }
             }
             
-            // MapPolyline could be added if coordinate array was mapped
-            if !viewModel.allDestinations.isEmpty {
-                MapPolyline(coordinates: viewModel.allDestinations.map { $0.coordinate })
-                    .stroke(Color(hex: "#00AD85"), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: [8, 8]))
+            if !viewModel.selectedDayRoutes.isEmpty {
+                ForEach(Array(viewModel.selectedDayRoutes.enumerated()), id: \.offset) { _, route in
+                    MapPolyline(route)
+                        .stroke(Color(hex: "#00AD85"), lineWidth: 4)
+                }
+            } else if !viewModel.selectedDayDestinations.isEmpty {
+                // Fallback to straight dashed line while calculating
+                MapPolyline(coordinates: viewModel.selectedDayDestinations.map { $0.coordinate })
+                    .stroke(Color(hex: "#00AD85").opacity(0.5), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: [8, 8]))
             }
         }
-        .onAppear {
-            position = .region(viewModel.initialRegion)
+        .onChange(of: viewModel.selectedDayIndex) { _ in
+            withAnimation {
+                position = .region(viewModel.currentRegion)
+            }
+        }
+        .onChange(of: viewModel.dayPlans.count) { _ in
+            withAnimation {
+                position = .region(viewModel.currentRegion)
+            }
         }
     }
 }
