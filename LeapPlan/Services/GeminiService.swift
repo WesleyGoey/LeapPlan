@@ -12,6 +12,8 @@ class GeminiService: GeminiServiceProtocol {
         let systemPromptText = "Kamu adalah LeapBot, asisten travel cerdas untuk aplikasi LeapPlan. Tugasmu HANYA membantu merencanakan liburan, membuat itinerary, dan merekomendasikan destinasi wisata. Jika pengguna bertanya coding, matematika, atau topik di luar travel dan liburan, TOLAK DENGAN SOPAN dan ingatkan bahwa kamu adalah asisten travel LeapPlan."
         let sysInstruction = SystemInstruction(parts: [GeminiPart(text: systemPromptText)])
         
+        let validHistory = chatHistory.drop(while: { $0.role == "model" })
+        
         // Mapping format
         let geminiContents = chatHistory.map { msg in
             GeminiContent(role: msg.role, parts: [GeminiPart(text: msg.content)])
