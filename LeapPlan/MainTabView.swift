@@ -21,6 +21,10 @@ struct MainTabView: View {
                 .tabItem { Label("Explore", systemImage: "map.fill") }
                 .tag(1)
             
+            ChatView()
+                .tabItem { Label("LeapBot", systemImage: "sparkles") }
+                .tag(2)
+
             TripsView()
                 .tabItem { Label("Trips", systemImage: "briefcase.fill") }
                 .tag(2)
