@@ -10,38 +10,52 @@ struct WatchLoginPromptView: View {
 
     var body: some View {
         ZStack {
-            // Pure OLED dark background
-            Color.black.ignoresSafeArea()
+            // Main Background matching Trips view
+            Color(hex: "#F2F2F7").ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 Spacer()
 
                 // MARK: - Icon Container
-                ZStack {
+                ZStack(alignment: .bottomTrailing) {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.black)
-                        .frame(width: 56, height: 56)
+                        .fill(Color.white)
+                        .frame(width: 60, height: 60)
+                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color(hex: "#50B498").opacity(0.6), lineWidth: 1.5)
+                            Image(systemName: "iphone")
+                                .font(.system(size: 28, weight: .regular))
+                                .foregroundStyle(.black)
                         )
 
-                    Image(systemName: "iphone.gen2")
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundStyle(Color(hex: "#50B498"))
+                    // Sync Badge overlaid
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "#F2F2F7"))
+                            .frame(width: 24, height: 24)
+                        
+                        Circle()
+                            .fill(Color(hex: "#50B498"))
+                            .frame(width: 20, height: 20)
+                        
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                    .offset(x: 6, y: 6) // Push bottom right
                 }
+                .padding(.bottom, 6)
 
                 // MARK: - Text Elements
-                VStack(spacing: 6) {
+                VStack(spacing: 4) {
                     Text("Login Required")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.black)
 
-                    Text("Please open LeapPlan on your iPhone to sync your trips.")
+                    Text("Open LeapPlan on iPhone to\nsync trips.")
                         .font(.system(size: 12))
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(Color.gray)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 8)
                 }
 
                 Spacer()
@@ -51,26 +65,31 @@ struct WatchLoginPromptView: View {
                     viewModel.triggerManualSync()
                 }) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color(hex: "#50B498"))
-                            .frame(height: 40)
+                        Capsule()
+                            .fill(Color(hex: "#E5E5EA"))
+                            .frame(height: 38)
 
                         if viewModel.isSyncing {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .black))
-                                .scaleEffect(0.9)
+                                .scaleEffect(0.8)
                         } else {
-                            Text("Check Sync")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.black)
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 12, weight: .bold))
+                                Text("Check Sync")
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .foregroundStyle(.black)
                         }
                     }
                 }
                 .buttonStyle(.plain)
                 .disabled(viewModel.isSyncing)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 16)
+                
+                Spacer()
             }
-            .padding()
         }
     }
 }
