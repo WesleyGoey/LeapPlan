@@ -8,14 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		538B54722FD8120D001B5903 /* Leaplan_Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 538B54682FD8120C001B5903 /* Leaplan_Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		538B547C2FD81221001B5903 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547B2FD81221001B5903 /* FirebaseAnalytics */; };
-		538B547E2FD81221001B5903 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547D2FD81221001B5903 /* FirebaseAnalyticsCore */; };
-		538B54802FD81221001B5903 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547F2FD81221001B5903 /* FirebaseAppCheck */; };
 		538B54822FD81221001B5903 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54812FD81221001B5903 /* FirebaseAuth */; };
 		538B54842FD81221001B5903 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54832FD81221001B5903 /* FirebaseCore */; };
-		538B54862FD81221001B5903 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54852FD81221001B5903 /* FirebaseDatabase */; };
-		538B54882FD81221001B5903 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54872FD81221001B5903 /* FirebaseFirestore */; };
-		538B548A2FD81221001B5903 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54892FD81221001B5903 /* FirebaseStorage */; };
+		538B54972FD813EB001B5903 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547B2FD81221001B5903 /* FirebaseAnalytics */; };
+		538B54982FD813EB001B5903 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547D2FD81221001B5903 /* FirebaseAnalyticsCore */; };
+		538B54992FD813EB001B5903 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547F2FD81221001B5903 /* FirebaseAppCheck */; };
+		538B549A2FD813EB001B5903 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54852FD81221001B5903 /* FirebaseDatabase */; };
+		538B549B2FD813EB001B5903 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54872FD81221001B5903 /* FirebaseFirestore */; };
+		538B549C2FD813EB001B5903 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54892FD81221001B5903 /* FirebaseStorage */; };
 		53C1BBD82FC7E3180045B368 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBD72FC7E3180045B368 /* FirebaseAnalytics */; };
 		53C1BBDA2FC7E31F0045B368 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBD92FC7E31F0045B368 /* FirebaseAppCheck */; };
 		53C1BBDC2FC7E32A0045B368 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBDB2FC7E32A0045B368 /* FirebaseDatabase */; };
@@ -62,6 +62,20 @@
 		9AF7868A2FC7D2A0000FDCB3 /* LeapPlan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LeapPlan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		538B55562FD814D3001B5903 /* Exceptions for "LeapPlan" folder in "Leaplan_Watch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Enums/TripStatus.swift,
+				Models/DayPlan.swift,
+				Models/Trip.swift,
+				Models/TripDestination.swift,
+				Models/User.swift,
+			);
+			target = 538B54672FD8120C001B5903 /* Leaplan_Watch Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		538B54692FD8120C001B5903 /* Leaplan_Watch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -75,6 +89,9 @@
 		};
 		9AF7868C2FC7D2A0000FDCB3 /* LeapPlan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				538B55562FD814D3001B5903 /* Exceptions for "LeapPlan" folder in "Leaplan_Watch Watch App" target */,
+			);
 			path = LeapPlan;
 			sourceTree = "<group>";
 		};
@@ -85,6 +102,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				538B549C2FD813EB001B5903 /* FirebaseStorage in Frameworks */,
+				538B549B2FD813EB001B5903 /* FirebaseFirestore in Frameworks */,
+				538B549A2FD813EB001B5903 /* FirebaseDatabase in Frameworks */,
+				538B54992FD813EB001B5903 /* FirebaseAppCheck in Frameworks */,
+				538B54982FD813EB001B5903 /* FirebaseAnalyticsCore in Frameworks */,
+				538B54972FD813EB001B5903 /* FirebaseAnalytics in Frameworks */,
 				538B54842FD81221001B5903 /* FirebaseCore in Frameworks */,
 				538B54822FD81221001B5903 /* FirebaseAuth in Frameworks */,
 			);

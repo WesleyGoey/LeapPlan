@@ -25,16 +25,15 @@ final class WatchAppViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init(sessionManager: WatchSessionManager = WatchSessionManager()) {
-        self.sessionManager = sessionManager
+    init(sessionManager: WatchSessionManager? = nil) {
+        self.sessionManager = sessionManager ?? WatchSessionManager()
 
-        // Observe session manager state
-        sessionManager.$isLoggedIn
+        self.sessionManager.$isLoggedIn
             .receive(on: RunLoop.main)
             .assign(to: \.isLoggedIn, on: self)
             .store(in: &cancellables)
 
-        sessionManager.$syncedTrips
+        self.sessionManager.$syncedTrips
             .receive(on: RunLoop.main)
             .assign(to: \.trips, on: self)
             .store(in: &cancellables)

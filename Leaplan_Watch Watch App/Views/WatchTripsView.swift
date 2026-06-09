@@ -98,8 +98,8 @@ struct WatchTripCardView: View {
 
 #Preview {
     // We create some mock trips since the preview needs it
-    let mockTrip1 = Trip(id: "1", title: "Bali Getaway", locationName: "Bali", startDate: Date(), endDate: Date().addingTimeInterval(86400*3), totalCost: 1000, description: "", createdAt: Date(), updatedAt: Date(), creatorId: "123", status: .upcoming, destinationIds: [])
-    let mockTrip2 = Trip(id: "2", title: "Japan Tour", locationName: "Tokyo", startDate: Date(), endDate: Date().addingTimeInterval(86400*7), totalCost: 2000, description: "", createdAt: Date(), updatedAt: Date(), creatorId: "123", status: .ongoing, destinationIds: [])
+    let mockTrip1 = Trip(id: "1", title: "Bali Getaway", locationName: "Bali", startDate: Date(), endDate: Date().addingTimeInterval(86400*3), status: .upcoming, participantIDs: [], createdAt: Date(), createdBy: "123")
+    let mockTrip2 = Trip(id: "2", title: "Japan Tour", locationName: "Tokyo", startDate: Date(), endDate: Date().addingTimeInterval(86400*7), status: .ongoing, participantIDs: [], createdAt: Date(), createdBy: "123")
     
     WatchTripsView(viewModel: .mock(isLoggedIn: true, trips: [mockTrip1, mockTrip2]))
 }

@@ -12,6 +12,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     FirebaseApp.configure()
+    
+    // Start WatchConnectivity listener
+    Task { @MainActor in
+        IOSWatchSessionManager.shared.startSession()
+    }
+    
     return true
   }
 }
