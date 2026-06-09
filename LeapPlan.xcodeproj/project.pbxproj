@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		538B54722FD8120D001B5903 /* Leaplan_Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 538B54682FD8120C001B5903 /* Leaplan_Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		538B547C2FD81221001B5903 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547B2FD81221001B5903 /* FirebaseAnalytics */; };
+		538B547E2FD81221001B5903 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547D2FD81221001B5903 /* FirebaseAnalyticsCore */; };
+		538B54802FD81221001B5903 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 538B547F2FD81221001B5903 /* FirebaseAppCheck */; };
+		538B54822FD81221001B5903 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54812FD81221001B5903 /* FirebaseAuth */; };
+		538B54842FD81221001B5903 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54832FD81221001B5903 /* FirebaseCore */; };
+		538B54862FD81221001B5903 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54852FD81221001B5903 /* FirebaseDatabase */; };
+		538B54882FD81221001B5903 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54872FD81221001B5903 /* FirebaseFirestore */; };
+		538B548A2FD81221001B5903 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 538B54892FD81221001B5903 /* FirebaseStorage */; };
 		53C1BBD82FC7E3180045B368 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBD72FC7E3180045B368 /* FirebaseAnalytics */; };
 		53C1BBDA2FC7E31F0045B368 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBD92FC7E31F0045B368 /* FirebaseAppCheck */; };
 		53C1BBDC2FC7E32A0045B368 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 53C1BBDB2FC7E32A0045B368 /* FirebaseDatabase */; };
@@ -17,6 +26,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		538B54702FD8120D001B5903 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9AF786822FC7D2A0000FDCB3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 538B54672FD8120C001B5903;
+			remoteInfo = "Leaplan_Watch Watch App";
+		};
 		53C1BCB82FC80AE90045B368 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 9AF786822FC7D2A0000FDCB3 /* Project object */;
@@ -26,12 +42,32 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		538B54732FD8120D001B5903 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				538B54722FD8120D001B5903 /* Leaplan_Watch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		538B54682FD8120C001B5903 /* Leaplan_Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Leaplan_Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		53C1BCB42FC80AE90045B368 /* LeapPlanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LeapPlanTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AF7868A2FC7D2A0000FDCB3 /* LeapPlan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LeapPlan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		538B54692FD8120C001B5903 /* Leaplan_Watch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Leaplan_Watch Watch App";
+			sourceTree = "<group>";
+		};
 		53C1BCB52FC80AE90045B368 /* LeapPlanTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LeapPlanTests;
@@ -45,6 +81,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		538B54652FD8120C001B5903 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				538B54842FD81221001B5903 /* FirebaseCore in Frameworks */,
+				538B54822FD81221001B5903 /* FirebaseAuth in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53C1BCB12FC80AE90045B368 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -81,6 +126,7 @@
 			children = (
 				9AF7868C2FC7D2A0000FDCB3 /* LeapPlan */,
 				53C1BCB52FC80AE90045B368 /* LeapPlanTests */,
+				538B54692FD8120C001B5903 /* Leaplan_Watch Watch App */,
 				53C1BBD62FC7E3180045B368 /* Frameworks */,
 				9AF7868B2FC7D2A0000FDCB3 /* Products */,
 			);
@@ -91,6 +137,7 @@
 			children = (
 				9AF7868A2FC7D2A0000FDCB3 /* LeapPlan.app */,
 				53C1BCB42FC80AE90045B368 /* LeapPlanTests.xctest */,
+				538B54682FD8120C001B5903 /* Leaplan_Watch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,6 +145,36 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		538B54672FD8120C001B5903 /* Leaplan_Watch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 538B54762FD8120D001B5903 /* Build configuration list for PBXNativeTarget "Leaplan_Watch Watch App" */;
+			buildPhases = (
+				538B54642FD8120C001B5903 /* Sources */,
+				538B54652FD8120C001B5903 /* Frameworks */,
+				538B54662FD8120C001B5903 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				538B54692FD8120C001B5903 /* Leaplan_Watch Watch App */,
+			);
+			name = "Leaplan_Watch Watch App";
+			packageProductDependencies = (
+				538B547B2FD81221001B5903 /* FirebaseAnalytics */,
+				538B547D2FD81221001B5903 /* FirebaseAnalyticsCore */,
+				538B547F2FD81221001B5903 /* FirebaseAppCheck */,
+				538B54812FD81221001B5903 /* FirebaseAuth */,
+				538B54832FD81221001B5903 /* FirebaseCore */,
+				538B54852FD81221001B5903 /* FirebaseDatabase */,
+				538B54872FD81221001B5903 /* FirebaseFirestore */,
+				538B54892FD81221001B5903 /* FirebaseStorage */,
+			);
+			productName = "Leaplan_Watch Watch App";
+			productReference = 538B54682FD8120C001B5903 /* Leaplan_Watch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 		53C1BCB32FC80AE90045B368 /* LeapPlanTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 53C1BCBA2FC80AE90045B368 /* Build configuration list for PBXNativeTarget "LeapPlanTests" */;
@@ -128,10 +205,12 @@
 				9AF786862FC7D2A0000FDCB3 /* Sources */,
 				9AF786872FC7D2A0000FDCB3 /* Frameworks */,
 				9AF786882FC7D2A0000FDCB3 /* Resources */,
+				538B54732FD8120D001B5903 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				538B54712FD8120D001B5903 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9AF7868C2FC7D2A0000FDCB3 /* LeapPlan */,
@@ -160,6 +239,9 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					538B54672FD8120C001B5903 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					53C1BCB32FC80AE90045B368 = {
 						CreatedOnToolsVersion = 26.5;
 						TestTargetID = 9AF786892FC7D2A0000FDCB3;
@@ -188,11 +270,19 @@
 			targets = (
 				9AF786892FC7D2A0000FDCB3 /* LeapPlan */,
 				53C1BCB32FC80AE90045B368 /* LeapPlanTests */,
+				538B54672FD8120C001B5903 /* Leaplan_Watch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		538B54662FD8120C001B5903 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53C1BCB22FC80AE90045B368 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -210,6 +300,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		538B54642FD8120C001B5903 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		53C1BCB02FC80AE90045B368 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -227,6 +324,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		538B54712FD8120D001B5903 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 538B54672FD8120C001B5903 /* Leaplan_Watch Watch App */;
+			targetProxy = 538B54702FD8120D001B5903 /* PBXContainerItemProxy */;
+		};
 		53C1BCB92FC80AE90045B368 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 9AF786892FC7D2A0000FDCB3 /* LeapPlan */;
@@ -235,6 +337,72 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		538B54742FD8120D001B5903 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XMK2Y8R52T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Leaplan_Watch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.wesley.LeapPlan;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesley.LeapPlan.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		538B54752FD8120D001B5903 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XMK2Y8R52T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Leaplan_Watch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.wesley.LeapPlan;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesley.LeapPlan.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
 		53C1BCBB2FC80AE90045B368 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -467,6 +635,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		538B54762FD8120D001B5903 /* Build configuration list for PBXNativeTarget "Leaplan_Watch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				538B54742FD8120D001B5903 /* Debug */,
+				538B54752FD8120D001B5903 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		53C1BCBA2FC80AE90045B368 /* Build configuration list for PBXNativeTarget "LeapPlanTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -508,6 +685,46 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		538B547B2FD81221001B5903 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		538B547D2FD81221001B5903 /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		538B547F2FD81221001B5903 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		538B54812FD81221001B5903 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		538B54832FD81221001B5903 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		538B54852FD81221001B5903 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		538B54872FD81221001B5903 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		538B54892FD81221001B5903 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		53C1BBD72FC7E3180045B368 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9AF787952FC7E07F000FDCB3 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

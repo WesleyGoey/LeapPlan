@@ -5,7 +5,6 @@
 //  Created by Wesley Goey on 02/06/26.
 //
 
-import FirebaseFirestore
 import Foundation
 
 enum TripStatus: String, Codable, Hashable {
