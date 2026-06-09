@@ -33,11 +33,16 @@ class ChatViewModel: ObservableObject {
             let botReply = ChatMessage(role: "model", content: replyText)
             messages.append(botReply)
             isLoading = false
+
+        //hvdsahbvdkjahbd
         } catch {
-            // 3. Kalau error (misal API key salah atau internet putus)
-            let errorMsg = ChatMessage(role: "model", content: "Waduh, koneksiku ke server terputus nih. Coba tanya lagi ya!")
-            messages.append(errorMsg)
+            // Nampilin pesan error TEKNIS langsung ke layar chat
+            let errorMessage = "🚨 ERROR TEKNIS:\n\(error.localizedDescription)\n\nRAW INFO:\n\(String(describing: error))"
+            
+            let botReply = ChatMessage(role: "model", content: errorMessage)
+            messages.append(botReply)
             isLoading = false
         }
+        //kfdsankasldnlads
     }
 }
