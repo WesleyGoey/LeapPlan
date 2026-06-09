@@ -96,6 +96,11 @@ class TripViewModel: ObservableObject {
                     return t
                 }
                 self.isLoading = false
+                
+                // Push updated trips to WatchOS immediately
+                Task { @MainActor in
+                    IOSWatchSessionManager.shared.syncTrips(trips: self.trips)
+                }
             } catch {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false

@@ -5,11 +5,17 @@
 //  Created by Sean tandjaja on 28/05/26.
 //
 
+#if canImport(FirebaseFirestore)
 import FirebaseFirestore
+#endif
 import Foundation
 
 struct Trip: Identifiable, Codable, Hashable {
+#if canImport(FirebaseFirestore)
     @DocumentID var id: String?
+#else
+    var id: String?
+#endif
     var title: String
     var locationName: String
     var startDate: Date
