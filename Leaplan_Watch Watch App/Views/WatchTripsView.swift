@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct WatchTripsView: View {
-    @ObservedObject var viewModel: WatchAppViewModel
+    @StateObject private var viewModel = WatchTripsViewModel()
 
     var filteredTrips: [Trip] {
         viewModel.trips.filter { $0.status == .upcoming || $0.status == .ongoing }
@@ -66,7 +66,7 @@ struct WatchTripsView: View {
             }
         }
         .onAppear {
-            viewModel.triggerManualSync()
+            viewModel.fetchTrips()
         }
     }
 }
@@ -77,22 +77,26 @@ struct WatchTripCardView: View {
 
     private var barColor: Color {
         switch trip.status {
-        case .upcoming: return Color(hex: "#50B498")
-        case .ongoing: return Color.blue
-        case .past: return Color.red
+        case .upcoming: return Color(hex: "#00AD85")
+        case .ongoing: return Color(hex: "#FF2E63")
+        case .past: return Color.gray
         }
     }
     
     private var pillBackgroundColor: Color {
         if trip.status == .upcoming {
-            return Color(hex: "#50B498").opacity(0.15)
+            return Color(hex: "#00AD85").opacity(0.15)
+        } else if trip.status == .ongoing {
+            return Color(hex: "#FF2E63").opacity(0.15)
         }
         return Color.gray.opacity(0.15)
     }
     
     private var pillTextColor: Color {
         if trip.status == .upcoming {
-            return Color(hex: "#2E8B57") // Darker green for text readability
+            return Color(hex: "#00AD85")
+        } else if trip.status == .ongoing {
+            return Color(hex: "#FF2E63")
         }
         return .gray
     }
@@ -104,61 +108,60 @@ struct WatchTripCardView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Left color bar
-            RoundedRectangle(cornerRadius: 2)
-                .fill(barColor)
-                .frame(width: 4)
-                .padding(.vertical, 14)
-                .padding(.leading, 8)
-            
-            VStack(alignment: .leading, spacing: 6) {
-                // Dynamic Status Tag Pill
-                Text(trip.status.rawValue.capitalized)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(pillTextColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule().fill(pillBackgroundColor)
-                    )
-
-                // Trip Title
-                Text(trip.title)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.black)
-                    .lineLimit(1)
+        NavigationLink(destination: WatchDetailTripView(viewModel: WatchDetailTripViewModel(trip: trip))) {
+            HStack(spacing: 0) {
+                // Left color bar
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(barColor)
+                    .frame(width: 4)
+                    .padding(.vertical, 14)
+                    .padding(.leading, 8)
                 
-                // Dates
-                Text(formattedDates())
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.gray)
+                VStack(alignment: .leading, spacing: 6) {
+                    // Dynamic Status Tag Pill
+                    Text(trip.status.rawValue.capitalized)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(pillTextColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule().fill(pillBackgroundColor)
+                        )
+
+                    // Trip Title
+                    Text(trip.title)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color(hex: "#222831"))
+                        .lineLimit(1)
+                    
+                    // Dates
+                    Text(formattedDates())
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.gray)
+                }
+                .padding(.leading, 8)
+                .padding(.vertical, 12)
+                
+                Spacer()
+            
+                // Chevron
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Color.gray.opacity(0.4))
+                    .padding(.trailing, 12)
             }
-            .padding(.leading, 8)
-            .padding(.vertical, 12)
-            
-            Spacer()
-            
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(Color.gray.opacity(0.4))
-                .padding(.trailing, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white)
+            )
+            // Subtle shadow
+            .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white)
-        )
-        // Subtle shadow
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .buttonStyle(.plain)
     }
 }
 
 #Preview {
-    let mockTrip1 = Trip(id: "1", title: "🌴 Bali Holiday", locationName: "Bali", startDate: Date(), endDate: Date().addingTimeInterval(86400*10), status: .upcoming, participantIDs: [], createdAt: Date(), createdBy: "123")
-    let mockTrip2 = Trip(id: "2", title: "🗼 Tokyo Escape", locationName: "Tokyo", startDate: Date(), endDate: Date().addingTimeInterval(86400*7), status: .ongoing, participantIDs: [], createdAt: Date(), createdBy: "123")
-    let mockTrip3 = Trip(id: "3", title: "🗺️ Paris Spring", locationName: "Paris", startDate: Date(), endDate: Date().addingTimeInterval(86400*7), status: .past, participantIDs: [], createdAt: Date(), createdBy: "123")
-    
-    WatchTripsView(viewModel: .mock(isLoggedIn: true, trips: [mockTrip1, mockTrip2, mockTrip3]))
+    WatchTripsView()
 }

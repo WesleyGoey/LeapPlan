@@ -25,7 +25,7 @@ struct WatchLoginPromptView: View {
                         .overlay(
                             Image(systemName: "iphone")
                                 .font(.system(size: 28, weight: .regular))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(Color(hex: "#222831"))
                         )
 
                     // Sync Badge overlaid
@@ -35,7 +35,7 @@ struct WatchLoginPromptView: View {
                             .frame(width: 24, height: 24)
                         
                         Circle()
-                            .fill(Color(hex: "#50B498"))
+                            .fill(Color(hex: "#00AD85"))
                             .frame(width: 20, height: 20)
                         
                         Image(systemName: "arrow.triangle.2.circlepath")
@@ -50,7 +50,7 @@ struct WatchLoginPromptView: View {
                 VStack(spacing: 4) {
                     Text("Login Required")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color(hex: "#222831"))
 
                     Text("Open LeapPlan on iPhone to\nsync trips.")
                         .font(.system(size: 12))
@@ -71,7 +71,7 @@ struct WatchLoginPromptView: View {
 
                         if viewModel.isSyncing {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#222831")))
                                 .scaleEffect(0.8)
                         } else {
                             HStack(spacing: 6) {
@@ -80,7 +80,7 @@ struct WatchLoginPromptView: View {
                                 Text("Check Sync")
                                     .font(.system(size: 14, weight: .semibold))
                             }
-                            .foregroundStyle(.black)
+                            .foregroundStyle(Color(hex: "#222831"))
                         }
                     }
                 }

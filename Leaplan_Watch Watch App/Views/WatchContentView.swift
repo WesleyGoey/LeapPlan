@@ -14,7 +14,7 @@ struct WatchContentView: View {
                 WatchLoginPromptView(viewModel: viewModel)
             } else {
                 NavigationStack {
-                    WatchTripsView(viewModel: viewModel)
+                    WatchTripsView()
                 }
             }
         }

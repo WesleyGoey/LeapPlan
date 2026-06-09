@@ -186,35 +186,80 @@ extension IOSWatchSessionManager: WCSessionDelegate {
         didReceiveMessage message: [String: Any],
         replyHandler: @escaping ([String: Any]) -> Void
     ) {
-        if let request = message["request"] as? String, request == "fetchLatestData"
-        {
-            print("[IOSWatchSessionManager] Watch requested fetchLatestData.")
+        if let request = message["request"] as? String {
+            switch request {
+            case "fetchLatestData":
+                print("[IOSWatchSessionManager] Watch requested fetchLatestData.")
 
-            let isLoggedIn = (Auth.auth().currentUser != nil)
-            var replyData: [String: Any] = ["isLoggedIn": isLoggedIn]
+                let isLoggedIn = (Auth.auth().currentUser != nil)
+                var replyData: [String: Any] = ["isLoggedIn": isLoggedIn]
 
-            if let uid = Auth.auth().currentUser?.uid {
+                if let uid = Auth.auth().currentUser?.uid {
+                    Task { @MainActor in
+                        do {
+                            // Fixed 'self' reference inside isolated Task
+                            let manager = IOSWatchSessionManager.shared
+                            let firestore = FirestoreRepository()
+                            let trips = try await firestore.fetchTrips(forUserID: uid)
+                            let updatedTrips = manager.calculateStatuses(for: trips)
+
+                            let dtos = updatedTrips.map { trip in
+                                TripDTO(
+                                    id: trip.id,
+                                    title: trip.title,
+                                    locationName: trip.locationName,
+                                    startDate: trip.startDate,
+                                    endDate: trip.endDate,
+                                    status: trip.status,
+                                    coverImageUrl: trip.coverImageUrl,
+                                    participantIDs: trip.participantIDs,
+                                    totalPlaces: trip.totalPlaces,
+                                    createdAt: trip.createdAt,
+                                    createdBy: trip.createdBy
+                                )
+                            }
+
+                            let encoder = JSONEncoder()
+                            encoder.dateEncodingStrategy = .secondsSince1970
+                            let data = try encoder.encode(dtos)
+
+                            if let jsonString = String(data: data, encoding: .utf8) {
+                                replyData["tripsJSON"] = jsonString
+                                replyHandler(replyData)
+                            } else {
+                                replyHandler(replyData)
+                            }
+                        } catch {
+                            print(
+                                "[IOSWatchSessionManager] Fetch failed for reply: \(error)"
+                            )
+                            replyHandler(replyData)
+                        }
+                    }
+                } else {
+                    replyData["tripsJSON"] = "[]"
+                    replyHandler(replyData)
+                }
+
+            case "fetchTripDetails":
+                print("[IOSWatchSessionManager] Watch requested fetchTripDetails.")
+                guard let tripId = message["tripId"] as? String,
+                      let uid = Auth.auth().currentUser?.uid else {
+                    replyHandler(["status": "error", "message": "Missing tripId or user not logged in"])
+                    return
+                }
+
                 Task { @MainActor in
                     do {
-                        // 4. Fixed 'self' reference inside isolated Task
-                        let manager = IOSWatchSessionManager.shared
                         let firestore = FirestoreRepository()
-                        let trips = try await firestore.fetchTrips(forUserID: uid)
-                        let updatedTrips = manager.calculateStatuses(for: trips)
+                        let dayPlans = try await firestore.fetchDayPlans(forTripID: tripId, userID: uid)
 
-                        let dtos = updatedTrips.map { trip in
-                            TripDTO(
-                                id: trip.id,
-                                title: trip.title,
-                                locationName: trip.locationName,
-                                startDate: trip.startDate,
-                                endDate: trip.endDate,
-                                status: trip.status,
-                                coverImageUrl: trip.coverImageUrl,
-                                participantIDs: trip.participantIDs,
-                                totalPlaces: trip.totalPlaces,
-                                createdAt: trip.createdAt,
-                                createdBy: trip.createdBy
+                        let dtos = dayPlans.map { plan in
+                            DayPlanDTO(
+                                id: plan.id,
+                                dayNumber: plan.dayNumber,
+                                date: plan.date,
+                                destinations: plan.destinations
                             )
                         }
 
@@ -223,21 +268,18 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                         let data = try encoder.encode(dtos)
 
                         if let jsonString = String(data: data, encoding: .utf8) {
-                            replyData["tripsJSON"] = jsonString
-                            replyHandler(replyData)
+                            replyHandler(["status": "success", "dayPlansJSON": jsonString])
                         } else {
-                            replyHandler(replyData)
+                            replyHandler(["status": "error", "message": "Failed to encode day plans"])
                         }
                     } catch {
-                        print(
-                            "[IOSWatchSessionManager] Fetch failed for reply: \(error)"
-                        )
-                        replyHandler(replyData)
+                        print("[IOSWatchSessionManager] Failed to fetch day plans: \(error)")
+                        replyHandler(["status": "error", "message": error.localizedDescription])
                     }
                 }
-            } else {
-                replyData["tripsJSON"] = "[]"
-                replyHandler(replyData)
+
+            default:
+                replyHandler(["status": "unknown_request"])
             }
         } else {
             replyHandler(["status": "unknown_request"])
