@@ -16,11 +16,11 @@ final class WatchAppViewModel: ObservableObject {
     @Published var trips: [Trip] = []
     @Published var isSyncing: Bool = false
 
-    private let sessionManager: WatchSessionManager
+    let sessionManager: WatchSessionManager
     private var cancellables = Set<AnyCancellable>()
 
-    init(sessionManager: WatchSessionManager? = nil) {
-        self.sessionManager = sessionManager ?? WatchSessionManager()
+    init(sessionManager: WatchSessionManager = WatchSessionManager.shared) {
+        self.sessionManager = sessionManager
 
         self.sessionManager.$isLoggedIn
             .receive(on: RunLoop.main)
@@ -36,7 +36,7 @@ final class WatchAppViewModel: ObservableObject {
                     .sorted { trip1, trip2 in
                         let order1 = trip1.status == .ongoing ? 0 : 1
                         let order2 = trip2.status == .ongoing ? 0 : 1
-                        
+
                         if order1 != order2 {
                             return order1 < order2
                         } else {
@@ -62,7 +62,7 @@ final class WatchAppViewModel: ObservableObject {
 
 extension WatchAppViewModel {
     static func mock(isLoggedIn: Bool = true, isSyncing: Bool = false, trips: [Trip] = []) -> WatchAppViewModel {
-        let vm = WatchAppViewModel(sessionManager: WatchSessionManager())
+        let vm = WatchAppViewModel(sessionManager: WatchSessionManager.shared)
         vm.isLoggedIn = isLoggedIn
         vm.isSyncing = isSyncing
         vm.trips = trips

@@ -131,6 +131,7 @@ class TripViewModel: ObservableObject {
                     forUserID: userID
                 )
                 self.loadUserTrips()
+                await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
             } catch {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
@@ -204,6 +205,7 @@ class TripViewModel: ObservableObject {
                 }
             }
             await MainActor.run { self.loadUserTrips() }
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
         } catch {
             self.errorMessage = error.localizedDescription
             self.isLoading = false

@@ -11,6 +11,8 @@ import WatchConnectivity
 
 @MainActor
 final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
+    static let shared = WatchSessionManager()
+
     @Published var isLoggedIn: Bool = false
     @Published var syncedTrips: [Trip] = []
 
@@ -37,7 +39,9 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.sendMessage(
             requestMessage,
             replyHandler: { [weak self] reply in
-                self?.handlePayload(reply)
+                Task { @MainActor in
+                    self?.handlePayload(reply)
+                }
             },
             errorHandler: { error in
                 print(
@@ -47,7 +51,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         )
     }
 
-    // MARK: - Session
+    // MARK: - Session Activation
     nonisolated func session(
         _ session: WCSession,
         activationDidCompleteWith activationState: WCSessionActivationState,
@@ -59,7 +63,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             )
             return
         }
-        
+
         let context = session.receivedApplicationContext
         if !context.isEmpty {
             Task { @MainActor in
@@ -68,7 +72,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
-    // MARK: - Session
+    // MARK: - Receive Application Context
     nonisolated func session(
         _ session: WCSession,
         didReceiveApplicationContext applicationContext: [String: Any]
@@ -78,7 +82,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
-    // MARK: - Session
+    // MARK: - Receive Message (no reply needed)
     nonisolated func session(
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
@@ -88,7 +92,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
-    // MARK: - Session
+    // MARK: - Receive Message (with reply handler)
     nonisolated func session(
         _ session: WCSession,
         didReceiveMessage message: [String: Any],
@@ -100,13 +104,20 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         replyHandler(["status": "received"])
     }
 
+#if os(iOS)
+    // MARK: - iOS-only Session Lifecycle
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
+        session.activate()
+    }
+#endif
 
     // MARK: - Handle Payload
     private func handlePayload(_ payload: [String: Any]) {
         if let loginStatus = payload["isLoggedIn"] as? Bool {
             self.isLoggedIn = loginStatus
             if !loginStatus {
-                self.syncedTrips = []  
+                self.syncedTrips = []
             }
         }
 
@@ -128,8 +139,23 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         do {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .secondsSince1970
-            let decodedTrips = try decoder.decode([Trip].self, from: data)
-            self.syncedTrips = decodedTrips
+            // iPhone sends [TripDTO], so decode as TripDTO and map to Trip
+            let dtos = try decoder.decode([TripDTO].self, from: data)
+            self.syncedTrips = dtos.map { dto in
+                Trip(
+                    id: dto.id,
+                    title: dto.title,
+                    locationName: dto.locationName,
+                    startDate: dto.startDate,
+                    endDate: dto.endDate,
+                    status: dto.status,
+                    coverImageUrl: dto.coverImageUrl,
+                    participantIDs: dto.participantIDs,
+                    totalPlaces: dto.totalPlaces,
+                    createdAt: dto.createdAt,
+                    createdBy: dto.createdBy
+                )
+            }
         } catch {
             print("[WatchSessionManager] Failed to decode trips JSON: \(error)")
         }

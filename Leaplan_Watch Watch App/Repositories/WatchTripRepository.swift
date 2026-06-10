@@ -8,6 +8,21 @@
 import Foundation
 import WatchConnectivity
 
+// MARK: - Trip DTO (mirrors iPhone's TripDTO for WatchConnectivity decoding)
+struct TripDTO: Codable {
+    var id: String?
+    var title: String
+    var locationName: String
+    var startDate: Date
+    var endDate: Date
+    var status: TripStatus
+    var coverImageUrl: String?
+    var participantIDs: [String]
+    var totalPlaces: Int
+    var createdAt: Date
+    var createdBy: String
+}
+
 // MARK: - Day Plan Dto
 struct DayPlanDTO: Identifiable, Codable {
     var id: String?
@@ -21,6 +36,40 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
     // MARK: - Fetch Trips
     func fetchTrips() async throws -> [Trip] {
         return try await withCheckedThrowingContinuation { continuation in
+            // First check if we have cached context data (works even when phone not reachable)
+            let context = WCSession.default.receivedApplicationContext
+            if !context.isEmpty,
+               let tripsJSON = context["tripsJSON"] as? String,
+               let data = tripsJSON.data(using: .utf8)
+            {
+                do {
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .secondsSince1970
+                    let dtos = try decoder.decode([TripDTO].self, from: data)
+                    let trips = dtos.map { dto in
+                        Trip(
+                            id: dto.id,
+                            title: dto.title,
+                            locationName: dto.locationName,
+                            startDate: dto.startDate,
+                            endDate: dto.endDate,
+                            status: dto.status,
+                            coverImageUrl: dto.coverImageUrl,
+                            participantIDs: dto.participantIDs,
+                            totalPlaces: dto.totalPlaces,
+                            createdAt: dto.createdAt,
+                            createdBy: dto.createdBy
+                        )
+                    }
+                    continuation.resume(returning: trips)
+                    return
+                } catch {
+                    print("[WatchTripRepository] Failed to decode cached context: \(error)")
+                    // Fall through to live request below
+                }
+            }
+
+            // Fallback: live request to phone if reachable
             guard WCSession.default.activationState == .activated,
                 WCSession.default.isReachable
             else {
@@ -30,22 +79,36 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
                         code: 1,
                         userInfo: [
                             NSLocalizedDescriptionKey:
-                                "iPhone is not reachable."
+                                "iPhone is not reachable and no cached data available."
                         ]
                     )
                 )
                 return
             }
 
-            WCSession.default.sendMessage(["request": "fetchLatestData"]) {
-                reply in
+            WCSession.default.sendMessage(["request": "fetchLatestData"]) { reply in
                 if let tripsJSON = reply["tripsJSON"] as? String,
                     let data = tripsJSON.data(using: .utf8)
                 {
                     do {
                         let decoder = JSONDecoder()
                         decoder.dateDecodingStrategy = .secondsSince1970
-                        let trips = try decoder.decode([Trip].self, from: data)
+                        let dtos = try decoder.decode([TripDTO].self, from: data)
+                        let trips = dtos.map { dto in
+                            Trip(
+                                id: dto.id,
+                                title: dto.title,
+                                locationName: dto.locationName,
+                                startDate: dto.startDate,
+                                endDate: dto.endDate,
+                                status: dto.status,
+                                coverImageUrl: dto.coverImageUrl,
+                                participantIDs: dto.participantIDs,
+                                totalPlaces: dto.totalPlaces,
+                                createdAt: dto.createdAt,
+                                createdBy: dto.createdBy
+                            )
+                        }
                         continuation.resume(returning: trips)
                     } catch {
                         continuation.resume(throwing: error)
