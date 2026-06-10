@@ -2,6 +2,8 @@
 //  WatchTripsView.swift
 //  Leaplan_Watch Watch App
 //
+//  Created by Wesley Goey on 10/06/26.
+//
 
 import SwiftUI
 

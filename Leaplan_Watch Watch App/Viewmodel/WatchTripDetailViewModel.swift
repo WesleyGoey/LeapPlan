@@ -2,6 +2,8 @@
 //  WatchTripDetailViewModel.swift
 //  Leaplan_Watch Watch App
 //
+//  Created by Wesley Goey on 10/06/26.
+//
 
 import Combine
 import Foundation
@@ -47,7 +49,7 @@ final class WatchTripDetailViewModel: ObservableObject {
     
     func calculateRoutes() {
         let destinations = selectedDayDestinations
-        self.selectedDayRoutes = [] // clear previous routes
+        self.selectedDayRoutes = []
         guard destinations.count > 1 else { return }
         
         Task {
@@ -64,7 +66,6 @@ final class WatchTripDetailViewModel: ObservableObject {
                 }
             }
             
-            // Only update if the day index hasn't changed while we were calculating
             self.selectedDayRoutes = newRoutes
         }
     }
@@ -111,7 +112,6 @@ final class WatchTripDetailViewModel: ObservableObject {
         let centerLat = (maxLat + minLat) / 2
         let centerLon = (maxLon + minLon) / 2
         
-        // Add padding to the span
         let latDelta = max(0.01, (maxLat - minLat) * 1.5)
         let lonDelta = max(0.01, (maxLon - minLon) * 1.5)
         
@@ -133,7 +133,6 @@ final class WatchTripDetailViewModel: ObservableObject {
         Task {
             do {
                 _ = try await tripService.generateRandomPlace(tripId: tripId, dayPlanId: dayPlanId, tripLocationName: trip.locationName)
-                // Fetch updated details
                 let plans = try await tripService.getTripDetails(tripId: tripId)
                 self.dayPlans = plans.sorted(by: { $0.dayNumber < $1.dayNumber })
                 self.calculateRoutes()

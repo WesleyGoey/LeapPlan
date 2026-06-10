@@ -46,11 +46,8 @@ final class SearchViewModelTests: XCTestCase {
             fsq_place_id: "1",
             name: "Pantai Kuta",
             distance: 100,
-            latitude: -8,
-            longitude: 115,
             location: nil,
-            rating: 5,
-            stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: -8, longitude: 115))
         )
         mockFourSquareService.mockPlaces = [dummyPlace]
         viewModel.searchQuery = "Pantai"
@@ -71,11 +68,8 @@ final class SearchViewModelTests: XCTestCase {
             fsq_place_id: "1",
             name: "Taman Bungkul",
             distance: 0,
-            latitude: -7,
-            longitude: 112,
             location: nil,
-            rating: 5,
-            stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: -7, longitude: 112))
         )
 
         viewModel.selectPlace(place)

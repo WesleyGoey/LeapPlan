@@ -43,11 +43,8 @@ final class TripDestinationServiceTests: XCTestCase {
             fsq_place_id: "fsq1",
             name: "Beach",
             distance: 0,
-            latitude: 0,
-            longitude: 0,
             location: nil,
-            rating: 5.0,
-            stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
         )
 
         let plan = DayPlan(
@@ -87,8 +84,7 @@ final class TripDestinationServiceTests: XCTestCase {
             longitude: 0,
             orderIndex: 0,
             stayDurationMinutes: 60,
-            transitTimeToNextMinutes: 10,
-            imageURL: nil
+            transitTimeToNextMinutes: 10
         )
         let plan = DayPlan(
             id: "p1",
@@ -128,8 +124,7 @@ final class TripDestinationServiceTests: XCTestCase {
             longitude: 0,
             orderIndex: 1,
             stayDurationMinutes: 0,
-            transitTimeToNextMinutes: 0,
-            imageURL: nil
+            transitTimeToNextMinutes: 0
         )
         let d2 = TripDestination(
             id: "d2",
@@ -140,8 +135,7 @@ final class TripDestinationServiceTests: XCTestCase {
             longitude: 0,
             orderIndex: 0,
             stayDurationMinutes: 0,
-            transitTimeToNextMinutes: 0,
-            imageURL: nil
+            transitTimeToNextMinutes: 0
         )
         let plan = DayPlan(
             id: "p1",
@@ -174,8 +168,7 @@ final class TripDestinationServiceTests: XCTestCase {
             longitude: 0,
             orderIndex: 0,
             stayDurationMinutes: 60,
-            transitTimeToNextMinutes: 30,
-            imageURL: nil
+            transitTimeToNextMinutes: 30
         )
         let d2 = TripDestination(
             id: "d2",
@@ -186,8 +179,7 @@ final class TripDestinationServiceTests: XCTestCase {
             longitude: 0,
             orderIndex: 1,
             stayDurationMinutes: 60,
-            transitTimeToNextMinutes: 0,
-            imageURL: nil
+            transitTimeToNextMinutes: 0
         )
         let plan = DayPlan(
             id: "p1",

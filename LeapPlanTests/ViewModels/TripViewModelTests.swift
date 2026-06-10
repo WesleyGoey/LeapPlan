@@ -111,11 +111,8 @@ final class TripViewModelTests: XCTestCase {
             fsq_place_id: "p1",
             name: "Beach",
             distance: 0,
-            latitude: 0,
-            longitude: 0,
             location: nil,
-            rating: 5,
-            stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
         )
 
         await viewModel.togglePlaceInDay(

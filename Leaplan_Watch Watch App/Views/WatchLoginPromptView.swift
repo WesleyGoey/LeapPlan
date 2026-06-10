@@ -2,6 +2,8 @@
 //  WatchLoginPromptView.swift
 //  Leaplan_Watch Watch App
 //
+//  Created by Wesley Goey on 10/06/26.
+//
 
 import SwiftUI
 
@@ -10,13 +12,11 @@ struct WatchLoginPromptView: View {
 
     var body: some View {
         ZStack {
-            // Main Background matching Trips view
             Color(hex: "#F2F2F7").ignoresSafeArea()
 
             VStack(spacing: 12) {
                 Spacer()
 
-                // MARK: - Icon Container
                 ZStack(alignment: .bottomTrailing) {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color.white)
@@ -28,7 +28,6 @@ struct WatchLoginPromptView: View {
                                 .foregroundStyle(Color(hex: "#222831"))
                         )
 
-                    // Sync Badge overlaid
                     ZStack {
                         Circle()
                             .fill(Color(hex: "#F2F2F7"))
@@ -42,11 +41,10 @@ struct WatchLoginPromptView: View {
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.white)
                     }
-                    .offset(x: 6, y: 6) // Push bottom right
+                    .offset(x: 6, y: 6)
                 }
                 .padding(.bottom, 6)
 
-                // MARK: - Text Elements
                 VStack(spacing: 4) {
                     Text("Login Required")
                         .font(.system(size: 16, weight: .bold))
@@ -60,7 +58,6 @@ struct WatchLoginPromptView: View {
 
                 Spacer()
 
-                // MARK: - Action Button
                 Button(action: {
                     viewModel.triggerManualSync()
                 }) {
@@ -102,11 +99,11 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8: 
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (1, 1, 1, 0)

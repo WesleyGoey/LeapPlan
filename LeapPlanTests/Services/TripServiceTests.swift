@@ -41,31 +41,22 @@ final class TripServiceTests: XCTestCase {
                 fsq_place_id: "1",
                 name: "Pantai Indah",
                 distance: 0,
-                latitude: 0,
-                longitude: 0,
                 location: nil,
-                rating: 5.0,
-                stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
             ),
             FSQPlace(
                 fsq_place_id: "2",
                 name: "Indomaret Point",
                 distance: 0,
-                latitude: 0,
-                longitude: 0,
                 location: nil,
-                rating: 5.0,
-                stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
             ),  // Harus dihapus
             FSQPlace(
                 fsq_place_id: "3",
                 name: "Cafe Hits",
                 distance: 0,
-                latitude: 0,
-                longitude: 0,
                 location: nil,
-                rating: 5.0,
-                stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
             ),  // Harus dihapus
         ]
         mockFourSquareService.mockPlaces = rawPlaces
@@ -102,11 +93,8 @@ final class TripServiceTests: XCTestCase {
             fsq_place_id: "1",
             name: "Wisata A",
             distance: 0,
-            latitude: 0,
-            longitude: 0,
             location: nil,
-            rating: 5.0,
-            stats: nil
+            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
         )
         mockFourSquareService.mockPlaces = [place]
 
