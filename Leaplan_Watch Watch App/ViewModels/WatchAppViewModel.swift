@@ -9,7 +9,6 @@ import Combine
 import Foundation
 import SwiftUI
 
-// MARK: - WatchAppViewModel
 
 @MainActor
 final class WatchAppViewModel: ObservableObject {
@@ -48,6 +47,7 @@ final class WatchAppViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Trigger Manual Sync
     func triggerManualSync() {
         guard !isSyncing else { return }
 
@@ -60,7 +60,6 @@ final class WatchAppViewModel: ObservableObject {
     }
 }
 
-// MARK: - Previews Support
 extension WatchAppViewModel {
     static func mock(isLoggedIn: Bool = true, isSyncing: Bool = false, trips: [Trip] = []) -> WatchAppViewModel {
         let vm = WatchAppViewModel(sessionManager: WatchSessionManager())

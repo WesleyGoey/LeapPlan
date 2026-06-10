@@ -22,6 +22,5 @@ class MockLocationService: ObservableObject, LocationServiceProtocol {
     }
 
     func requestLocationPermission() {
-        // null lol
     }
 }

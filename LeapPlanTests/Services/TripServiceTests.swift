@@ -34,7 +34,6 @@ final class TripServiceTests: XCTestCase {
     }
 
     // MARK: - Test Cases
-
     func testGenerateRandomItinerary_FiltersInvalidPlaces() async throws {
         let rawPlaces = [
             FSQPlace(
@@ -70,13 +69,10 @@ final class TripServiceTests: XCTestCase {
             ]
         )
 
-        // Act
         let result = try await service.generateRandomItinerary(
             preferences: prefs
         )
 
-        // Assert
-        // Seharusnya hanya "Pantai Indah" yang tersisa (count 1)
         let firstDestinationsCount: Int = await MainActor.run {
             result.first?.destinations.count ?? 0
         }
@@ -88,7 +84,6 @@ final class TripServiceTests: XCTestCase {
     }
 
     func testGenerateRandomItinerary_CreatesCorrectStructure() async throws {
-        // Arrange
         let place = FSQPlace(
             fsq_place_id: "1",
             name: "Wisata A",
@@ -108,12 +103,10 @@ final class TripServiceTests: XCTestCase {
             ]
         )
 
-        // Act
         let result = try await service.generateRandomItinerary(
             preferences: prefs
         )
 
-        // Assert
         XCTAssertEqual(result.count, 2, "Harus menghasilkan 2 hari perjalanan")
         let firstDayNumber: Int = await MainActor.run { result[0].dayNumber }
         let secondDayNumber: Int = await MainActor.run { result[1].dayNumber }
@@ -129,8 +122,7 @@ final class TripServiceTests: XCTestCase {
     }
 
     func testGenerateRandomItinerary_HandlesError() async {
-        // Arrange
-        mockFourSquareService.shouldThrowError = true  // Misal API Foursquare mati
+        mockFourSquareService.shouldThrowError = true
 
         let prefs = RandomTripPreferences(
             locationName: "Surabaya",
@@ -139,7 +131,6 @@ final class TripServiceTests: XCTestCase {
             dailyPreferences: []
         )
 
-        // Act & Assert
         do {
             _ = try await service.generateRandomItinerary(preferences: prefs)
             XCTFail("Harusnya melempar error")

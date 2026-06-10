@@ -21,6 +21,7 @@ final class WatchTripsViewModel: ObservableObject {
         self.tripService = tripService
     }
     
+    // MARK: - Fetch Trips
     func fetchTrips() {
         guard !isLoading else { return }
         isLoading = true

@@ -16,13 +16,11 @@ struct WatchTripsView: View {
 
     var body: some View {
         ZStack {
-            // Main Background
             Color(hex: "#F2F2F7")
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    // MARK: - Header Area
                     HStack {
                         Text("My Trips")
                             .font(.system(size: 18, weight: .bold))
@@ -30,7 +28,6 @@ struct WatchTripsView: View {
 
                         Spacer()
 
-                        // Circular notification-style badge
                         ZStack {
                             Circle()
                                 .fill(Color(hex: "#E5E5EA"))
@@ -45,7 +42,6 @@ struct WatchTripsView: View {
                     .padding(.bottom, 4)
                     .padding(.top, 8)
 
-                    // MARK: - List Area
                     if filteredTrips.isEmpty {
                         VStack(spacing: 8) {
                             Image(systemName: "airplane.departure")
@@ -73,7 +69,7 @@ struct WatchTripsView: View {
     }
 }
 
-// MARK: - Trip Card Design
+// MARK: - Watch Trip Card View
 struct WatchTripCardView: View {
     let trip: Trip
 
@@ -103,6 +99,7 @@ struct WatchTripCardView: View {
         return .gray
     }
     
+    // MARK: - Formatted Dates
     private func formattedDates() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
@@ -112,7 +109,6 @@ struct WatchTripCardView: View {
     var body: some View {
         NavigationLink(destination: WatchTripDetailView(viewModel: WatchTripDetailViewModel(trip: trip))) {
             HStack(spacing: 0) {
-                // Left color bar
                 RoundedRectangle(cornerRadius: 2)
                     .fill(barColor)
                     .frame(width: 4)
@@ -120,7 +116,6 @@ struct WatchTripCardView: View {
                     .padding(.leading, 8)
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    // Dynamic Status Tag Pill
                     Text(trip.status.rawValue.capitalized)
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(pillTextColor)
@@ -130,13 +125,11 @@ struct WatchTripCardView: View {
                             Capsule().fill(pillBackgroundColor)
                         )
 
-                    // Trip Title
                     Text(trip.title)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(Color(hex: "#222831"))
                         .lineLimit(1)
                     
-                    // Dates
                     Text(formattedDates())
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.gray)
@@ -146,7 +139,6 @@ struct WatchTripCardView: View {
                 
                 Spacer()
             
-                // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color.gray.opacity(0.4))
@@ -157,7 +149,6 @@ struct WatchTripCardView: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color.white)
             )
-            // Subtle shadow
             .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)

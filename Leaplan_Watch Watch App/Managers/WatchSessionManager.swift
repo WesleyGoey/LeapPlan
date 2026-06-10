@@ -22,6 +22,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    // MARK: - Send Sync Request
     func sendSyncRequest() {
         guard WCSession.default.activationState == .activated,
             WCSession.default.isReachable
@@ -46,6 +47,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         )
     }
 
+    // MARK: - Session
     nonisolated func session(
         _ session: WCSession,
         activationDidCompleteWith activationState: WCSessionActivationState,
@@ -66,6 +68,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    // MARK: - Session
     nonisolated func session(
         _ session: WCSession,
         didReceiveApplicationContext applicationContext: [String: Any]
@@ -75,6 +78,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    // MARK: - Session
     nonisolated func session(
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
@@ -84,6 +88,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    // MARK: - Session
     nonisolated func session(
         _ session: WCSession,
         didReceiveMessage message: [String: Any],
@@ -95,8 +100,8 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         replyHandler(["status": "received"])
     }
 
-    // MARK: - Payload Handler
 
+    // MARK: - Handle Payload
     private func handlePayload(_ payload: [String: Any]) {
         if let loginStatus = payload["isLoggedIn"] as? Bool {
             self.isLoggedIn = loginStatus
@@ -118,6 +123,7 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    // MARK: - Decode Trips
     private func decodeTrips(from data: Data) {
         do {
             let decoder = JSONDecoder()

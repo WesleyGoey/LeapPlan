@@ -91,7 +91,6 @@ struct WatchLoginPromptView: View {
     }
 }
 
-// MARK: - Color Hex Extension
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
