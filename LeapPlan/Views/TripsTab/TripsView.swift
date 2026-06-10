@@ -10,7 +10,7 @@ import SwiftUI
 
 struct TripsView: View {
     @StateObject var viewModel: TripViewModel
-    @State private var selectedTab: TripStatus = .upcoming
+    @State private var selectedTab: TripStatus = .ongoing
 
     @State private var isShowingFABMenu: Bool = false
     @State private var navigationPath = NavigationPath()
@@ -117,10 +117,10 @@ struct TripsView: View {
     // MARK: - Subviews
     private var statusTabBar: some View {
         HStack(spacing: 0) {
-            tabButton(title: "Upcoming", status: .upcoming).frame(
+            tabButton(title: "Ongoing", status: .ongoing).frame(
                 maxWidth: .infinity
             )
-            tabButton(title: "Ongoing", status: .ongoing).frame(
+            tabButton(title: "Upcoming", status: .upcoming).frame(
                 maxWidth: .infinity
             )
             tabButton(title: "Past", status: .past).frame(maxWidth: .infinity)

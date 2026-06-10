@@ -1,7 +1,7 @@
 import Foundation
 
 class GroqRepository: GroqRepositoryProtocol {
-    private let apiKey = "masukkan api"
+    private let apiKey = ""
     
     func fetchGroqResponse(payload: GroqRequest) async throws -> GroqResponse {
         let urlString = "https://api.groq.com/openai/v1/chat/completions"

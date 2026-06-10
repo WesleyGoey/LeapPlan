@@ -13,7 +13,7 @@ struct AddToItinerarySheetView: View {
 
     let place: FSQPlace
     @State private var selectedTrip: Trip? = nil
-    @State private var selectedTab: TripStatus = .upcoming
+    @State private var selectedTab: TripStatus = .ongoing
 
     @State private var selectedDays: Set<Int> = []
 
@@ -190,8 +190,8 @@ struct AddToItinerarySheetView: View {
 
     private var statusTabBar: some View {
         HStack(spacing: 0) {
-            tabButton(title: "Upcoming", status: .upcoming).frame(maxWidth: .infinity)
             tabButton(title: "Ongoing", status: .ongoing).frame(maxWidth: .infinity)
+            tabButton(title: "Upcoming", status: .upcoming).frame(maxWidth: .infinity)
             tabButton(title: "Past", status: .past).frame(maxWidth: .infinity)
         }.padding(.horizontal, 8)
     }

@@ -8,26 +8,21 @@ struct FSQResponse: Codable {
 
 // MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
-    // Foursquare V3 API mengganti key dari "fsq_place_id" ke "fsq_id"
-    // Kita panggil CodingKeys biar di dalem app kita tetep pake variabel fsq_place_id
-    enum CodingKeys: String, CodingKey {
-        case fsq_place_id = "fsq_id"
-        case name, distance, location, rating, stats, photos
-        case geocodes
-    }
-
     let fsq_place_id: String
     let name: String
     let distance: Int?
-    let latitude: Double?
-    let longitude: Double?
     let location: FSQLocation?
+    let geocodes: FSQGeocodes?
 
     var id: String { fsq_place_id }
     
-    // Helper buat ngambil lat/long biar kompatibel sama sisa kode lu
     var latitude: Double? { geocodes?.main?.latitude }
     var longitude: Double? { geocodes?.main?.longitude }
+
+    enum CodingKeys: String, CodingKey {
+        case fsq_place_id = "fsq_id"
+        case name, distance, location, geocodes
+    }
 
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {
         return lhs.fsq_place_id == rhs.fsq_place_id
@@ -38,6 +33,15 @@ struct FSQPlace: Identifiable, Codable, Equatable {
 struct FSQLocation: Codable {
     let locality: String?
     let country: String?
+}
+
+struct FSQGeocodes: Codable {
+    let main: FSQCoordinate?
+}
+
+struct FSQCoordinate: Codable {
+    let latitude: Double?
+    let longitude: Double?
 }
 
 // MARK: - MapKit Compatibility Extension

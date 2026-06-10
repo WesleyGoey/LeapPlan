@@ -59,7 +59,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         try handleResponse(data: data, response: response)
         
         let rawPlaces = try JSONDecoder().decode(FSQResponse.self, from: data).results
-        return mapPhotos(for: rawPlaces)
+        return rawPlaces
     }
 
     func searchPlacesByCity(near city: String, query: String, limit: Int)
@@ -84,7 +84,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
 
         struct FSQSearchResponse: Codable { let results: [FSQPlace] }
         let rawPlaces = try JSONDecoder().decode(FSQSearchResponse.self, from: data).results
-        return mapPhotos(for: rawPlaces)
+        return rawPlaces
     }
 
     func fetchPlaces(near city: String, categoryID: String, limit: Int)
@@ -105,7 +105,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         try handleResponse(data: data, response: response)
         
         let rawPlaces = try JSONDecoder().decode(FSQResponse.self, from: data).results
-        return mapPhotos(for: rawPlaces) // Panggil fungsi helper di bawah
+        return rawPlaces
     }
 
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
@@ -134,9 +134,11 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 fsq_place_id: result.text.primary,
                 name: fullName,
                 distance: 0,
-                latitude: geoItem.center?.latitude ?? 0.0,
-                longitude: geoItem.center?.longitude ?? 0.0,
-                location: nil
+                location: nil,
+                geocodes: FSQGeocodes(main: FSQCoordinate(
+                    latitude: geoItem.center?.latitude ?? 0.0,
+                    longitude: geoItem.center?.longitude ?? 0.0
+                ))
             )
         }
     }
