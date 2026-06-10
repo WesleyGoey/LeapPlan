@@ -10,6 +10,7 @@ import SwiftUI
 struct TripCardView: View {
     let trip: Trip
     var placesCount: Int = 0
+    @State private var decodedImage: UIImage? = nil
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -27,7 +28,7 @@ struct TripCardView: View {
                             fallbackImage()
                         }
                     }
-                } else if let uiImage = Base64Helper.decode(imgString) {
+                } else if let uiImage = decodedImage {
                     Image(uiImage: uiImage).resizable().scaledToFill()
                         .frame(height: 220).clipped()
                 } else {
@@ -84,6 +85,19 @@ struct TripCardView: View {
         .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .task(id: trip.coverImageUrl) {
+            if let imgString = trip.coverImageUrl, !imgString.starts(with: "http") {
+                if decodedImage == nil {
+                    Task.detached(priority: .userInitiated) {
+                        if let img = Base64Helper.decode(imgString) {
+                            await MainActor.run {
+                                self.decodedImage = img
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder

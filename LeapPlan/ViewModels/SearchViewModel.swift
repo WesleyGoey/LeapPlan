@@ -119,26 +119,16 @@ class SearchViewModel: ObservableObject {
     }
 
     func handleAppleMapFeatureClick(_ feature: MapFeature) {
-            // 1. Bungkus lat & long ke dalem Geocodes sesuai model baru
-            let lat = feature.coordinate.latitude
-            let lng = feature.coordinate.longitude
-            let geocodesData = FSQGeocodes(main: FSQMainGeocode(latitude: lat, longitude: lng))
-            
-            // 2. Bikin tempPlace pake format model FSQPlace yang udah di-update
-            let tempPlace = FSQPlace(
-                fsq_place_id: UUID().uuidString,
-                name: feature.title ?? "Selected Location",
-                distance: 0,
-                location: nil,
-                rating: nil,
-                stats: nil,
-                photos: nil,             // Wajib diisi nil karena kita nambahin parameter ini kemaren
-                geocodes: geocodesData,  // Masukin bungkus koordinat yang baru
-                imageURL: nil            // Wajib diisi nil juga
-            )
-            
-            selectPlace(tempPlace, isFromAppleMap: true)
-        }
+        let tempPlace = FSQPlace(
+            fsq_place_id: UUID().uuidString,
+            name: feature.title ?? "Selected Location",
+            distance: 0,
+            latitude: feature.coordinate.latitude,
+            longitude: feature.coordinate.longitude,
+            location: nil
+        )
+        selectPlace(tempPlace, isFromAppleMap: true)
+    }
 
     func getIconForCategory(name: String) -> String {
         let lowerName = name.lowercased()

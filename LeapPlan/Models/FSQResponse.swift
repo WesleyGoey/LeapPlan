@@ -19,18 +19,9 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     let fsq_place_id: String
     let name: String
     let distance: Int?
-    
+    let latitude: Double?
+    let longitude: Double?
     let location: FSQLocation?
-    let rating: Double?
-    let stats: FSQStats?
-    
-    // Nangkep array foto mentah dari Foursquare
-    let photos: [FSQPhoto]?
-
-    // Nangkep koordinat latitude longitude
-    let geocodes: FSQGeocodes?
-
-    var imageURL: String? // Diisi manual lewat helper mapPhotos() di Repository
 
     var id: String { fsq_place_id }
     
@@ -47,26 +38,6 @@ struct FSQPlace: Identifiable, Codable, Equatable {
 struct FSQLocation: Codable {
     let locality: String?
     let country: String?
-}
-
-struct FSQStats: Codable {
-    let total_ratings: Int?
-}
-
-// 🔥 STRUCT BARU BUAT NANGKEP FOTO
-struct FSQPhoto: Codable {
-    let prefix: String
-    let suffix: String
-}
-
-// 🔥 STRUCT BARU BUAT NANGKEP KOORDINAT V3
-struct FSQGeocodes: Codable {
-    let main: FSQMainGeocode?
-}
-
-struct FSQMainGeocode: Codable {
-    let latitude: Double
-    let longitude: Double
 }
 
 // MARK: - MapKit Compatibility Extension

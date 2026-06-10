@@ -13,6 +13,7 @@ struct AddToItinerarySheetView: View {
 
     let place: FSQPlace
     @State private var selectedTrip: Trip? = nil
+    @State private var selectedTab: TripStatus = .upcoming
 
     @State private var selectedDays: Set<Int> = []
 
@@ -39,23 +40,37 @@ struct AddToItinerarySheetView: View {
                         Spacer()
                     }.padding()
                 } else if selectedTrip == nil {
-                    List(tripViewModel.trips) { trip in
-                        Button(action: {
-                            withAnimation { selectedTrip = trip }
-                        }) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(trip.title).font(.headline)
-                                        .foregroundColor(.primary)
-                                    Text(trip.locationName).font(.subheadline)
-                                        .foregroundColor(.gray)
+                    VStack(spacing: 0) {
+                        statusTabBar
+                            .padding(.top, 16)
+                            .padding(.bottom, 8)
+
+                        let filteredTrips = tripViewModel.trips.filter { $0.status == selectedTab }
+                        if filteredTrips.isEmpty {
+                            Spacer()
+                            Text("No \(selectedTab.rawValue) trips found.")
+                                .foregroundColor(.gray)
+                            Spacer()
+                        } else {
+                            List(filteredTrips) { trip in
+                                Button(action: {
+                                    withAnimation { selectedTrip = trip }
+                                }) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(trip.title).font(.headline)
+                                                .foregroundColor(.primary)
+                                            Text(trip.locationName).font(.subheadline)
+                                                .foregroundColor(.gray)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.gray)
+                                    }.padding(.vertical, 4)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                            }.padding(.vertical, 4)
+                            }.listStyle(.plain)
                         }
-                    }.listStyle(.plain)
+                    }
                 } else if let trip = selectedTrip {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Sync \(place.name) to \(trip.title)")
@@ -78,7 +93,9 @@ struct AddToItinerarySheetView: View {
                             )
                             List(1...totalDays, id: \.self) { dayNum in
                                 Button(action: {
-                                    toggleDaySync(dayNum: dayNum, trip: trip)
+                                    if !selectedDays.contains(dayNum) {
+                                        toggleDaySync(dayNum: dayNum, trip: trip)
+                                    }
                                 }) {
                                     HStack {
                                         Text("Day \(dayNum)").font(.body)
@@ -105,7 +122,7 @@ struct AddToItinerarySheetView: View {
                                     }
                                     .padding(.vertical, 4)
                                 }
-                                .disabled(processingDays.contains(dayNum))
+                                .disabled(processingDays.contains(dayNum) || selectedDays.contains(dayNum))
                             }.listStyle(.plain)
                         }
                     }
@@ -153,13 +170,10 @@ struct AddToItinerarySheetView: View {
     }
 
     private func toggleDaySync(dayNum: Int, trip: Trip) {
-        let isAdding = !selectedDays.contains(dayNum)
+        // Hanya bisa add, tidak bisa remove dari sheet ini
+        guard !selectedDays.contains(dayNum) else { return }
 
-        if isAdding {
-            selectedDays.insert(dayNum)
-        } else {
-            selectedDays.remove(dayNum)
-        }
+        selectedDays.insert(dayNum)
 
         processingDays.insert(dayNum)
 
@@ -168,9 +182,35 @@ struct AddToItinerarySheetView: View {
                 place: place,
                 trip: trip,
                 dayNum: dayNum,
-                isAdding: isAdding
+                isAdding: true
             )
             processingDays.remove(dayNum)
+        }
+    }
+
+    private var statusTabBar: some View {
+        HStack(spacing: 0) {
+            tabButton(title: "Upcoming", status: .upcoming).frame(maxWidth: .infinity)
+            tabButton(title: "Ongoing", status: .ongoing).frame(maxWidth: .infinity)
+            tabButton(title: "Past", status: .past).frame(maxWidth: .infinity)
+        }.padding(.horizontal, 8)
+    }
+
+    private func tabButton(title: String, status: TripStatus) -> some View {
+        let isActive = selectedTab == status
+        return Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedTab = status
+            }
+        } label: {
+            VStack(spacing: 8) {
+                Text(title).font(
+                    .system(size: 16, weight: isActive ? .bold : .medium)
+                ).foregroundColor(isActive ? .leapPrimary : .gray)
+                
+                Rectangle().fill(isActive ? Color.leapPrimary : Color.clear)
+                    .frame(height: 3).cornerRadius(1.5)
+            }
         }
     }
 

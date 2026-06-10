@@ -42,8 +42,7 @@ class TripDestinationService: TripDestinationServiceProtocol {
                     longitude: place.longitude ?? 0.0,
                     orderIndex: nextIndex,
                     stayDurationMinutes: 120,
-                    transitTimeToNextMinutes: 15,
-                    imageURL: place.imageURL
+                    transitTimeToNextMinutes: 15
                 )
 
                 updatedPlan.destinations.append(newDestination)

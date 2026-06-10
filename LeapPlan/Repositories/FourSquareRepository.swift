@@ -8,12 +8,8 @@
 import Foundation
 
 class FourSquareRepository: FourSquareRepositoryProtocol {
-    
     private let apiKey = "3DK5KUE00UX30UQXJREU1Z0FJVSRJDU1R2QYMFOS4DCNSR4N"
-    private let baseURL = "https://places-api.foursquare.com/v3"
-
-    // 🔥 PENTING: Ini daftar data yang kita paksa minta dari Foursquare
-    private let requiredFields = "fsq_id,name,location,rating,stats,photos"
+    private let baseURL = "https://places-api.foursquare.com"
 
     private func createRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
@@ -53,7 +49,8 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 withAllowedCharacters: .urlQueryAllowed
             ),
             let url = URL(
-                string: "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15&fields=\(requiredFields)"
+                string:
+                    "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
         
@@ -76,7 +73,8 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 withAllowedCharacters: .urlQueryAllowed
             ),
             let url = URL(
-                string: "\(baseURL)/places/search?near=\(encodedCity)&query=\(encodedQuery)&limit=\(limit)&fields=\(requiredFields)"
+                string:
+                    "\(baseURL)/places/search?near=\(encodedCity)&query=\(encodedQuery)&limit=\(limit)&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
 
@@ -97,7 +95,8 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 withAllowedCharacters: .urlQueryAllowed
             ),
             let url = URL(
-                string: "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY&fields=\(requiredFields)"
+                string:
+                    "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
         
@@ -122,52 +121,24 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             let (data, response) = try await URLSession.shared.data(for: request)
             try handleResponse(data: data, response: response)
 
-            let fsqResponse = try JSONDecoder().decode(
-                FSQAutocompleteResponse.self,
-                from: data
+        let fsqResponse = try JSONDecoder().decode(
+            FSQAutocompleteResponse.self,
+            from: data
+        )
+        return fsqResponse.results.compactMap { result in
+            guard let geoItem = result.geo else { return nil }
+            let cityName = result.text.primary
+            let detail = result.text.secondary ?? ""
+            let fullName = detail.isEmpty ? cityName : "\(cityName), \(detail)"
+            return FSQPlace(
+                fsq_place_id: result.text.primary,
+                name: fullName,
+                distance: 0,
+                latitude: geoItem.center?.latitude ?? 0.0,
+                longitude: geoItem.center?.longitude ?? 0.0,
+                location: nil
             )
-            
-            // 🔥 FIX: Kasih tau Swift secara eksplisit kalau kita balikin FSQPlace?
-            return fsqResponse.results.compactMap { result -> FSQPlace? in
-                guard let geoItem = result.geo else { return nil }
-                let cityName = result.text.primary
-                let detail = result.text.secondary ?? ""
-                let fullName = detail.isEmpty ? cityName : "\(cityName), \(detail)"
-                
-                // 🔥 FIX: Bungkus latitude & longitude ke dalem Geocodes sesuai model baru
-                let lat = geoItem.center?.latitude ?? 0.0
-                let lng = geoItem.center?.longitude ?? 0.0
-                let geocodesData = FSQGeocodes(main: FSQMainGeocode(latitude: lat, longitude: lng))
-                
-                return FSQPlace(
-                    fsq_place_id: result.text.primary,
-                    name: fullName,
-                    distance: 0,
-                    location: nil,
-                    rating: nil,
-                    stats: nil,
-                    photos: nil, // Autocomplete nggak dapet foto
-                    geocodes: geocodesData, // Pake geocodes yang baru dibikin
-                    imageURL: nil
-                )
-            }
         }
-
-    // Fungsi ini udah nggak dipake lagi karena foto udah dapet dari search awal
-    func fetchPlacePhotos(id: String) async throws -> String? {
-        return nil
-    }
-    
-    // MARK: - HELPER FUNGSI BUAT JAHIT FOTO
-    // Fungsi ini otomatis ngejahit prefix + suffix dari data yang didapat
-    private func mapPhotos(for places: [FSQPlace]) -> [FSQPlace] {
-        var updatedPlaces = places
-        for i in 0..<updatedPlaces.count {
-            if let photo = updatedPlaces[i].photos?.first {
-                updatedPlaces[i].imageURL = "\(photo.prefix)original\(photo.suffix)"
-            }
-        }
-        return updatedPlaces
     }
 }
 

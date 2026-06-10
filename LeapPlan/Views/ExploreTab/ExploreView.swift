@@ -123,56 +123,17 @@ struct ExploreView: View {
                                             }
                                         }) {
                                             HStack(spacing: 15) {
-                                                if let imgUrl = place.imageURL,
-                                                    let url = URL(
-                                                        string: imgUrl
-                                                    )
-                                                {
-                                                    AsyncImage(url: url) {
-                                                        phase in
-                                                        if let image = phase
-                                                            .image
-                                                        {
-                                                            image.resizable()
-                                                                .scaledToFill()
-                                                                .frame(
-                                                                    width: 40,
-                                                                    height: 40
-                                                                ).clipShape(
-                                                                    RoundedRectangle(
-                                                                        cornerRadius:
-                                                                            8
-                                                                    )
-                                                                )
-                                                        } else {
-                                                            RoundedRectangle(
-                                                                cornerRadius: 8
-                                                            ).fill(
-                                                                Color.gray
-                                                                    .opacity(
-                                                                        0.2
-                                                                    )
-                                                            ).frame(
-                                                                width: 40,
-                                                                height: 40
-                                                            )
-                                                        }
-                                                    }
-                                                } else {
-                                                    RoundedRectangle(
-                                                        cornerRadius: 8
-                                                    ).fill(
-                                                        Color.gray.opacity(0.2)
-                                                    ).frame(
-                                                        width: 40,
-                                                        height: 40
-                                                    )
-                                                    .overlay(
-                                                        Image(
-                                                            systemName: "photo"
-                                                        ).foregroundColor(.gray)
-                                                    )
-                                                }
+                                                RoundedRectangle(
+                                                    cornerRadius: 8
+                                                ).fill(
+                                                    Color.leapPrimary.opacity(0.12)
+                                                ).frame(
+                                                    width: 40,
+                                                    height: 40
+                                                ).overlay(
+                                                    Image(systemName: "mappin.circle.fill")
+                                                        .foregroundColor(.leapPrimary.opacity(0.7))
+                                                )
 
                                                 VStack(
                                                     alignment: .leading,
@@ -243,6 +204,16 @@ struct ExploreView: View {
                         )
                     }
                     .padding(.horizontal).padding(.top, 10)
+
+                    HStack {
+                        Spacer()
+                        Text("LeapPlan")
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .foregroundColor(.leapPrimary)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 4)
+                            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                    }
                 }
 
                 Spacer()
@@ -312,38 +283,20 @@ struct PlaceDetailSheet: View {
             .padding(.top, 10)
 
             HStack(spacing: 16) {
-                if let imgUrl = place.imageURL, let url = URL(string: imgUrl) {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image {
-                            image.resizable().scaledToFill().frame(
-                                width: 80,
-                                height: 80
-                            ).clipShape(RoundedRectangle(cornerRadius: 12))
-                        } else {
-                            RoundedRectangle(cornerRadius: 12).fill(
-                                Color.gray.opacity(0.2)
-                            ).frame(width: 80, height: 80).overlay(
-                                ProgressView()
-                            )
-                        }
-                    }
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.leapPrimary, Color.teal],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.leapPrimary, Color.teal],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .frame(width: 80, height: 80)
-                        .overlay(
-                            Image(systemName: "building.2.crop.circle.fill")
-                                .font(.system(size: 40)).foregroundColor(
-                                    .white.opacity(0.8)
-                                )
-                        )
-                }
+                    )
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.system(size: 36))
+                            .foregroundColor(.white.opacity(0.9))
+                    )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(place.name).font(.title3).fontWeight(.bold)
@@ -351,20 +304,16 @@ struct PlaceDetailSheet: View {
                         .subheadline
                     ).foregroundColor(.gray)
                     HStack {
-                        Image(systemName: "star.fill").foregroundColor(.yellow)
-                            .font(.caption)
-                        Text(String(format: "%.1f", place.rating ?? 4.9)).font(
-                            .caption
-                        ).fontWeight(.bold)
-                        Text("•").foregroundColor(.gray)
                         if let distance = place.distance, distance > 0 {
+                            Image(systemName: "location.fill")
+                                .font(.caption).foregroundColor(.gray)
                             Text(formatDistance(distance)).font(.caption)
                                 .foregroundColor(.gray)
                         }
                     }
                 }
             }
-            Spacer()
+            .padding(.top, 12)
 
             VStack(spacing: 8) {
                 Button(action: {
@@ -380,7 +329,7 @@ struct PlaceDetailSheet: View {
                     }
                     .font(.headline).foregroundColor(.white).frame(
                         maxWidth: .infinity
-                    ).padding()
+                    ).padding(.vertical, 14)
                     .background(isLoggedIn ? Color.leapPrimary : Color.gray)
                     .cornerRadius(12)
                 }
@@ -393,9 +342,11 @@ struct PlaceDetailSheet: View {
                     .font(.caption2).foregroundColor(.gray)
                 }
             }
-            .padding(.bottom, 20)
+            .padding(.top, 4)
+            
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 24).padding(.top, 10)
+        .padding(.horizontal, 24).padding(.top, 16)
     }
 
     private func formatDistance(_ meters: Int) -> String {

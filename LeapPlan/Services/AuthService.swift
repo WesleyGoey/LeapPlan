@@ -10,7 +10,7 @@ import FirebaseAuth
 import Foundation
 
 class AuthService: ObservableObject, AuthServiceProtocol {
-    @Published var isLoggedIn: Bool = false
+    @Published var isLoggedIn: Bool = (Auth.auth().currentUser != nil)
 
     private let authRepo: AuthRepositoryProtocol
     private var authStateListenerHandle: AuthStateDidChangeListenerHandle?

@@ -14,32 +14,13 @@ class FourSquareService: FourSquareServiceProtocol {
         self.repo = repo
     }
 
-    // MARK: - ASYNC TASKGROUP UNTUK MENGUNDUH URL GAMBAR SERENTAK
-    private func attachPhotos(to places: [FSQPlace]) async -> [FSQPlace] {
-        return await withTaskGroup(of: (Int, String?).self) { group in
-            for (index, place) in places.enumerated() {
-                group.addTask {
-                    let url = try? await self.repo.fetchPlacePhotos(
-                        id: place.fsq_place_id
-                    )
-                    return (index, url)
-                }
-            }
-            var updatedPlaces = places
-            for await (index, url) in group {
-                updatedPlaces[index].imageURL = url
-            }
-            return updatedPlaces
-        }
-    }
-
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
         let places = try await repo.fetchPlaces(
             near: city,
             categoryID: "16000",
             limit: 10
         )
-        return await attachPhotos(to: places)
+        return places
     }
 
     func searchPlaces(query: String, latitude: Double, longitude: Double)
@@ -50,7 +31,7 @@ class FourSquareService: FourSquareServiceProtocol {
             latitude: latitude,
             longitude: longitude
         )
-        return await attachPhotos(to: places)
+        return places
     }
 
     func fetchPlaces(near city: String, categoryID: String, limit: Int)
@@ -61,7 +42,7 @@ class FourSquareService: FourSquareServiceProtocol {
             categoryID: categoryID,
             limit: limit
         )
-        return await attachPhotos(to: places)
+        return places
     }
 
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
@@ -76,6 +57,6 @@ class FourSquareService: FourSquareServiceProtocol {
             query: query,
             limit: limit
         )
-        return await attachPhotos(to: places)
+        return places
     }
 }

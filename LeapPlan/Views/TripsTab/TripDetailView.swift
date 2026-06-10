@@ -395,37 +395,6 @@ struct TimelineRowView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 12) {
-                        Group {
-                            if let imgUrl = destination.imageURL, let url = URL(string: imgUrl) {
-                                AsyncImage(url: url) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        ProgressView()
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 60, height: 60)
-                                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    case .failure:
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.gray.opacity(0.2))
-                                            .overlay(Image(systemName: "photo").foregroundColor(.gray))
-                                    @unknown default:
-                                        EmptyView()
-                                    }
-                                }
-                                .frame(width: 60, height: 60)
-                            } else {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(width: 60, height: 60)
-                                    .overlay(
-                                        Image(systemName: "photo").foregroundColor(.gray)
-                                    )
-                            }
-                        }
-
                     VStack(alignment: .leading, spacing: 4) {
                         Text(destination.name).font(.headline).foregroundColor(
                             .leapSecondary
