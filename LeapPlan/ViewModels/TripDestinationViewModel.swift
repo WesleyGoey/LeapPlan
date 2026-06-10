@@ -230,8 +230,7 @@ class TripDestinationViewModel: ObservableObject {
             longitude: place?.longitude ?? 0.0,
             orderIndex: dayPlans[selectedDayIndex].destinations.count,
             stayDurationMinutes: durationMinutes,
-            transitTimeToNextMinutes: 30,
-            imageURL: place?.imageURL
+            transitTimeToNextMinutes: 30
         )
 
         dayPlans[selectedDayIndex].destinations.append(newDest)
@@ -270,8 +269,6 @@ class TripDestinationViewModel: ObservableObject {
                     newPlace.latitude ?? 0.0
                 dayPlans[selectedDayIndex].destinations[index].longitude =
                     newPlace.longitude ?? 0.0
-                dayPlans[selectedDayIndex].destinations[index].imageURL =
-                    newPlace.imageURL
             }
 
             Task {
@@ -334,8 +331,7 @@ class TripDestinationViewModel: ObservableObject {
                         orderIndex: dayPlans[selectedDayIndex].destinations
                             .count,
                         stayDurationMinutes: 120,
-                        transitTimeToNextMinutes: 30,
-                        imageURL: randomPlace.imageURL
+                        transitTimeToNextMinutes: 30
                     )
                     dayPlans[selectedDayIndex].destinations.append(newDest)
                     

@@ -49,7 +49,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             ),
             let url = URL(
                 string:
-                    "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15"
+                    "\(baseURL)/places/search?query=\(encodedQuery)&ll=\(latitude),\(longitude)&limit=15&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
         let request = createRequest(url: url)
@@ -70,7 +70,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             ),
             let url = URL(
                 string:
-                    "\(baseURL)/places/search?near=\(encodedCity)&query=\(encodedQuery)&limit=\(limit)"
+                    "\(baseURL)/places/search?near=\(encodedCity)&query=\(encodedQuery)&limit=\(limit)&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
 
@@ -92,7 +92,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             ),
             let url = URL(
                 string:
-                    "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY"
+                    "\(baseURL)/places/search?near=\(encodedCity)&categories=\(categoryID)&limit=\(limit)&sort=POPULARITY&fields=fsq_place_id,name,latitude,longitude,location"
             )
         else { throw URLError(.badURL) }
         let request = createRequest(url: url)
@@ -130,43 +130,9 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 distance: 0,
                 latitude: geoItem.center?.latitude ?? 0.0,
                 longitude: geoItem.center?.longitude ?? 0.0,
-                location: nil,
-                rating: nil,
-                stats: nil
+                location: nil
             )
         }
-    }
-
-    // MARK: - API UNTUK FOTO FOURSQUARE
-    func fetchPlacePhotos(id: String) async throws -> String? {
-        guard
-            let url = URL(
-                string: "\(baseURL)/places/\(id)/photos?limit=1&sort=POPULAR"
-            )
-        else { return nil }
-        let request = createRequest(url: url)
-        do {
-            let (data, response) = try await URLSession.shared.data(
-                for: request
-            )
-            guard let httpResponse = response as? HTTPURLResponse,
-                httpResponse.statusCode == 200
-            else { return nil }
-
-            struct FSQPhotoResponse: Codable {
-                let prefix: String
-                let suffix: String
-            }
-            let photos = try JSONDecoder().decode(
-                [FSQPhotoResponse].self,
-                from: data
-            )
-
-            if let first = photos.first {
-                return "\(first.prefix)500x500\(first.suffix)"
-            }
-            return nil
-        } catch { return nil }
     }
 }
 

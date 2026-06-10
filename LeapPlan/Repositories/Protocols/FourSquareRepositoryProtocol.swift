@@ -16,6 +16,4 @@ protocol FourSquareRepositoryProtocol {
     func autocompleteLocation(query: String) async throws -> [FSQPlace]
     func searchPlacesByCity(near city: String, query: String, limit: Int)
         async throws -> [FSQPlace]
-    func fetchPlacePhotos(id: String) async throws -> String?
-
 }

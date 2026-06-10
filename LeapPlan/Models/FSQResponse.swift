@@ -20,12 +20,7 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     let distance: Int?
     let latitude: Double?
     let longitude: Double?
-
     let location: FSQLocation?
-    let rating: Double?
-    let stats: FSQStats?
-
-    var imageURL: String?
 
     var id: String { fsq_place_id }
 
@@ -38,10 +33,6 @@ struct FSQPlace: Identifiable, Codable, Equatable {
 struct FSQLocation: Codable {
     let locality: String?
     let country: String?
-}
-
-struct FSQStats: Codable {
-    let total_ratings: Int?
 }
 
 // MARK: - MapKit Compatibility Extension

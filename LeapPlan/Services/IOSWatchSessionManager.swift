@@ -324,8 +324,7 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                                 longitude: randomPlace.longitude ?? 0.0,
                                 orderIndex: plan.destinations.count,
                                 stayDurationMinutes: 120,
-                                transitTimeToNextMinutes: 30,
-                                imageURL: randomPlace.imageURL
+                                transitTimeToNextMinutes: 30
                             )
                             plan.destinations.append(newDest)
                             try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)

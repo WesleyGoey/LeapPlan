@@ -125,9 +125,7 @@ class SearchViewModel: ObservableObject {
             distance: 0,
             latitude: feature.coordinate.latitude,
             longitude: feature.coordinate.longitude,
-            location: nil,
-            rating: nil,
-            stats: nil
+            location: nil
         )
         selectPlace(tempPlace, isFromAppleMap: true)
     }
