@@ -97,12 +97,13 @@ struct ChatBubble: View {
             
             Text(message.content)
                 .padding(14)
-                .background(isUser ? Color.leapPrimary : Color.gray.opacity(0.15))
+                .background(isUser ? Color.leapPrimary.opacity(0.8) : Color.white.opacity(0.8))
                 .foregroundColor(isUser ? .white : .primary)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
+                .shadow(color: .black.opacity(isUser ? 0 : 0.05), radius: 5, y: 2)
                 .overlay(
                     Image(systemName: "arrowtriangle.down.fill")
-                        .foregroundColor(isUser ? Color.leapPrimary : Color.gray.opacity(0.15))
+                        .foregroundColor(isUser ? Color.leapPrimary.opacity(0.8) : Color.white.opacity(0.8))
                         .rotationEffect(.degrees(isUser ? -45 : 45))
                         .offset(x: isUser ? 5 : -5, y: 5)
                     , alignment: isUser ? .bottomTrailing : .bottomLeading
