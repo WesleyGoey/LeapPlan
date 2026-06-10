@@ -108,7 +108,7 @@ struct WatchTripCardView: View {
     }
 
     var body: some View {
-        NavigationLink(destination: WatchDetailTripView(viewModel: WatchDetailTripViewModel(trip: trip))) {
+        NavigationLink(destination: WatchTripDetailView(viewModel: WatchTripDetailViewModel(trip: trip))) {
             HStack(spacing: 0) {
                 // Left color bar
                 RoundedRectangle(cornerRadius: 2)

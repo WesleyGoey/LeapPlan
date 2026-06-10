@@ -35,7 +35,22 @@ final class WatchAppViewModel: ObservableObject {
 
         self.sessionManager.$syncedTrips
             .receive(on: RunLoop.main)
-            .assign(to: \.trips, on: self)
+            .sink { [weak self] newTrips in
+                guard let self = self else { return }
+                // Filter out .past and sort: .ongoing (0) -> .upcoming (1)
+                self.trips = newTrips
+                    .filter { $0.status == .ongoing || $0.status == .upcoming }
+                    .sorted { trip1, trip2 in
+                        let order1 = trip1.status == .ongoing ? 0 : 1
+                        let order2 = trip2.status == .ongoing ? 0 : 1
+                        
+                        if order1 != order2 {
+                            return order1 < order2
+                        } else {
+                            return trip1.startDate < trip2.startDate
+                        }
+                    }
+            }
             .store(in: &cancellables)
     }
 

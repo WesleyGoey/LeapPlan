@@ -1,5 +1,5 @@
 //
-//  WatchDetailTripViewModel.swift
+//  WatchTripDetailViewModel.swift
 //  Leaplan_Watch Watch App
 //
 
@@ -9,7 +9,7 @@ import MapKit
 import SwiftUI
 
 @MainActor
-final class WatchDetailTripViewModel: ObservableObject {
+final class WatchTripDetailViewModel: ObservableObject {
     @Published var dayPlans: [DayPlan] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
@@ -30,7 +30,7 @@ final class WatchDetailTripViewModel: ObservableObject {
         Task {
             do {
                 guard let tripId = trip.id else {
-                    throw NSError(domain: "WatchDetailTripViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid trip ID"])
+                    throw NSError(domain: "WatchTripDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid trip ID"])
                 }
                 let plans = try await tripService.getTripDetails(tripId: tripId)
                 self.dayPlans = plans.sorted(by: { $0.dayNumber < $1.dayNumber })
@@ -123,5 +123,45 @@ final class WatchDetailTripViewModel: ObservableObject {
     
     var currentRegion: MKCoordinateRegion {
         return region(for: selectedDayDestinations)
+    }
+    
+    func generateRandomPlace() {
+        guard let tripId = trip.id, !dayPlans.isEmpty, selectedDayIndex < dayPlans.count else { return }
+        let dayPlanId = dayPlans[selectedDayIndex].id ?? ""
+        isLoading = true
+        
+        Task {
+            do {
+                _ = try await tripService.generateRandomPlace(tripId: tripId, dayPlanId: dayPlanId, tripLocationName: trip.locationName)
+                // Fetch updated details
+                let plans = try await tripService.getTripDetails(tripId: tripId)
+                self.dayPlans = plans.sorted(by: { $0.dayNumber < $1.dayNumber })
+                self.calculateRoutes()
+                self.isLoading = false
+            } catch {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func moveDestination(from source: IndexSet, to destination: Int) {
+        guard !dayPlans.isEmpty, selectedDayIndex < dayPlans.count, let tripId = trip.id else { return }
+        
+        dayPlans[selectedDayIndex].destinations.move(fromOffsets: source, toOffset: destination)
+        // Update orderIndex
+        for (i, _) in dayPlans[selectedDayIndex].destinations.enumerated() {
+            dayPlans[selectedDayIndex].destinations[i].orderIndex = i
+        }
+        self.calculateRoutes()
+        
+        let planToSave = dayPlans[selectedDayIndex]
+        Task {
+            do {
+                _ = try await tripService.saveReorderedDestinations(tripId: tripId, dayPlan: planToSave)
+            } catch {
+                print("Failed to save reordered destinations: \(error)")
+            }
+        }
     }
 }

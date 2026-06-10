@@ -334,9 +334,23 @@ class TripDestinationViewModel: ObservableObject {
                         orderIndex: dayPlans[selectedDayIndex].destinations
                             .count,
                         stayDurationMinutes: 120,
-                        transitTimeToNextMinutes: 30
+                        transitTimeToNextMinutes: 30,
+                        imageURL: randomPlace.imageURL
                     )
                     dayPlans[selectedDayIndex].destinations.append(newDest)
+                    
+                    if let tripID = trip.id {
+                        try await tripDestinationService.saveReorderedDestinations(
+                            dayPlan: dayPlans[selectedDayIndex],
+                            tripID: tripID,
+                            userID: activeUserID
+                        )
+                        calculateActualDrivingRoutes()
+                        
+                        Task { @MainActor in
+                            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
+                        }
+                    }
                 }
             } catch {
                 print("Generate error: \(error.localizedDescription)")

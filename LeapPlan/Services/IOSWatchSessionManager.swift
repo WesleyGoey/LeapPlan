@@ -93,7 +93,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         }
     }
 
-    private func fetchAndSyncTrips(for userID: String) async {
+    func fetchAndSyncTrips(for userID: String) async {
         do {
             let trips = try await firestoreRepo.fetchTrips(forUserID: userID)
             let updatedTrips = self.calculateStatuses(for: trips)
@@ -274,6 +274,104 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                         }
                     } catch {
                         print("[IOSWatchSessionManager] Failed to fetch day plans: \(error)")
+                        replyHandler(["status": "error", "message": error.localizedDescription])
+                    }
+                }
+
+            case "generateRandomPlace":
+                print("[IOSWatchSessionManager] Watch requested generateRandomPlace.")
+                guard let tripId = message["tripId"] as? String,
+                      let dayPlanId = message["dayPlanId"] as? String,
+                      let tripLocationName = message["tripLocationName"] as? String,
+                      let uid = Auth.auth().currentUser?.uid else {
+                    replyHandler(["status": "error", "message": "Missing tripId/dayPlanId or user not logged in"])
+                    return
+                }
+                
+                Task { @MainActor in
+                    do {
+                        let firestore = FirestoreRepository()
+                        let fsqService = FourSquareService()
+                        let tripDestService = TripDestinationService()
+                        
+                        let dayPlans = try await firestore.fetchDayPlans(forTripID: tripId, userID: uid)
+                        guard let planIndex = dayPlans.firstIndex(where: { $0.id == dayPlanId }) else {
+                            replyHandler(["status": "error", "message": "Day Plan not found"])
+                            return
+                        }
+                        
+                        var plan = dayPlans[planIndex]
+                        
+                        let placeCategories = "16000,10027,10055,16032,10044"
+                        var availablePlaces = try await fsqService.fetchPlaces(near: tripLocationName, categoryID: placeCategories, limit: 30)
+                        
+                        let invalidWords = ["toko", "store", "shop", "mart", "market", "pasar", "supermarket", "indomaret", "alfamart", "masjid", "vihara", "gereja", "pura", "temple", "shrine", "bank", "atm", "hotel", "penginapan", "kost", "resto", "cafe", "warung", "bakso", "soto", "nasi", "mie", "rs", "klinik", "hospital", "xxi", "cgv", "bioskop"]
+                        availablePlaces.removeAll { place in
+                            let lowerName = place.name.lowercased()
+                            return invalidWords.contains(where: { lowerName.contains($0) })
+                        }
+                        
+                        let existingIDs = Set(plan.destinations.compactMap { $0.foursquareID })
+                        availablePlaces.removeAll { existingIDs.contains($0.fsq_place_id) }
+                        
+                        if let randomPlace = availablePlaces.randomElement() {
+                            let newDest = TripDestination(
+                                id: UUID().uuidString,
+                                name: randomPlace.name,
+                                category: "Objek Wisata",
+                                foursquareID: randomPlace.fsq_place_id,
+                                latitude: randomPlace.latitude ?? 0.0,
+                                longitude: randomPlace.longitude ?? 0.0,
+                                orderIndex: plan.destinations.count,
+                                stayDurationMinutes: 120,
+                                transitTimeToNextMinutes: 30,
+                                imageURL: randomPlace.imageURL
+                            )
+                            plan.destinations.append(newDest)
+                            try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)
+                            
+                            // Re-sync trips eager push just in case
+                            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
+                            
+                            replyHandler(["status": "success"])
+                        } else {
+                            replyHandler(["status": "error", "message": "No places found"])
+                        }
+                    } catch {
+                        print("[IOSWatchSessionManager] Failed to generate place: \(error)")
+                        replyHandler(["status": "error", "message": error.localizedDescription])
+                    }
+                }
+                
+            case "saveReorderedDestinations":
+                print("[IOSWatchSessionManager] Watch requested saveReorderedDestinations.")
+                guard let tripId = message["tripId"] as? String,
+                      let dayPlanJSON = message["dayPlanJSON"] as? String,
+                      let uid = Auth.auth().currentUser?.uid else {
+                    replyHandler(["status": "error", "message": "Missing info or user not logged in"])
+                    return
+                }
+                
+                Task { @MainActor in
+                    do {
+                        let decoder = JSONDecoder()
+                        decoder.dateDecodingStrategy = .secondsSince1970
+                        if let data = dayPlanJSON.data(using: .utf8) {
+                            let dto = try decoder.decode(DayPlanDTO.self, from: data)
+                            let plan = DayPlan(id: dto.id, dayNumber: dto.dayNumber, date: dto.date, destinations: dto.destinations)
+                            
+                            let tripDestService = TripDestinationService()
+                            try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)
+                            
+                            // Eager fetch update
+                            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
+                            
+                            replyHandler(["status": "success"])
+                        } else {
+                            replyHandler(["status": "error", "message": "Invalid JSON data"])
+                        }
+                    } catch {
+                        print("[IOSWatchSessionManager] Failed to save reordered dests: \(error)")
                         replyHandler(["status": "error", "message": error.localizedDescription])
                     }
                 }

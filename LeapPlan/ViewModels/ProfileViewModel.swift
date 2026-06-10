@@ -56,9 +56,14 @@ class ProfileViewModel: ObservableObject {
                     forUserID: userID
                 )
                 self.totalTripsCount = userTrips.count
+                let now = Date()
                 self.upcomingTripsCount =
-                    userTrips.filter {
-                        $0.status == .upcoming || $0.status == .ongoing
+                    userTrips.filter { trip in
+                        let status: TripStatus
+                        if now < trip.startDate { status = .upcoming }
+                        else if now >= trip.startDate && now <= trip.endDate { status = .ongoing }
+                        else { status = .past }
+                        return status == .upcoming
                     }.count
 
                 self.isLoading = false

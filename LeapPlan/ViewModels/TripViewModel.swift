@@ -94,6 +94,21 @@ class TripViewModel: ObservableObject {
                         endDate: trip.endDate
                     )
                     return t
+                }.sorted { trip1, trip2 in
+                    let statusOrder: [TripStatus: Int] = [.ongoing: 0, .upcoming: 1, .past: 2]
+                    let order1 = statusOrder[trip1.status] ?? 3
+                    let order2 = statusOrder[trip2.status] ?? 3
+                    
+                    if order1 != order2 {
+                        return order1 < order2
+                    } else {
+                        // If same status, sort by startDate (closest first for ongoing/upcoming, newest first for past)
+                        if trip1.status == .past {
+                            return trip1.startDate > trip2.startDate
+                        } else {
+                            return trip1.startDate < trip2.startDate
+                        }
+                    }
                 }
                 self.isLoading = false
                 

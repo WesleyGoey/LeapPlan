@@ -19,4 +19,12 @@ class WatchTripService: WatchTripServiceProtocol {
     func getTripDetails(tripId: String) async throws -> [DayPlan] {
         return try await repository.fetchTripDetails(tripId: tripId)
     }
+    
+    func generateRandomPlace(tripId: String, dayPlanId: String, tripLocationName: String) async throws -> Bool {
+        return try await repository.generateRandomPlace(tripId: tripId, dayPlanId: dayPlanId, tripLocationName: tripLocationName)
+    }
+    
+    func saveReorderedDestinations(tripId: String, dayPlan: DayPlan) async throws -> Bool {
+        return try await repository.saveReorderedDestinations(tripId: tripId, dayPlan: dayPlan)
+    }
 }

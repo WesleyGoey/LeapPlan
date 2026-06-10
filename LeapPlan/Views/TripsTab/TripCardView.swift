@@ -13,26 +13,28 @@ struct TripCardView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // 1. Gambar Base64 / Fallback
-            if let base64String = trip.coverImageUrl,
-                let uiImage = Base64Helper.decode(base64String)
-            {
-                Image(uiImage: uiImage).resizable().scaledToFill().frame(
-                    height: 220
-                ).clipped()
-            } else {
-                // FALLBACK ICON DAN BACKGROUND GRADIENT
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.leapPrimary.opacity(0.8), Color.teal],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    Image(systemName: "suitcase.fill").font(.system(size: 60))
-                        .foregroundColor(.white.opacity(0.4))
+            // 1. Gambar URL / Base64 / Fallback
+            if let imgString = trip.coverImageUrl {
+                if imgString.starts(with: "http"), let url = URL(string: imgString) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                                .frame(height: 220).clipped()
+                        case .empty, .failure:
+                            fallbackImage()
+                        @unknown default:
+                            fallbackImage()
+                        }
+                    }
+                } else if let uiImage = Base64Helper.decode(imgString) {
+                    Image(uiImage: uiImage).resizable().scaledToFill()
+                        .frame(height: 220).clipped()
+                } else {
+                    fallbackImage()
                 }
-                .frame(height: 220)
-                .clipped()
+            } else {
+                fallbackImage()
             }
 
             // 2. Gradient Overlay
@@ -82,6 +84,21 @@ struct TripCardView: View {
         .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+    }
+
+    @ViewBuilder
+    private func fallbackImage() -> some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color.leapPrimary.opacity(0.8), Color.teal],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "suitcase.fill").font(.system(size: 60))
+                .foregroundColor(.white.opacity(0.4))
+        }
+        .frame(height: 220)
+        .clipped()
     }
 
     private var formattedDateRange: String {
