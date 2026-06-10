@@ -205,15 +205,22 @@ struct ExploreView: View {
                     }
                     .padding(.horizontal).padding(.top, 10)
 
-                    HStack {
+                    HStack(spacing: 8) {
                         Spacer()
+                        
+                        Image("kodok")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 36, height: 36)
+                            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                        
                         Text("LeapPlan")
                             .font(.system(size: 24, weight: .black, design: .rounded))
                             .foregroundColor(.leapPrimary)
-                            .padding(.horizontal, 24)
-                            .padding(.top, 4)
                             .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 4)
                 }
 
                 Spacer()

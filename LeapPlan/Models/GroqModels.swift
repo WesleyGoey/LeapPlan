@@ -2,7 +2,7 @@ import Foundation
 
 struct ChatMessage: Identifiable, Hashable {
     let id = UUID()
-    let role: String // "user" atau "assistant"
+    let role: String
     let content: String
 }
 
@@ -12,7 +12,7 @@ struct GroqRequest: Codable {
 }
 
 struct GroqMessage: Codable {
-    let role: String // "system", "user", "assistant"
+    let role: String
     let content: String
 }
 

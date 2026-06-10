@@ -2,6 +2,8 @@
 //  WatchTripDetailView.swift
 //  Leaplan_Watch Watch App
 //
+//  Created by Wesley Goey on 10/06/26.
+//
 
 import MapKit
 import SwiftUI
@@ -28,13 +30,11 @@ struct WatchTripDetailView: View {
                 .padding()
             } else {
                 List {
-                    // MARK: - Full Screen Map
                     ZStack(alignment: .bottom) {
                         WatchMapView(viewModel: viewModel)
-                            .disabled(true) // Disable interaction on watch map usually
+                            .disabled(true)
                             .frame(height: WKInterfaceDevice.current().screenBounds.height)
                         
-                        // Map Overlay Info
                         VStack {
                             HStack {
                                 Text(viewModel.trip.title)
@@ -54,11 +54,10 @@ struct WatchTripDetailView: View {
                                     .background(RoundedRectangle(cornerRadius: 4).fill(Color(hex: "#00AD85")))
                             }
                             .padding(.horizontal, 8)
-                            .padding(.top, 40) // safe area approx
+                            .padding(.top, 40)
                             Spacer()
                         }
                         
-                        // Swipe up indicator
                         HStack {
                             Image(systemName: "chevron.up")
                                 .font(.system(size: 10, weight: .bold))
@@ -75,9 +74,7 @@ struct WatchTripDetailView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                     
-                    // MARK: - Itinerary Header & Day Picker
                     VStack(alignment: .leading, spacing: 12) {
-                        // Trip Info
                         VStack(alignment: .leading, spacing: 4) {
                             Text(viewModel.trip.title)
                                 .font(.system(size: 18, weight: .bold))
@@ -90,7 +87,6 @@ struct WatchTripDetailView: View {
                         }
                         .padding(.horizontal, 16)
                         
-                        // Day Picker
                         if !viewModel.availableDays.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 8) {
@@ -127,9 +123,6 @@ struct WatchTripDetailView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                     
-
-                    
-                    // MARK: - Itinerary List
                     ForEach(Array(viewModel.selectedDayDestinations.enumerated()), id: \.element.id) { index, dest in
                         WatchItineraryRow(
                             destination: dest,
@@ -200,7 +193,6 @@ struct WatchMapView: View {
                         .stroke(Color(hex: "#00AD85"), lineWidth: 4)
                 }
             } else if !viewModel.selectedDayDestinations.isEmpty {
-                // Fallback to straight dashed line while calculating
                 MapPolyline(coordinates: viewModel.selectedDayDestinations.map { $0.coordinate })
                     .stroke(Color(hex: "#00AD85").opacity(0.5), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: [8, 8]))
             }
@@ -227,13 +219,11 @@ struct WatchItineraryRow: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            // Drag icon placeholder (left side dots)
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 12))
                 .foregroundStyle(Color.gray.opacity(0.3))
                 .padding(.top, 6)
             
-            // Number Circle and Line
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
@@ -253,7 +243,6 @@ struct WatchItineraryRow: View {
                 }
             }
             
-            // Text Details
             VStack(alignment: .leading, spacing: 2) {
                 Text(destination.name)
                     .font(.system(size: 14, weight: .bold))
@@ -270,7 +259,6 @@ struct WatchItineraryRow: View {
             
             Spacer()
             
-            // Duration
             Text("\(destination.stayDurationMinutes / 60) hrs")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.gray)
