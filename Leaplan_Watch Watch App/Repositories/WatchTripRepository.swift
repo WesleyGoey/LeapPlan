@@ -8,6 +8,7 @@
 import Foundation
 import WatchConnectivity
 
+// MARK: - Day Plan Dto
 struct DayPlanDTO: Identifiable, Codable {
     var id: String?
     var dayNumber: Int
@@ -15,7 +16,9 @@ struct DayPlanDTO: Identifiable, Codable {
     var destinations: [TripDestination]
 }
 
+// MARK: - Watch Trip Repository
 class WatchTripRepository: WatchTripRepositoryProtocol {
+    // MARK: - Fetch Trips
     func fetchTrips() async throws -> [Trip] {
         return try await withCheckedThrowingContinuation { continuation in
             guard WCSession.default.activationState == .activated,
@@ -56,6 +59,7 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
         }
     }
 
+    // MARK: - Fetch Trip Details
     func fetchTripDetails(tripId: String) async throws -> [DayPlan] {
         return try await withCheckedThrowingContinuation { continuation in
             guard WCSession.default.activationState == .activated,
@@ -117,6 +121,7 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
         }
     }
 
+    // MARK: - Generate Random Place
     func generateRandomPlace(
         tripId: String,
         dayPlanId: String,
@@ -165,6 +170,7 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
         }
     }
 
+    // MARK: - Save Reordered Destinations
     func saveReorderedDestinations(tripId: String, dayPlan: DayPlan)
         async throws -> Bool
     {

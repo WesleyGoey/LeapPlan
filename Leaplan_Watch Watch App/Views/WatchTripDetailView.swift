@@ -166,7 +166,7 @@ struct WatchTripDetailView: View {
     }
 }
 
-// MARK: - Map View
+// MARK: - Watch Map View
 struct WatchMapView: View {
     @ObservedObject var viewModel: WatchTripDetailViewModel
     @State private var position: MapCameraPosition = .automatic
@@ -211,7 +211,7 @@ struct WatchMapView: View {
     }
 }
 
-// MARK: - Itinerary Row
+// MARK: - Watch Itinerary Row
 struct WatchItineraryRow: View {
     let destination: TripDestination
     let index: Int

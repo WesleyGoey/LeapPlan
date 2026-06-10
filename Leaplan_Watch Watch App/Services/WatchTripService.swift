@@ -7,6 +7,7 @@
 
 import Foundation
 
+// MARK: - Watch Trip Service
 class WatchTripService: WatchTripServiceProtocol {
     private let repository: WatchTripRepositoryProtocol
 
@@ -14,14 +15,17 @@ class WatchTripService: WatchTripServiceProtocol {
         self.repository = repository
     }
 
+    // MARK: - Get Trips
     func getTrips() async throws -> [Trip] {
         return try await repository.fetchTrips()
     }
 
+    // MARK: - Get Trip Details
     func getTripDetails(tripId: String) async throws -> [DayPlan] {
         return try await repository.fetchTripDetails(tripId: tripId)
     }
 
+    // MARK: - Generate Random Place
     func generateRandomPlace(
         tripId: String,
         dayPlanId: String,
@@ -34,6 +38,7 @@ class WatchTripService: WatchTripServiceProtocol {
         )
     }
 
+    // MARK: - Save Reordered Destinations
     func saveReorderedDestinations(tripId: String, dayPlan: DayPlan)
         async throws -> Bool
     {

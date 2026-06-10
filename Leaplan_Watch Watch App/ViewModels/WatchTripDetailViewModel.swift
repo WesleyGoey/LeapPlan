@@ -24,6 +24,7 @@ final class WatchTripDetailViewModel: ObservableObject {
         self.tripService = tripService
     }
     
+    // MARK: - Fetch Trip Details
     func fetchTripDetails() {
         guard !isLoading else { return }
         isLoading = true
@@ -47,6 +48,7 @@ final class WatchTripDetailViewModel: ObservableObject {
     
     @Published var selectedDayRoutes: [MKRoute] = []
     
+    // MARK: - Calculate Routes
     func calculateRoutes() {
         let destinations = selectedDayDestinations
         self.selectedDayRoutes = []
@@ -93,6 +95,7 @@ final class WatchTripDetailViewModel: ObservableObject {
         return Double(totalMinutes) / 60.0
     }
     
+    // MARK: - Region
     func region(for destinations: [TripDestination]) -> MKCoordinateRegion {
         guard !destinations.isEmpty else {
             return MKCoordinateRegion(
@@ -125,6 +128,7 @@ final class WatchTripDetailViewModel: ObservableObject {
         return region(for: selectedDayDestinations)
     }
     
+    // MARK: - Generate Random Place
     func generateRandomPlace() {
         guard let tripId = trip.id, !dayPlans.isEmpty, selectedDayIndex < dayPlans.count else { return }
         let dayPlanId = dayPlans[selectedDayIndex].id ?? ""
@@ -144,11 +148,11 @@ final class WatchTripDetailViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Move Destination
     func moveDestination(from source: IndexSet, to destination: Int) {
         guard !dayPlans.isEmpty, selectedDayIndex < dayPlans.count, let tripId = trip.id else { return }
         
         dayPlans[selectedDayIndex].destinations.move(fromOffsets: source, toOffset: destination)
-        // Update orderIndex
         for (i, _) in dayPlans[selectedDayIndex].destinations.enumerated() {
             dayPlans[selectedDayIndex].destinations[i].orderIndex = i
         }
