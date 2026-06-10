@@ -1,5 +1,5 @@
 import Foundation
 
-protocol GeminiServiceProtocol {
+protocol GroqServiceProtocol {
     func sendMessage(chatHistory: [ChatMessage]) async throws -> String
 }

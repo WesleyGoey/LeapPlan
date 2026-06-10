@@ -8,13 +8,13 @@ class ChatViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     
     // Dependency Injection pakai Protocol
-    private let geminiService: GeminiServiceProtocol
+    private let groqService: GroqServiceProtocol
     
-    init(geminiService: GeminiServiceProtocol = GeminiService()) {
-        self.geminiService = geminiService
+    init(groqService: GroqServiceProtocol = GroqService()) {
+        self.groqService = groqService
         
         // Pesan sapaan pertama kali saat user buka layar Chat
-        messages.append(ChatMessage(role: "model", content: "Halo! Aku LeapBot 🤖. Ada rencana liburan atau mau cari inspirasi destinasi hari ini?"))
+        messages.append(ChatMessage(role: "assistant", content: "Halo! Aku LeapBot 🤖. Ada rencana liburan atau mau cari inspirasi destinasi hari ini?"))
     }
     
     func sendMessage() async {
@@ -29,8 +29,8 @@ class ChatViewModel: ObservableObject {
         
         do {
             // 2. Minta AI mikir balesan (passing history chat)
-            let replyText = try await geminiService.sendMessage(chatHistory: messages)
-            let botReply = ChatMessage(role: "model", content: replyText)
+            let replyText = try await groqService.sendMessage(chatHistory: messages)
+            let botReply = ChatMessage(role: "assistant", content: replyText)
             messages.append(botReply)
             isLoading = false
 
@@ -39,7 +39,7 @@ class ChatViewModel: ObservableObject {
             // Nampilin pesan error TEKNIS langsung ke layar chat
             let errorMessage = "🚨 ERROR TEKNIS:\n\(error.localizedDescription)\n\nRAW INFO:\n\(String(describing: error))"
             
-            let botReply = ChatMessage(role: "model", content: errorMessage)
+            let botReply = ChatMessage(role: "assistant", content: errorMessage)
             messages.append(botReply)
             isLoading = false
         }
