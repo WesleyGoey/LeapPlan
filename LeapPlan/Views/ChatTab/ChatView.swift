@@ -13,7 +13,14 @@ struct ChatView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            ZStack {
+                Image("kodok_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 16) {
@@ -49,8 +56,9 @@ struct ChatView: View {
                     TextField("Tanya destinasi wisata...", text: $viewModel.inputText, axis: .vertical)
                         .lineLimit(1...4)
                         .padding(12)
-                        .background(Color.gray.opacity(0.1))
+                        .background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(color: .black.opacity(0.1), radius: 5, y: 2)
                         .focused($isFocused)
                     
                     Button(action: {
@@ -67,7 +75,7 @@ struct ChatView: View {
                     .disabled(viewModel.inputText.isEmpty || viewModel.isLoading)
                 }
                 .padding()
-                .background(Color(.systemBackground).shadow(radius: 2))
+            }
             }
             .navigationTitle("LeapBot AI")
             .navigationBarTitleDisplayMode(.inline)
