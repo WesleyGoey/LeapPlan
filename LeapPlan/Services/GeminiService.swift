@@ -17,7 +17,7 @@ class GeminiService: GeminiServiceProtocol {
             GeminiContent(role: msg.role, parts: [GeminiPart(text: msg.content)])
         }
         
-        let payload = GeminiRequest(system_instruction: sysInstruction, contents: geminiContents)
+        let payload = GeminiRequest(systemInstruction: sysInstruction, contents: Array(geminiContents))
         
         // Eksekusi via Repository
         let geminiResponse = try await repository.fetchGeminiResponse(payload: payload)

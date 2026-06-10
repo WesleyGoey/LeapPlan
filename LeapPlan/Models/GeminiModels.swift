@@ -9,7 +9,7 @@ struct ChatMessage: Identifiable, Hashable {
 
 // MARK: - Model untuk Request ke API Gemini
 struct GeminiRequest: Codable {
-    let system_instruction: SystemInstruction?
+    let systemInstruction: SystemInstruction?
     let contents: [GeminiContent]
 }
 

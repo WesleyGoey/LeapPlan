@@ -27,17 +27,14 @@ struct HomeView: View {
                         Spacer()
 
                         Button(action: {
-                            selectedTab = 3
+                            selectedTab = 4 // Asumsi tab Profile ada di urutan ke-5 (index 4)
                         }) {
-                            if let base64 = profileVM.currentUser?
-                                .profileImageUrl,
-                                let uiImage = Base64Helper.decode(base64)
+                            if let base64 = profileVM.currentUser?.profileImageUrl,
+                               let uiImage = Base64Helper.decode(base64)
                             {
                                 Image(uiImage: uiImage).resizable()
                                     .scaledToFill()
-                                    .frame(width: 45, height: 45).clipShape(
-                                        Circle()
-                                    )
+                                    .frame(width: 45, height: 45).clipShape(Circle())
                                     .shadow(radius: 3)
                             } else {
                                 Circle().fill(Color.leapPrimary)
@@ -52,8 +49,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                     
                     if let trip = viewModel.recentTrip {
-                        NavigationLink(destination: TripDetailView(trip: trip))
-                        {
+                        NavigationLink(destination: TripDetailView(trip: trip)) {
                             HomeRecentTripCard(
                                 trip: trip,
                                 placesCount: viewModel.recentTripPlacesCount
@@ -88,10 +84,7 @@ struct HomeView: View {
                         } else {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
-                                    ForEach(
-                                        viewModel.trendingPlaces,
-                                        id: \.fsq_place_id
-                                    ) { place in
+                                    ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
                                         HomeTrendingCard(place: place)
                                     }
                                 }
@@ -119,10 +112,7 @@ struct HomeView: View {
 
                         if !viewModel.trendingPlaces.isEmpty {
                             VStack(spacing: 14) {
-                                ForEach(
-                                    viewModel.trendingPlaces,
-                                    id: \.fsq_place_id
-                                ) { place in
+                                ForEach(viewModel.trendingPlaces, id: \.fsq_place_id) { place in
                                     HomeExploreRow(place: place)
                                 }
                             }
@@ -158,18 +148,14 @@ struct HomeRecentTripCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if let cover = trip.coverImageUrl,
-                let img = Base64Helper.decode(cover)
-            {
+            if let cover = trip.coverImageUrl, let img = Base64Helper.decode(cover) {
                 Image(uiImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 200)
                     .clipped()
                     .overlay(Color.black.opacity(0.25))
-            } else if let cover = trip.coverImageUrl,
-                let url = URL(string: cover)
-            {
+            } else if let cover = trip.coverImageUrl, let url = URL(string: cover) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {
                         image.resizable().aspectRatio(contentMode: .fill)
@@ -182,9 +168,7 @@ struct HomeRecentTripCard: View {
                 .overlay(Color.black.opacity(0.25))
             } else {
                 LinearGradient(
-                    colors: [
-                        Color.leapPrimary.opacity(0.9), Color.teal.opacity(0.9),
-                    ],
+                    colors: [Color.leapPrimary.opacity(0.9), Color.teal.opacity(0.9)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -194,9 +178,7 @@ struct HomeRecentTripCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Image(systemName: "airplane.departure")
-                    Text(
-                        "\(trip.status == .upcoming ? "UPCOMING" : trip.status == .ongoing ? "ONGOING" : "COMPLETED") TRIP"
-                    )
+                    Text("\(trip.status == .upcoming ? "UPCOMING" : trip.status == .ongoing ? "ONGOING" : "COMPLETED") TRIP")
                 }
                 .font(.caption2.weight(.bold))
                 .foregroundColor(.white.opacity(0.9))
@@ -211,27 +193,19 @@ struct HomeRecentTripCard: View {
 
                 HStack(spacing: 6) {
                     Image(systemName: "calendar")
-                    Text(
-                        dateRangeString(
-                            start: trip.startDate,
-                            end: trip.endDate
-                        )
-                    )
+                    Text(dateRangeString(start: trip.startDate, end: trip.endDate))
                 }
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.9))
 
                 HStack(spacing: 8) {
-                    Label(
-                        "Countdown: \(trip.daysUntilTrip) Days Left",
-                        systemImage: "clock.fill"
-                    )
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color(hex: "#00ADB5"))
-                    .clipShape(Capsule())
-                    .foregroundColor(.white)
+                    Label("Countdown: \(trip.daysUntilTrip) Days Left", systemImage: "clock.fill")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.leapPrimary) // Pake warna theme lu
+                        .clipShape(Capsule())
+                        .foregroundColor(.white)
 
                     if placesCount > 0 {
                         Text("\(placesCount) Places")
@@ -295,9 +269,7 @@ struct HomeTrendingCard: View {
                         if let image = phase.image {
                             image.resizable().scaledToFill()
                         } else {
-                            RoundedRectangle(cornerRadius: 16).fill(
-                                Color.gray.opacity(0.2)
-                            )
+                            RoundedRectangle(cornerRadius: 16).fill(Color.gray.opacity(0.2))
                         }
                     }
                     .frame(width: 180, height: 120)
@@ -307,9 +279,7 @@ struct HomeTrendingCard: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color.gray.opacity(0.15))
                         .frame(width: 180, height: 120)
-                        .overlay(
-                            Image(systemName: "photo").foregroundColor(.gray)
-                        )
+                        .overlay(Image(systemName: "photo").foregroundColor(.gray))
                 }
 
                 Text(tagText())
@@ -327,9 +297,12 @@ struct HomeTrendingCard: View {
 
             HStack(spacing: 4) {
                 Image(systemName: "star.fill").foregroundColor(.yellow)
-                Text(String(format: "%.1f", place.rating ?? 4.9))
+                
+                let ratingVal = (place.rating ?? 0.0) / 2.0
+                Text(place.rating != nil ? String(format: "%.1f", ratingVal) : "N/A")
                     .foregroundColor(.gray)
                     .font(.caption)
+                    
                 if let total = place.stats?.total_ratings {
                     Text("(\(total))").foregroundColor(.gray).font(.caption)
                 }
@@ -346,7 +319,7 @@ struct HomeExploreRow: View {
         if let locality = place.location?.locality, !locality.isEmpty {
             return locality
         }
-        return "Nature"
+        return "Destination"
     }
 
     var body: some View {
@@ -374,17 +347,15 @@ struct HomeExploreRow: View {
                     .lineLimit(1)
                 HStack(spacing: 6) {
                     Image(systemName: "mappin.and.ellipse")
-                    Text(
-                        place.location?.country ?? place.location?.locality
-                            ?? "Unknown"
-                    )
+                    Text(place.location?.country ?? place.location?.locality ?? "Unknown")
                 }
                 .font(.caption)
                 .foregroundColor(.gray)
 
                 HStack(spacing: 6) {
                     Image(systemName: "star.fill").foregroundColor(.yellow)
-                    Text(String(format: "%.1f", place.rating ?? 4.8))
+                    let ratingVal = (place.rating ?? 0.0) / 2.0
+                    Text(place.rating != nil ? String(format: "%.1f", ratingVal) : "N/A")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
