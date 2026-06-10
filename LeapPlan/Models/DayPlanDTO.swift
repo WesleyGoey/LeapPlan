@@ -1,6 +1,8 @@
 //
 //  DayPlanDTO.swift
-//  LeapPlan
+//  RecipeVault
+//
+//  Created by Wesley Goey on 31/05/26.
 //
 
 import Foundation

@@ -1,3 +1,10 @@
+//
+//  ChatView.swift
+//  LeapPlan
+//
+//  Created by student on 10/06/26.
+//
+
 import SwiftUI
 
 struct ChatView: View {

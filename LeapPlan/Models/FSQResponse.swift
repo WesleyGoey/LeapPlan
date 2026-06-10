@@ -1,3 +1,10 @@
+//
+//  FSQResponse.swift
+//  RecipeVault
+//
+//  Created by Wesley Goey on 31/05/26.
+//
+
 import CoreLocation
 import Foundation
 
