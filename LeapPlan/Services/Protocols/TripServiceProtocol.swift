@@ -6,6 +6,7 @@
 //
 
 protocol TripServiceProtocol {
+    // MARK: - Generate Random Itinerary
     func generateRandomItinerary(preferences: RandomTripPreferences)
         async throws -> [DayPlan]
 }

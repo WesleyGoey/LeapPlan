@@ -14,7 +14,6 @@ struct TripCardView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // 1. Gambar URL / Base64 / Fallback
             if let imgString = trip.coverImageUrl {
                 if imgString.starts(with: "http"), let url = URL(string: imgString) {
                     AsyncImage(url: url) { phase in
@@ -38,14 +37,12 @@ struct TripCardView: View {
                 fallbackImage()
             }
 
-            // 2. Gradient Overlay
             LinearGradient(
                 colors: [.black.opacity(0.8), .black.opacity(0.3), .clear],
                 startPoint: .bottom,
                 endPoint: .top
             )
 
-            // 3. Card Content
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     if placesCount > 0 {
@@ -101,6 +98,7 @@ struct TripCardView: View {
     }
 
     @ViewBuilder
+    // MARK: - Fallback Image
     private func fallbackImage() -> some View {
         ZStack {
             LinearGradient(

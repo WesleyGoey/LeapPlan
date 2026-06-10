@@ -23,11 +23,13 @@ class LocationService: NSObject, ObservableObject, LocationServiceProtocol,
         requestLocationPermission()
     }
 
+    // MARK: - Request Location Permission
     func requestLocationPermission() {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
 
+    // MARK: - Location Manager
     func locationManager(
         _ manager: CLLocationManager,
         didUpdateLocations locations: [CLLocation]
@@ -38,6 +40,7 @@ class LocationService: NSObject, ObservableObject, LocationServiceProtocol,
         }
     }
 
+    // MARK: - Location Manager
     func locationManager(
         _ manager: CLLocationManager,
         didFailWithError error: Error

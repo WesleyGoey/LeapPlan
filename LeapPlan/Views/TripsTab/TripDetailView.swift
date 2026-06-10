@@ -270,7 +270,7 @@ struct TripDetailView: View {
         }
     }
 
-    // MARK: - FUNGSI AUTO-ZOOM PETA
+    // MARK: - Center Map On City
     private func centerMapOnCity() {
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(viewModel.trip.locationName) {
@@ -293,7 +293,6 @@ struct TripDetailView: View {
         }
     }
 
-    // MARK: - FAB MENU
     private var detailFABMenu: some View {
         VStack(alignment: .trailing, spacing: 16) {
             if isShowingFABMenu {
@@ -357,7 +356,6 @@ struct TripDetailView: View {
     }
 }
 
-// MARK: - COMPONENT TIMELINE ROW
 struct TimelineRowView: View {
     let destination: TripDestination
     let indexNumber: Int
@@ -439,7 +437,6 @@ struct TimelineRowView: View {
     }
 }
 
-// MARK: - SHEET TAMBAH/EDIT DESTINASI
 struct AddOrEditPlaceSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDestinationViewModel
@@ -484,7 +481,6 @@ struct AddOrEditPlaceSheetView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
 
-                        // MARK: SECTION - SEARCH LOCATION ATAU DESTINATION
                         VStack(alignment: .leading, spacing: 8) {
                             Text(
                                 mode == .add
@@ -593,7 +589,6 @@ struct AddOrEditPlaceSheetView: View {
                         }
                         .padding(.horizontal, 20).padding(.top, 20)
 
-                        // MARK: SECTION - CATEGORY
                         VStack(alignment: .leading, spacing: 8) {
                             Text("CATEGORY").font(.caption).fontWeight(.bold)
                                 .foregroundColor(.gray)
@@ -611,7 +606,6 @@ struct AddOrEditPlaceSheetView: View {
                         .padding(.horizontal, 20)
                         .zIndex(1)
 
-                        // MARK: SECTION - STAY DURATION
                         VStack(alignment: .leading, spacing: 8) {
                             Text("STAY DURATION").font(.caption).fontWeight(
                                 .bold
@@ -641,7 +635,6 @@ struct AddOrEditPlaceSheetView: View {
                         }
                         .padding(.horizontal, 20)
 
-                        // MARK: SECTION - DELETE BUTTON (Hanya Muncul Jika Sedang Edit)
                         if mode == .edit {
                             Button(role: .destructive) {
                                 if let id = destinationToEdit?.id {
@@ -674,7 +667,6 @@ struct AddOrEditPlaceSheetView: View {
                     DragGesture().onChanged({ _ in isSearchFocused = false })
                 )
 
-                // MARK: - TOMBOL SAVE MENGAMBANG DI BAWAH
                 Button {
                     let totalMinutes =
                         (stayDurationHours * 60) + stayDurationMinutes
@@ -732,7 +724,6 @@ struct AddOrEditPlaceSheetView: View {
     }
 }
 
-// MARK: - EDITOR TRIP DENGAN UPLOAD FOTO
 struct TripEditView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripDestinationViewModel
@@ -887,6 +878,7 @@ struct TripEditView: View {
 }
 
 struct Line: Shape {
+    // MARK: - Path
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.midX, y: rect.minY))

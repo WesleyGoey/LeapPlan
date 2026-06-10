@@ -10,5 +10,6 @@ import Foundation
 
 protocol LocationServiceProtocol {
     var currentLocation: CLLocationCoordinate2D? { get }
+    // MARK: - Request Location Permission
     func requestLocationPermission()
 }

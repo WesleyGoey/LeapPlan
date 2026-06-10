@@ -15,7 +15,6 @@ class ProfileViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    // MARK: - TRAVEL STATS (Konek Backend Firestore)
     @Published var totalTripsCount: Int = 0
     @Published var upcomingTripsCount: Int = 0
 
@@ -45,6 +44,7 @@ class ProfileViewModel: ObservableObject {
 
     var isLoggedIn: Bool { return authService.isLoggedIn }
 
+    // MARK: - Load Profile
     func loadProfile() {
         guard let userID = authService.getCurrentUserID() else { return }
         isLoading = true
@@ -74,6 +74,7 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Populate Edit Form
     func populateEditForm() {
         guard let user = currentUser else { return }
         editFullName = user.fullName
@@ -83,6 +84,7 @@ class ProfileViewModel: ObservableObject {
         currentPassword = ""
     }
 
+    // MARK: - Clear Auth Form
     func clearAuthForm() {
         authEmail = ""
         authPassword = ""
@@ -90,6 +92,7 @@ class ProfileViewModel: ObservableObject {
         errorMessage = nil
     }
 
+    // MARK: - Login
     func login() async -> Bool {
         isLoading = true
         errorMessage = nil
@@ -108,6 +111,7 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Register
     func register() async -> Bool {
         isLoading = true
         errorMessage = nil
@@ -136,6 +140,7 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Logout
     func logout() {
         do {
             try authService.logout()
@@ -154,6 +159,7 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Save Edited Profile
     func saveEditedProfile(selectedImage: UIImage?) async -> Bool {
         guard var updatedUser = currentUser else { return false }
         isLoading = true

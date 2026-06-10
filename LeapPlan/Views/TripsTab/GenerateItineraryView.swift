@@ -22,7 +22,6 @@ struct GenerateItineraryView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
 
-                    // MARK: - Masukkan ini ke dalam VStack ScrollView Anda
                     VStack(alignment: .leading, spacing: 8) {
                         Text("TRIP NAME (OPTIONAL)").font(.caption).fontWeight(
                             .bold
@@ -200,10 +199,12 @@ struct GenerateItineraryView: View {
         }
     }
 
+    // MARK: - Section Header
     private func sectionHeader(title: String) -> some View {
         Text(title).font(.caption).fontWeight(.bold).foregroundColor(.gray)
             .padding(.top, 8)
     }
+    // MARK: - Day Tab Button
     private func dayTabButton(dayNumber: Int) -> some View {
         let isSelected = viewModel.selectedDayNumber == dayNumber
         return Button {
@@ -222,6 +223,7 @@ struct GenerateItineraryView: View {
                 )
         }
     }
+    // MARK: - Stepper Card
     private func stepperCard(
         icon: String,
         title: String,

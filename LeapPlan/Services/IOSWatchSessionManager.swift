@@ -21,6 +21,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         super.init()
     }
 
+    // MARK: - Start Session
     func startSession() {
         if WCSession.isSupported() {
             WCSession.default.delegate = self
@@ -28,22 +29,18 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
             print("[IOSWatchSessionManager] WCSession activated.")
         }
 
-        // Listen to global Auth state changes
         authStateListenerHandle = Auth.auth().addStateDidChangeListener {
             [weak self] _, user in
             guard let self = self else { return }
             let isLoggedIn = (user != nil)
 
-            // Push the login state to the Watch immediately
             self.pushContext(["isLoggedIn": isLoggedIn])
 
-            // If logged in, eagerly push trips as well
             if isLoggedIn, let uid = user?.uid {
                 Task {
                     await self.fetchAndSyncTrips(for: uid)
                 }
             } else {
-                // If logged out, clear trips
                 self.pushContext(["tripsJSON": "[]"])
             }
         }
@@ -55,9 +52,8 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         }
     }
 
-    // MARK: - Outgoing Data
     
-    /// Called manually by ViewModels whenever trips change
+    // MARK: - Sync Trips
     func syncTrips(trips: [Trip]) {
         do {
             let dtos = trips.map { trip in
@@ -93,6 +89,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         }
     }
 
+    // MARK: - Fetch And Sync Trips
     func fetchAndSyncTrips(for userID: String) async {
         do {
             let trips = try await firestoreRepo.fetchTrips(forUserID: userID)
@@ -107,6 +104,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         }
     }
 
+    // MARK: - Calculate Statuses
     fileprivate func calculateStatuses(for trips: [Trip]) -> [Trip] {
         let now = Date()
         return trips.map { trip in
@@ -122,7 +120,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
         }
     }
 
-    // 2. Moved inside the class scope
+    // MARK: - Push Context
     private func pushContext(_ dictionary: [String: Any]) {
         guard WCSession.default.activationState == .activated else { return }
 
@@ -136,9 +134,7 @@ final class IOSWatchSessionManager: NSObject { // 1. Remove WCSessionDelegate he
     }
 }
 
-// MARK: - WCSessionDelegate Extension
 
-// 3. Create an extension conforming to the protocol
 extension IOSWatchSessionManager: WCSessionDelegate {
 
     nonisolated func session(
@@ -154,10 +150,8 @@ extension IOSWatchSessionManager: WCSessionDelegate {
         }
 
         if activationState == .activated {
-            // Re-sync current auth state
             let isLoggedIn = (Auth.auth().currentUser != nil)
 
-            // We use updateApplicationContext here safely by using Task to capture it
             Task {
                 do {
                     try session.updateApplicationContext(["isLoggedIn": isLoggedIn])
@@ -172,11 +166,9 @@ extension IOSWatchSessionManager: WCSessionDelegate {
 
 #if os(iOS)
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        // Required protocol stub
     }
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
-        // Re-activate if deactivated (e.g. app switching)
         session.activate()
     }
 #endif
@@ -197,7 +189,6 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                 if let uid = Auth.auth().currentUser?.uid {
                     Task { @MainActor in
                         do {
-                            // Fixed 'self' reference inside isolated Task
                             let manager = IOSWatchSessionManager.shared
                             let firestore = FirestoreRepository()
                             let trips = try await firestore.fetchTrips(forUserID: uid)
@@ -329,7 +320,6 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                             plan.destinations.append(newDest)
                             try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)
                             
-                            // Re-sync trips eager push just in case
                             await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
                             
                             replyHandler(["status": "success"])
@@ -362,7 +352,6 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                             let tripDestService = TripDestinationService()
                             try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)
                             
-                            // Eager fetch update
                             await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
                             
                             replyHandler(["status": "success"])

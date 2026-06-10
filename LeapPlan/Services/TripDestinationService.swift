@@ -14,6 +14,7 @@ class TripDestinationService: TripDestinationServiceProtocol {
         self.firestoreRepo = firestoreRepo
     }
 
+    // MARK: - Add Place To Trip
     func addPlaceToTrip(
         place: FSQPlace,
         targetTrip: Trip,
@@ -55,7 +56,7 @@ class TripDestinationService: TripDestinationServiceProtocol {
         }
     }
 
-    // MARK: - FITUR REMOVE (Hapus Destinasi untuk Real-time Toggle)
+    // MARK: - Remove Place From Trip
     func removePlaceFromTrip(
         placeID: String,
         tripID: String,
@@ -82,6 +83,7 @@ class TripDestinationService: TripDestinationServiceProtocol {
         }
     }
 
+    // MARK: - Save Reordered Destinations
     func saveReorderedDestinations(
         dayPlan: DayPlan,
         tripID: String,
@@ -98,6 +100,7 @@ class TripDestinationService: TripDestinationServiceProtocol {
         )
     }
 
+    // MARK: - Calculate Timeline
     func calculateTimeline(
         for destination: TripDestination,
         in dayPlan: DayPlan

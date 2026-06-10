@@ -261,7 +261,6 @@ struct ExploreView: View {
     }
 }
 
-// MARK: - 2. DETAIL PLACE SHEET
 struct PlaceDetailSheet: View {
     let place: FSQPlace
     let isLoggedIn: Bool
@@ -349,6 +348,7 @@ struct PlaceDetailSheet: View {
         .padding(.horizontal, 24).padding(.top, 16)
     }
 
+    // MARK: - Format Distance
     private func formatDistance(_ meters: Int) -> String {
         if meters >= 1000 {
             return String(format: "%.1f km away", Double(meters) / 1000.0)

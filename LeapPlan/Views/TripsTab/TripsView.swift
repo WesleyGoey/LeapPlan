@@ -114,7 +114,6 @@ struct TripsView: View {
         }
     }
 
-    // MARK: - Subviews
     private var statusTabBar: some View {
         HStack(spacing: 0) {
             tabButton(title: "Ongoing", status: .ongoing).frame(
@@ -127,6 +126,7 @@ struct TripsView: View {
         }.padding(8)
     }
 
+    // MARK: - Tab Button
     private func tabButton(title: String, status: TripStatus) -> some View {
         let isActive = selectedTab == status
         let count = viewModel.trips.filter { $0.status == status }.count
@@ -243,7 +243,6 @@ struct TripsView: View {
     }
 }
 
-// MARK: - EDITOR DARI HALAMAN UTAMA (TripsView)
 struct TripsEditSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: TripViewModel

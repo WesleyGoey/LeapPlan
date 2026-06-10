@@ -54,7 +54,7 @@ class TripDestinationViewModel: ObservableObject {
         return dayPlans[selectedDayIndex]
     }
 
-    // MARK: - LOAD DATA & ROUTE
+    // MARK: - Load Day Plans
     func loadDayPlans() {
         guard let tripID = trip.id else { return }
         isLoading = true
@@ -76,6 +76,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Calculate Actual Driving Routes
     func calculateActualDrivingRoutes() {
         guard dayPlans.indices.contains(selectedDayIndex) else {
             self.actualRoutes = []
@@ -134,7 +135,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
-    // MARK: - FITUR TIMELINE MENGGUNAKAN SERVICE BARU
+    // MARK: - Move Destination
     func moveDestination(from source: IndexSet, to destination: Int) {
         guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id
         else { return }
@@ -155,6 +156,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Delete Destination
     func deleteDestination(destID: String) {
         guard dayPlans.indices.contains(selectedDayIndex), let tripID = trip.id
         else { return }
@@ -172,6 +174,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Get Formatted Time
     func getFormattedTime(for destination: TripDestination) -> String {
         guard let plan = currentDayPlan else { return "" }
         return tripDestinationService.calculateTimeline(
@@ -180,7 +183,7 @@ class TripDestinationViewModel: ObservableObject {
         )
     }
 
-    // MARK: - SEARCH INTERNAL DENGAN ATURAN SE-KOTA SAJA
+    // MARK: - Search Places Around City
     func searchPlacesAroundCity(query: String) {
         guard query.count > 2, !trip.locationName.isEmpty else {
             self.addSearchResults = []
@@ -212,6 +215,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Add Manual Destination
     func addManualDestination(
         name: String,
         category: String,
@@ -244,6 +248,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Update Destination
     func updateDestination(
         id: String,
         newName: String,
@@ -282,7 +287,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
-    // MARK: - GENERATE 1 RANDOM PLACE
+    // MARK: - Generate One Random Place
     func generateOneRandomPlace() {
         guard dayPlans.indices.contains(selectedDayIndex) else { return }
         isLoading = true
@@ -355,7 +360,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
-    // MARK: - EDIT META TRIP (Dates/Image)
+    // MARK: - Update Trip Details
     func updateTripDetails(
         title: String,
         startDate: Date,
@@ -421,6 +426,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Delete This Trip
     func deleteThisTrip() async -> Bool {
         guard let tripID = trip.id else { return false }
         do {
@@ -435,6 +441,7 @@ class TripDestinationViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Convert Image To Base64 String
     func convertImageToBase64String(image: UIImage) -> String? {
         return Base64Helper.encode(image)
     }

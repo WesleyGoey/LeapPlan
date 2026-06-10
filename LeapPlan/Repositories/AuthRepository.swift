@@ -11,13 +11,13 @@ import Foundation
 class AuthRepository: AuthRepositoryProtocol {
     private let db = Firestore.firestore()
 
-    // MARK: - 1. CREATE
+    // MARK: - Save User
     func saveUser(_ user: User) async throws {
         guard let userID = user.id else { return }
         try db.collection("Users").document(userID).setData(from: user)
     }
 
-    // MARK: - 2. READ
+    // MARK: - Fetch User
     func fetchUser(userID: String) async throws -> User {
         let doc = try await db.collection("Users").document(userID)
             .getDocument()
@@ -33,7 +33,7 @@ class AuthRepository: AuthRepositoryProtocol {
         return user
     }
 
-    // MARK: - 3. UPDATE
+    // MARK: - Update User
     func updateUser(_ user: User) async throws {
         guard let userID = user.id else { return }
         try db.collection("Users").document(userID).setData(
@@ -42,7 +42,7 @@ class AuthRepository: AuthRepositoryProtocol {
         )
     }
 
-    // MARK: - 4. DELETE
+    // MARK: - Delete User
     func deleteUser(userID: String) async throws {
         try await db.collection("Users").document(userID).delete()
     }

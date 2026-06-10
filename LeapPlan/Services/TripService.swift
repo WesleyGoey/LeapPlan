@@ -19,6 +19,7 @@ class TripService: TripServiceProtocol {
         self.firestoreRepo = firestoreRepo
     }
 
+    // MARK: - Generate Random Itinerary
     func generateRandomItinerary(preferences: RandomTripPreferences)
         async throws -> [DayPlan]
     {

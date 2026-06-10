@@ -20,7 +20,6 @@ struct CreateManualTripView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        // MARK: - Masukkan ini ke dalam VStack ScrollView Anda
                         VStack(alignment: .leading, spacing: 8) {
                             Text("TRIP NAME (OPTIONAL)").font(.caption)
                                 .fontWeight(.bold).foregroundColor(.gray)

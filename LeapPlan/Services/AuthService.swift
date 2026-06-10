@@ -32,6 +32,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         }
     }
 
+    // MARK: - Register
     func register(email: String, password: String) async throws -> String {
         let authResult = try await Auth.auth().createUser(
             withEmail: email,
@@ -41,6 +42,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         return authResult.user.uid
     }
 
+    // MARK: - Login
     func login(email: String, password: String) async throws -> String {
         let authResult = try await Auth.auth().signIn(
             withEmail: email,
@@ -50,15 +52,18 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         return authResult.user.uid
     }
 
+    // MARK: - Get Current User Id
     func getCurrentUserID() -> String? {
         return Auth.auth().currentUser?.uid
     }
 
+    // MARK: - Logout
     func logout() throws {
         try Auth.auth().signOut()
         DispatchQueue.main.async { self.isLoggedIn = false }
     }
 
+    // MARK: - Update Email
     func updateEmail(currentPassword: String, newEmail: String) async throws {
         guard let user = Auth.auth().currentUser, let email = user.email else {
             return
@@ -71,6 +76,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         try await user.updateEmail(to: newEmail)
     }
 
+    // MARK: - Update Password
     func updatePassword(currentPassword: String, newPassword: String)
         async throws
     {
@@ -89,6 +95,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         try await user.updatePassword(to: newPassword)
     }
 
+    // MARK: - Delete User
     func deleteUser(password: String) async throws {
         guard let user = Auth.auth().currentUser, let email = user.email else {
             throw NSError(

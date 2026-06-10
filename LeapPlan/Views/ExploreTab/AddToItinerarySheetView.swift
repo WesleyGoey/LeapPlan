@@ -169,8 +169,8 @@ struct AddToItinerarySheetView: View {
         }
     }
 
+    // MARK: - Toggle Day Sync
     private func toggleDaySync(dayNum: Int, trip: Trip) {
-        // Hanya bisa add, tidak bisa remove dari sheet ini
         guard !selectedDays.contains(dayNum) else { return }
 
         selectedDays.insert(dayNum)
@@ -196,6 +196,7 @@ struct AddToItinerarySheetView: View {
         }.padding(.horizontal, 8)
     }
 
+    // MARK: - Tab Button
     private func tabButton(title: String, status: TripStatus) -> some View {
         let isActive = selectedTab == status
         return Button {
@@ -214,6 +215,7 @@ struct AddToItinerarySheetView: View {
         }
     }
 
+    // MARK: - Calculate Total Days
     private func calculateTotalDays(start: Date, end: Date) -> Int {
         let components = Calendar.current.dateComponents(
             [.day],

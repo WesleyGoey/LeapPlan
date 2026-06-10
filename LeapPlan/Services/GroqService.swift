@@ -7,12 +7,11 @@ class GroqService: GroqServiceProtocol {
         self.repository = repository
     }
     
+    // MARK: - Send Message
     func sendMessage(chatHistory: [ChatMessage]) async throws -> String {
-        // Doktrin AI
         let systemPromptText = "Kamu adalah LeapBot, asisten travel cerdas untuk aplikasi LeapPlan. Tugasmu HANYA membantu merencanakan liburan, membuat itinerary, dan merekomendasikan destinasi wisata. Jika pengguna bertanya coding, matematika, atau topik di luar travel dan liburan, TOLAK DENGAN SOPAN dan ingatkan bahwa kamu adalah asisten travel LeapPlan."
         let systemMessage = GroqMessage(role: "system", content: systemPromptText)
         
-        // Mapping format
         let groqMessages: [GroqMessage] = chatHistory.map { msg in
             let role = msg.role == "model" ? "assistant" : msg.role
             return GroqMessage(role: role, content: msg.content)
@@ -23,7 +22,6 @@ class GroqService: GroqServiceProtocol {
         
         let payload = GroqRequest(model: "llama-3.3-70b-versatile", messages: allMessages)
         
-        // Eksekusi via Repository
         let groqResponse = try await repository.fetchGroqResponse(payload: payload)
         
         if let replyText = groqResponse.choices?.first?.message?.content {

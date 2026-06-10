@@ -13,7 +13,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     FirebaseApp.configure()
     
-    // Start WatchConnectivity listener
     Task { @MainActor in
         IOSWatchSessionManager.shared.startSession()
     }
@@ -24,12 +23,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct LeapPlanApp: App {
-  // register app delegate for Firebase setup
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
   var body: some Scene {
     WindowGroup {
-        // Cukup panggil ContentView, jangan bungkus dengan NavigationView lagi
         ContentView()
     }
   }

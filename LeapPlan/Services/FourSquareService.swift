@@ -14,6 +14,7 @@ class FourSquareService: FourSquareServiceProtocol {
         self.repo = repo
     }
 
+    // MARK: - Fetch Trending Places
     func fetchTrendingPlaces(city: String) async throws -> [FSQPlace] {
         let places = try await repo.fetchPlaces(
             near: city,
@@ -23,6 +24,7 @@ class FourSquareService: FourSquareServiceProtocol {
         return places
     }
 
+    // MARK: - Search Places
     func searchPlaces(query: String, latitude: Double, longitude: Double)
         async throws -> [FSQPlace]
     {
@@ -34,6 +36,7 @@ class FourSquareService: FourSquareServiceProtocol {
         return places
     }
 
+    // MARK: - Fetch Places
     func fetchPlaces(near city: String, categoryID: String, limit: Int)
         async throws -> [FSQPlace]
     {
@@ -45,10 +48,12 @@ class FourSquareService: FourSquareServiceProtocol {
         return places
     }
 
+    // MARK: - Autocomplete Location
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
         return try await repo.autocompleteLocation(query: query)
     }
 
+    // MARK: - Search Places By City
     func searchPlacesByCity(near city: String, query: String, limit: Int)
         async throws -> [FSQPlace]
     {

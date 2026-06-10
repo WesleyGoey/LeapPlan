@@ -11,6 +11,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
     private let apiKey = "3DK5KUE00UX30UQXJREU1Z0FJVSRJDU1R2QYMFOS4DCNSR4N"
     private let baseURL = "https://places-api.foursquare.com"
 
+    // MARK: - Create Request
     private func createRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -19,17 +20,16 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
             "\(apiKey)", // 🔥 PENTING: Foursquare V3 nggak pakai tulisan "Bearer ", cuma key doang
             forHTTPHeaderField: "Authorization"
         )
-        // Versi API nggak butuh dikirim di header kalau udah pakai /v3 di baseURL
         request.timeoutInterval = 10.0
         return request
     }
 
+    // MARK: - Handle Response
     private func handleResponse(data: Data, response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
         if httpResponse.statusCode != 200 {
-            // Trik debugging: Print isi surat penolakan Foursquare
             let errorMsg = String(data: data, encoding: .utf8) ?? "Unknown Foursquare Error"
             print("🚨 FOURSQUARE ERROR \(httpResponse.statusCode): \(errorMsg)")
             
@@ -41,6 +41,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         }
     }
 
+    // MARK: - Search Places
     func searchPlaces(query: String, latitude: Double, longitude: Double)
         async throws -> [FSQPlace]
     {
@@ -62,6 +63,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         return rawPlaces
     }
 
+    // MARK: - Search Places By City
     func searchPlacesByCity(near city: String, query: String, limit: Int)
         async throws -> [FSQPlace]
     {
@@ -87,6 +89,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         return rawPlaces
     }
 
+    // MARK: - Fetch Places
     func fetchPlaces(near city: String, categoryID: String, limit: Int)
         async throws -> [FSQPlace]
     {
@@ -108,6 +111,7 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         return rawPlaces
     }
 
+    // MARK: - Autocomplete Location
     func autocompleteLocation(query: String) async throws -> [FSQPlace] {
             guard
                 let encodedQuery = query.addingPercentEncoding(
@@ -144,7 +148,6 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
     }
 }
 
-// MARK: - Helper Codable Structs
 private struct FSQAutocompleteResponse: Codable {
     let results: [AutocompleteResult]
 }

@@ -7,7 +7,6 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Area Scroll Chat
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 16) {
@@ -39,7 +38,6 @@ struct ChatView: View {
                     }
                 }
                 
-                // Area Textfield Bawah
                 HStack(alignment: .bottom, spacing: 10) {
                     TextField("Tanya destinasi wisata...", text: $viewModel.inputText, axis: .vertical)
                         .lineLimit(1...4)
@@ -66,7 +64,6 @@ struct ChatView: View {
             }
             .navigationTitle("LeapBot AI")
             .navigationBarTitleDisplayMode(.inline)
-            // Biar keyboard bisa di-dismiss pas di tap di luar area textfield
             .onTapGesture {
                 isFocused = false
             }
@@ -74,7 +71,6 @@ struct ChatView: View {
     }
 }
 
-// Sub-komponen untuk Desain Bubble Chat
 struct ChatBubble: View {
     let message: ChatMessage
     

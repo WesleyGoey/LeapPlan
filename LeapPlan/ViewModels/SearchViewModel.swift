@@ -53,6 +53,7 @@ class SearchViewModel: ObservableObject {
         return authService.isLoggedIn
     }
 
+    // MARK: - Setup Live Search
     private func setupLiveSearch() {
         $searchQuery.debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .removeDuplicates().sink { [weak self] query in
@@ -68,6 +69,7 @@ class SearchViewModel: ObservableObject {
             }.store(in: &cancellables)
     }
 
+    // MARK: - Perform Search
     func performSearch() {
         guard !searchQuery.isEmpty else { return }
         isLoading = true
@@ -89,6 +91,7 @@ class SearchViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Select Place
     func selectPlace(_ place: FSQPlace, isFromAppleMap: Bool = false) {
         self.selectedPlace = place
         self.searchQuery = place.name
@@ -104,6 +107,7 @@ class SearchViewModel: ObservableObject {
         )
     }
 
+    // MARK: - Center To Current Location
     func centerToCurrentLocation() {
         let lat = locationService.currentLocation?.latitude ?? -7.2504
         let lon = locationService.currentLocation?.longitude ?? 112.7688
@@ -118,6 +122,7 @@ class SearchViewModel: ObservableObject {
         )
     }
 
+    // MARK: - Handle Apple Map Feature Click
     func handleAppleMapFeatureClick(_ feature: MapFeature) {
         let tempPlace = FSQPlace(
             fsq_place_id: UUID().uuidString,
@@ -132,6 +137,7 @@ class SearchViewModel: ObservableObject {
         selectPlace(tempPlace, isFromAppleMap: true)
     }
 
+    // MARK: - Get Icon For Category
     func getIconForCategory(name: String) -> String {
         let lowerName = name.lowercased()
         if lowerName.contains("apotek") || lowerName.contains("hospital")

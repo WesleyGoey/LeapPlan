@@ -11,12 +11,10 @@ import UIKit
 
 @MainActor
 class TripViewModel: ObservableObject {
-    // MARK: - STATE LIST TRIP
     @Published var trips: [Trip] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    // MARK: - STATE GENERATE/CREATE TRIP
     @Published var destinationForm: String = ""
     @Published var tripNameForm: String = ""
     @Published var startDateForm: Date = Date() {
@@ -67,6 +65,7 @@ class TripViewModel: ObservableObject {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
 
+    // MARK: - Calculate Trip Status
     private func calculateTripStatus(startDate: Date, endDate: Date)
         -> TripStatus
     {
@@ -76,7 +75,7 @@ class TripViewModel: ObservableObject {
         return .past
     }
 
-    // MARK: - LOGIKA LIST TRIP (BUG FIX BLANK SHEET)
+    // MARK: - Load User Trips
     func loadUserTrips() {
         guard authService.isLoggedIn else { return }
         let userID = activeUserID
@@ -102,7 +101,6 @@ class TripViewModel: ObservableObject {
                     if order1 != order2 {
                         return order1 < order2
                     } else {
-                        // If same status, sort by startDate (closest first for ongoing/upcoming, newest first for past)
                         if trip1.status == .past {
                             return trip1.startDate > trip2.startDate
                         } else {
@@ -112,7 +110,6 @@ class TripViewModel: ObservableObject {
                 }
                 self.isLoading = false
                 
-                // Push updated trips to WatchOS immediately
                 Task { @MainActor in
                     IOSWatchSessionManager.shared.syncTrips(trips: self.trips)
                 }
@@ -123,6 +120,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Delete Trip
     func deleteTrip(tripID: String) {
         let userID = activeUserID
         isLoading = true
@@ -140,6 +138,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Update Trip Details
     func updateTripDetails(
         trip: Trip,
         title: String,
@@ -211,6 +210,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Setup Generate Form Live Search
     private func setupGenerateFormLiveSearch() {
         $destinationForm.removeDuplicates().debounce(
             for: .milliseconds(500),
@@ -220,6 +220,7 @@ class TripViewModel: ObservableObject {
         }.store(in: &cancellables)
     }
 
+    // MARK: - Perform Form Search
     private func performFormSearch(query: String) {
         guard query.count > 2 else {
             self.autocompleteResults = []
@@ -237,6 +238,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Update Daily Preferences
     private func updateDailyPreferences() {
         let calendar = Calendar.current
         let start = calendar.startOfDay(for: startDateForm)
@@ -261,6 +263,7 @@ class TripViewModel: ObservableObject {
         if selectedDayNumber > totalDays { selectedDayNumber = totalDays }
     }
 
+    // MARK: - Create Manual Trip
     func createManualTrip() async throws -> Trip {
         let userID = activeUserID
         let finalTitle =
@@ -306,6 +309,7 @@ class TripViewModel: ObservableObject {
         return newTrip
     }
 
+    // MARK: - Generate Random Trip
     func generateRandomTrip() async throws -> Trip {
         let userID = activeUserID
         let prefs = RandomTripPreferences(
@@ -343,7 +347,7 @@ class TripViewModel: ObservableObject {
         return newTrip
     }
 
-    // MARK: - TOGGLE PLACE LOGIC (IDE CERDASMU)
+    // MARK: - Toggle Place In Day
     func togglePlaceInDay(
         place: FSQPlace,
         trip: Trip,
@@ -374,6 +378,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Fetch Day Plans
     func fetchDayPlans(for tripID: String) async -> [DayPlan] {
         do {
             return try await firestoreRepo.fetchDayPlans(
@@ -385,7 +390,7 @@ class TripViewModel: ObservableObject {
         }
     }
 
-    // MARK: - RESET FORM
+    // MARK: - Reset Form
     func resetForm() {
         destinationForm = ""
         tripNameForm = ""
@@ -401,6 +406,7 @@ class TripViewModel: ObservableObject {
         isShowingDropdown = false
     }
 
+    // MARK: - Clear Data
     func clearData() {
         self.trips = []
         self.isLoading = false

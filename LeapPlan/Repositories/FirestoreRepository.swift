@@ -11,7 +11,7 @@ import Foundation
 class FirestoreRepository: FirestoreRepositoryProtocol {
     private let db = Firestore.firestore()
 
-    // MARK: - Trip Operations
+    // MARK: - Fetch Trips
     func fetchTrips(forUserID userID: String) async throws -> [Trip] {
         let snapshot = try await db.collection("Users").document(userID)
             .collection("Trips")
@@ -21,6 +21,7 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
         return snapshot.documents.compactMap { try? $0.data(as: Trip.self) }
     }
 
+    // MARK: - Create Trip
     func createTrip(_ trip: Trip, forUserID userID: String) async throws {
         let collectionRef = db.collection("Users").document(userID).collection(
             "Trips"
@@ -33,6 +34,7 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
         try docRef.setData(from: newTrip)
     }
 
+    // MARK: - Update Trip
     func updateTrip(_ trip: Trip, forUserID userID: String) async throws {
         guard let tripID = trip.id else { return }
         let docRef = db.collection("Users").document(userID).collection("Trips")
@@ -40,12 +42,13 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
         try docRef.setData(from: trip, merge: true)
     }
 
+    // MARK: - Delete Trip
     func deleteTrip(tripID: String, forUserID userID: String) async throws {
         try await db.collection("Users").document(userID).collection("Trips")
             .document(tripID).delete()
     }
 
-    // MARK: - DayPlan Operations
+    // MARK: - Fetch Day Plans
     func fetchDayPlans(forTripID tripID: String, userID: String) async throws
         -> [DayPlan]
     {
@@ -58,6 +61,7 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
         return snapshot.documents.compactMap { try? $0.data(as: DayPlan.self) }
     }
 
+    // MARK: - Save Day Plan
     func saveDayPlan(
         _ dayPlan: DayPlan,
         forTripID tripID: String,
@@ -75,6 +79,7 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
         try docRef.setData(from: newPlan)
     }
 
+    // MARK: - Delete Day Plan
     func deleteDayPlan(planID: String, tripID: String, userID: String)
         async throws
     {
@@ -83,7 +88,7 @@ class FirestoreRepository: FirestoreRepositoryProtocol {
             .collection("DayPlans").document(planID).delete()
     }
 
-    // MARK: - BATCH WRITE (Untuk Generate Trip Otomatis)
+    // MARK: - Save Generated Trip With Day Plans
     func saveGeneratedTripWithDayPlans(
         trip: Trip,
         dayPlans: [DayPlan],

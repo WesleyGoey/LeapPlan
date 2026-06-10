@@ -1,12 +1,10 @@
 import CoreLocation
 import Foundation
 
-// MARK: - API Response Wrapper
 struct FSQResponse: Codable {
     let results: [FSQPlace]
 }
 
-// MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
     let fsq_place_id: String
     let name: String
@@ -29,7 +27,6 @@ struct FSQPlace: Identifiable, Codable, Equatable {
     }
 }
 
-// MARK: - Helper Structs
 struct FSQLocation: Codable {
     let locality: String?
     let country: String?
@@ -44,7 +41,6 @@ struct FSQCoordinate: Codable {
     let longitude: Double?
 }
 
-// MARK: - MapKit Compatibility Extension
 extension FSQPlace {
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
