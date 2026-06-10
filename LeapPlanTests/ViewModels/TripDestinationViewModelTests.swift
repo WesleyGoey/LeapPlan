@@ -122,8 +122,9 @@ final class TripDestinationViewModelTests: XCTestCase {
             fsq_place_id: "p1",
             name: "Ubud Monkey Forest",
             distance: 0,
-            location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+            latitude: 0,
+            longitude: 0,
+            location: nil
         )
         mockFourSquare.mockPlaces = [place]
 
@@ -195,8 +196,9 @@ final class TripDestinationViewModelTests: XCTestCase {
                 fsq_place_id: "r1",
                 name: "Random",
                 distance: 0,
-                location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+                latitude: 0,
+            longitude: 0,
+            location: nil
             )
         ]
 

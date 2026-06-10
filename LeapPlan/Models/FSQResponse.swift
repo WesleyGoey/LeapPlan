@@ -1,53 +1,42 @@
 //
 //  FSQResponse.swift
-//  RecipeVault
+//  LeapPlan
 //
 //  Created by Wesley Goey on 31/05/26.
 //
 
-import CoreLocation
 import Foundation
+import CoreLocation
 
+// MARK: - API Response Wrapper
 struct FSQResponse: Codable {
     let results: [FSQPlace]
 }
 
+// MARK: - Main Place Model
 struct FSQPlace: Identifiable, Codable, Equatable {
     let fsq_place_id: String
     let name: String
     let distance: Int?
-    let location: FSQLocation?
-    let geocodes: FSQGeocodes?
-
-    var id: String { fsq_place_id }
+    let latitude: Double?
+    let longitude: Double?
     
-    var latitude: Double? { geocodes?.main?.latitude }
-    var longitude: Double? { geocodes?.main?.longitude }
-
-    enum CodingKeys: String, CodingKey {
-        case fsq_place_id = "fsq_id"
-        case name, distance, location, geocodes
-    }
+    let location: FSQLocation?
+    
+    var id: String { fsq_place_id }
 
     static func == (lhs: FSQPlace, rhs: FSQPlace) -> Bool {
         return lhs.fsq_place_id == rhs.fsq_place_id
     }
 }
 
+// MARK: - Helper Structs
 struct FSQLocation: Codable {
     let locality: String?
     let country: String?
 }
 
-struct FSQGeocodes: Codable {
-    let main: FSQCoordinate?
-}
-
-struct FSQCoordinate: Codable {
-    let latitude: Double?
-    let longitude: Double?
-}
-
+// MARK: - MapKit Compatibility Extension
 extension FSQPlace {
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(

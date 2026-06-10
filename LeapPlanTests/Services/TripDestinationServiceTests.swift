@@ -43,8 +43,9 @@ final class TripDestinationServiceTests: XCTestCase {
             fsq_place_id: "fsq1",
             name: "Beach",
             distance: 0,
-            location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+            latitude: 0,
+            longitude: 0,
+            location: nil
         )
 
         let plan = DayPlan(

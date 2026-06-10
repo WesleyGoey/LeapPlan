@@ -33,8 +33,9 @@ final class FourSquareServiceTests: XCTestCase {
                 fsq_place_id: "1",
                 name: "Test",
                 distance: 10,
-                location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+                latitude: 0,
+            longitude: 0,
+            location: nil
             )
         ]
 
@@ -51,8 +52,9 @@ final class FourSquareServiceTests: XCTestCase {
             fsq_place_id: id,
             name: "Test Place",
             distance: 100,
-            location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+            latitude: 0,
+            longitude: 0,
+            location: nil
         )
     }
 

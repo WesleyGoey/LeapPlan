@@ -178,49 +178,42 @@ struct ExploreView: View {
                     }
                     .padding(.top, 10)
                 } else {
-                    Button(action: {
-                        withAnimation { isSearching = true }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isSearchFocused = true
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.gray)
-                            Text(
-                                viewModel.searchQuery.isEmpty
-                                    ? "Search on map..." : viewModel.searchQuery
-                            ).foregroundColor(
-                                viewModel.searchQuery.isEmpty ? .gray : .primary
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            withAnimation { isSearching = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isSearchFocused = true
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                Text(
+                                    viewModel.searchQuery.isEmpty
+                                        ? "Search on map..." : viewModel.searchQuery
+                                ).foregroundColor(
+                                    viewModel.searchQuery.isEmpty ? .gray : .primary
+                                )
+                                Spacer()
+                            }
+                            .padding().background(Color(.systemBackground))
+                            .cornerRadius(30).shadow(
+                                color: Color.black.opacity(0.1),
+                                radius: 5,
+                                x: 0,
+                                y: 2
                             )
-                            Spacer()
                         }
-                        .padding().background(Color(.systemBackground))
-                        .cornerRadius(30).shadow(
-                            color: Color.black.opacity(0.1),
-                            radius: 5,
-                            x: 0,
-                            y: 2
-                        )
-                    }
-                    .padding(.horizontal).padding(.top, 10)
-
-                    HStack(spacing: 8) {
-                        Spacer()
                         
-                        Image("kodok")
+                        Image("kodok_muka")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 36, height: 36)
-                            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
-                        
-                        Text("LeapPlan")
-                            .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundColor(.leapPrimary)
-                            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
+                    .padding(.horizontal).padding(.top, 10)
                 }
 
                 Spacer()

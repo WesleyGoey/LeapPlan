@@ -29,8 +29,9 @@ final class FourSquareRepositoryTests: XCTestCase {
             fsq_place_id: "test_123",
             name: "Test Place",
             distance: 100,
-            location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(latitude: 0, longitude: 0))
+            latitude: 0,
+            longitude: 0,
+            location: nil
         )
     }
 

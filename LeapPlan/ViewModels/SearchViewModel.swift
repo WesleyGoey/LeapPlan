@@ -128,11 +128,9 @@ class SearchViewModel: ObservableObject {
             fsq_place_id: UUID().uuidString,
             name: feature.title ?? "Selected Location",
             distance: 0,
-            location: nil,
-            geocodes: FSQGeocodes(main: FSQCoordinate(
-                latitude: feature.coordinate.latitude,
-                longitude: feature.coordinate.longitude
-            ))
+            latitude: feature.coordinate.latitude,
+            longitude: feature.coordinate.longitude,
+            location: nil
         )
         selectPlace(tempPlace, isFromAppleMap: true)
     }

@@ -8,7 +8,7 @@
 import Foundation
 
 class FourSquareRepository: FourSquareRepositoryProtocol {
-    private let apiKey = "3DK5KUE00UX30UQXJREU1Z0FJVSRJDU1R2QYMFOS4DCNSR4N"
+    private let apiKey = "2EX5CEBBU3MHQNKZK3GR5320TDGZ13DWP13NIXPEQRGQXGER"
     private let baseURL = "https://places-api.foursquare.com"
 
     // MARK: - Create Request
@@ -16,10 +16,8 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Accept")
-        request.addValue(
-            "\(apiKey)", // 🔥 PENTING: Foursquare V3 nggak pakai tulisan "Bearer ", cuma key doang
-            forHTTPHeaderField: "Authorization"
-        )
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("2025-06-17", forHTTPHeaderField: "X-Places-Api-Version")
         request.timeoutInterval = 10.0
         return request
     }
@@ -138,11 +136,9 @@ class FourSquareRepository: FourSquareRepositoryProtocol {
                 fsq_place_id: result.text.primary,
                 name: fullName,
                 distance: 0,
-                location: nil,
-                geocodes: FSQGeocodes(main: FSQCoordinate(
-                    latitude: geoItem.center?.latitude ?? 0.0,
-                    longitude: geoItem.center?.longitude ?? 0.0
-                ))
+                latitude: geoItem.center?.latitude ?? 0.0,
+                longitude: geoItem.center?.longitude ?? 0.0,
+                location: nil
             )
         }
     }
