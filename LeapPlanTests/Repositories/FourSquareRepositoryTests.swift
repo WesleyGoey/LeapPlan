@@ -72,12 +72,4 @@ final class FourSquareRepositoryTests: XCTestCase {
         }
     }
 
-    // MARK: - Test Fetch Photos
-    func testFetchPhotos_Success() async throws {
-        mockRepo.mockPhotoURL = "https://image.url"
-
-        let url = try await mockRepo.fetchPlacePhotos(id: "123")
-
-        XCTAssertEqual(url, "https://image.url")
-    }
 }

@@ -43,11 +43,20 @@ class TripDestinationViewModel: ObservableObject {
             tripDestinationService ?? TripDestinationService()
         self.fourSquareService = fourSquareService ?? FourSquareService()
         self.tripService = tripService ?? TripService()
+        
+        NotificationCenter.default.publisher(for: NSNotification.Name("WatchDidModifyTripData"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadDayPlans()
+            }
+            .store(in: &cancellables)
     }
 
     private var activeUserID: String {
         return authService.getCurrentUserID() ?? "dummy_user_123"
     }
+
+    private var cancellables = Set<AnyCancellable>()
 
     var currentDayPlan: DayPlan? {
         guard dayPlans.indices.contains(selectedDayIndex) else { return nil }
@@ -152,6 +161,7 @@ class TripDestinationViewModel: ObservableObject {
                     userID: activeUserID
                 )
                 calculateActualDrivingRoutes()
+                await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
             } catch { print("Reorder gagal: \(error)") }
         }
     }
@@ -170,6 +180,7 @@ class TripDestinationViewModel: ObservableObject {
                     userID: activeUserID
                 )
                 calculateActualDrivingRoutes()
+                await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
             } catch { print("Delete destinasi gagal: \(error)") }
         }
     }
@@ -245,6 +256,7 @@ class TripDestinationViewModel: ObservableObject {
                 userID: activeUserID
             )
             calculateActualDrivingRoutes()
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
         }
     }
 
@@ -283,6 +295,7 @@ class TripDestinationViewModel: ObservableObject {
                     userID: activeUserID
                 )
                 calculateActualDrivingRoutes()
+                await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
             }
         }
     }
@@ -419,6 +432,7 @@ class TripDestinationViewModel: ObservableObject {
                     )
                 }
             }
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
             self.loadDayPlans()
         } catch {
             print("Update failed: \(error)")
@@ -434,6 +448,7 @@ class TripDestinationViewModel: ObservableObject {
                 tripID: tripID,
                 forUserID: activeUserID
             )
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: activeUserID)
             return true
         } catch {
             print("Gagal menghapus trip: \(error)")

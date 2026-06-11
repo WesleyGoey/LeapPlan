@@ -18,7 +18,6 @@ class MockFourSquareRepository: FourSquareRepositoryProtocol {
     var didCallSearchPlacesByCity = false
     var didCallFetchPlaces = false
     var didCallAutocompleteLocation = false
-    var didCallFetchPlacePhotos = false
 
     enum MockError: Error {
         case simulatedNetworkError
@@ -52,11 +51,5 @@ class MockFourSquareRepository: FourSquareRepositoryProtocol {
         didCallAutocompleteLocation = true
         if shouldThrowError { throw MockError.simulatedNetworkError }
         return mockPlaces
-    }
-
-    func fetchPlacePhotos(id: String) async throws -> String? {
-        didCallFetchPlacePhotos = true
-        if shouldThrowError { throw MockError.simulatedNetworkError }
-        return mockPhotoURL
     }
 }

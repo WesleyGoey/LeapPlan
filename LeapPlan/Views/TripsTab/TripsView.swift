@@ -54,7 +54,7 @@ struct TripsView: View {
                         LazyVStack(spacing: 24) {
                             let filteredTrips = viewModel.trips.filter { trip in
                                 trip.status == selectedTab
-                            }.sorted(by: { $0.startDate > $1.startDate })
+                            }
 
                             if filteredTrips.isEmpty {
                                 emptyStateView
