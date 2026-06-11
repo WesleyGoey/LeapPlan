@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  ContentView.swift
 //  Leaplan_Watch Watch App
@@ -16,3 +17,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
+#endif

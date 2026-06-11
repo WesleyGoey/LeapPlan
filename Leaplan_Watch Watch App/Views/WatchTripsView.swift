@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchTripsView.swift
 //  Leaplan_Watch Watch App
@@ -8,10 +9,10 @@
 import SwiftUI
 
 struct WatchTripsView: View {
-    @StateObject private var viewModel = WatchTripsViewModel()
+    @EnvironmentObject private var appViewModel: WatchAppViewModel
 
     var filteredTrips: [Trip] {
-        viewModel.trips.filter { $0.status == .upcoming || $0.status == .ongoing }
+        appViewModel.trips
     }
 
     var body: some View {
@@ -64,7 +65,7 @@ struct WatchTripsView: View {
             }
         }
         .onAppear {
-            viewModel.fetchTrips()
+            appViewModel.triggerManualSync()
         }
     }
 }
@@ -158,3 +159,5 @@ struct WatchTripCardView: View {
 #Preview {
     WatchTripsView()
 }
+
+#endif

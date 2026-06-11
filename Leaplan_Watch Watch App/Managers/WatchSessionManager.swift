@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchSessionManager.swift
 //  Leaplan_Watch Watch App
@@ -101,6 +102,13 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
 
 
+#if os(iOS)
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
+        session.activate()
+    }
+#endif
+
     // MARK: - Handle Payload
     private func handlePayload(_ payload: [String: Any]) {
         if let loginStatus = payload["isLoggedIn"] as? Bool {
@@ -135,3 +143,5 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 }
+
+#endif

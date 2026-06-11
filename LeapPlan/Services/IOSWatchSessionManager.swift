@@ -151,14 +151,15 @@ extension IOSWatchSessionManager: WCSessionDelegate {
 
         if activationState == .activated {
             let isLoggedIn = (Auth.auth().currentUser != nil)
+            let uid = Auth.auth().currentUser?.uid
 
-            Task {
-                do {
-                    try session.updateApplicationContext(["isLoggedIn": isLoggedIn])
-                } catch {
-                    print(
-                        "[IOSWatchSessionManager] Failed to send context upon activation: \(error)"
-                    )
+            Task { @MainActor in
+                let manager = IOSWatchSessionManager.shared
+                if isLoggedIn, let uid = uid {
+                    manager.pushContext(["isLoggedIn": true])
+                    await manager.fetchAndSyncTrips(for: uid)
+                } else {
+                    manager.pushContext(["isLoggedIn": false, "tripsJSON": "[]"])
                 }
             }
         }
@@ -322,6 +323,8 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                             
                             await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
                             
+                            NotificationCenter.default.post(name: NSNotification.Name("WatchDidModifyTripData"), object: nil)
+                            
                             replyHandler(["status": "success"])
                         } else {
                             replyHandler(["status": "error", "message": "No places found"])
@@ -353,6 +356,8 @@ extension IOSWatchSessionManager: WCSessionDelegate {
                             try await tripDestService.saveReorderedDestinations(dayPlan: plan, tripID: tripId, userID: uid)
                             
                             await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: uid)
+                            
+                            NotificationCenter.default.post(name: NSNotification.Name("WatchDidModifyTripData"), object: nil)
                             
                             replyHandler(["status": "success"])
                         } else {

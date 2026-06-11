@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchContentView.swift
 //  Leaplan_Watch Watch App
@@ -18,6 +19,7 @@ struct WatchContentView: View {
                 NavigationStack {
                     WatchTripsView()
                 }
+                .environmentObject(viewModel)
             }
         }
         .animation(.easeInOut, value: viewModel.isLoggedIn)
@@ -27,3 +29,5 @@ struct WatchContentView: View {
 #Preview {
     WatchContentView()
 }
+
+#endif

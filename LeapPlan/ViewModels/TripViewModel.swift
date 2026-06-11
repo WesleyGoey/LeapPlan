@@ -58,6 +58,13 @@ class TripViewModel: ObservableObject {
 
         setupGenerateFormLiveSearch()
         updateDailyPreferences()
+        
+        NotificationCenter.default.publisher(for: NSNotification.Name("WatchDidModifyTripData"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadUserTrips()
+            }
+            .store(in: &cancellables)
     }
 
     var isLoggedIn: Bool { return authService.isLoggedIn }
@@ -130,6 +137,7 @@ class TripViewModel: ObservableObject {
                     tripID: tripID,
                     forUserID: userID
                 )
+                await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
                 self.loadUserTrips()
             } catch {
                 self.errorMessage = error.localizedDescription
@@ -158,6 +166,7 @@ class TripViewModel: ObservableObject {
 
         do {
             try await firestoreRepo.updateTrip(updatedTrip, forUserID: userID)
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
             let calendar = Calendar.current
             let components = calendar.dateComponents(
                 [.day],
@@ -305,6 +314,7 @@ class TripViewModel: ObservableObject {
             dayPlans: emptyDays,
             userID: userID
         )
+        await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
         self.loadUserTrips()
         return newTrip
     }
@@ -342,7 +352,7 @@ class TripViewModel: ObservableObject {
             dayPlans: generatedDayPlans,
             userID: userID
         )
-
+        await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
         self.loadUserTrips()
         return newTrip
     }
@@ -373,6 +383,7 @@ class TripViewModel: ObservableObject {
                     userID: userID
                 )
             }
+            await IOSWatchSessionManager.shared.fetchAndSyncTrips(for: userID)
         } catch {
             print("Gagal sync data ke Firebase: \(error.localizedDescription)")
         }

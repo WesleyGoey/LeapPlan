@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchTripService.swift
 //  Leaplan_Watch Watch App
@@ -48,3 +49,5 @@ class WatchTripService: WatchTripServiceProtocol {
         )
     }
 }
+
+#endif

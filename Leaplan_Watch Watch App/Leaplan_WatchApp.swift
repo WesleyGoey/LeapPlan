@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  Leaplan_WatchApp.swift
 //  Leaplan_Watch Watch App
@@ -15,3 +16,5 @@ struct Leaplan_Watch_Watch_AppApp: App {
         }
     }
 }
+
+#endif
