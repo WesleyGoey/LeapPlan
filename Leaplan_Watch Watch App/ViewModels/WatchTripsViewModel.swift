@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchTripsViewModel.swift
 //  Leaplan_Watch Watch App
@@ -87,3 +88,5 @@ final class WatchTripsViewModel: ObservableObject {
         }
     }
 }
+
+#endif

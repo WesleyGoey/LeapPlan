@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchLoginPromptView.swift
 //  Leaplan_Watch Watch App
@@ -120,3 +121,5 @@ extension Color {
 #Preview {
     WatchLoginPromptView(viewModel: .mock(isLoggedIn: false, isSyncing: false))
 }
+
+#endif

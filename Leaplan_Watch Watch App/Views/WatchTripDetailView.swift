@@ -5,11 +5,14 @@
 //  Created by Wesley Goey on 10/06/26.
 //
 
+#if os(watchOS)
 import MapKit
 import SwiftUI
+import WatchKit
 
 struct WatchTripDetailView: View {
     @StateObject var viewModel: WatchTripDetailViewModel
+    @EnvironmentObject var appViewModel: WatchAppViewModel
 
     var body: some View {
         ZStack {
@@ -163,6 +166,9 @@ struct WatchTripDetailView: View {
         .onAppear {
             viewModel.fetchTripDetails()
         }
+        .onChange(of: appViewModel.trips) { _ in
+            viewModel.fetchTripDetails()
+        }
     }
 }
 
@@ -268,3 +274,4 @@ struct WatchItineraryRow: View {
         .padding(.vertical, 8)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchTripRepositoryProtocol.swift
 //  Leaplan_Watch Watch App
@@ -26,3 +27,5 @@ protocol WatchTripRepositoryProtocol {
     func saveReorderedDestinations(tripId: String, dayPlan: DayPlan)
         async throws -> Bool
 }
+
+#endif
