@@ -24,8 +24,8 @@ class GroqRepository: GroqRepositoryProtocol {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse, 
-              (200...299).contains(httpResponse.statusCode) else {
+        guard let httpResponse = response as? HTTPURLResponse,
+                (200...299).contains(httpResponse.statusCode) else {
             
             let serverMessage = String(data: data, encoding: .utf8) ?? "Nggak ada pesan"
             print("❌ GROQ API MENOLAK! Status: \((response as? HTTPURLResponse)?.statusCode ?? 0)")
