@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchTripRepository.swift
 //  Leaplan_Watch Watch App
@@ -304,3 +305,5 @@ class WatchTripRepository: WatchTripRepositoryProtocol {
         }
     }
 }
+
+#endif

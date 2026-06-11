@@ -1,3 +1,4 @@
+#if os(watchOS)
 //
 //  WatchAppViewModel.swift
 //  Leaplan_Watch Watch App
@@ -69,3 +70,5 @@ extension WatchAppViewModel {
         return vm
     }
 }
+
+#endif
