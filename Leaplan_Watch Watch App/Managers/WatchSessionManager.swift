@@ -120,6 +120,13 @@ final class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
 #endif
 
+#if os(iOS)
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
+        session.activate()
+    }
+#endif
+
     // MARK: - Handle Payload
     private func handlePayload(_ payload: [String: Any]) {
         if let loginStatus = payload["isLoggedIn"] as? Bool {
