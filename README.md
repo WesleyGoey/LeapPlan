@@ -16,6 +16,7 @@ LeapPlan is a native iOS, iPadOS, and watchOS application designed to simplify h
 | 🎓 Institution | Universitas Ciputra Surabaya |
 | 🚀 Academic Timeline | Semester 4 - Mobile Application Development |
 | 📅 Development Period | April 2026 - June 2026 |
+| 👥 Team Size | 3 Developers |
 | 💻 Platform | Native Swift (iOS, iPadOS, watchOS) |
 
 ---
